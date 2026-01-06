@@ -3,7 +3,21 @@
 #
 
 # Add source to this project's executable.
-add_executable (TypherCompiler "Core/TypherCompiler.cpp" "Core/TypherCompiler.h" "Core/CompilerImpl.cpp" "Core/CompilerImpl.h" "Lexer/Keywords.h" "Lexer/Lexer.h" "Lexer/Lexer.cpp" "Lexer/Tokens/TokenTypes.h" "Lexer/Tokens/Token.h" "Lexer/Tokens/Token.cpp" "Parser/Parser.h" "Lexer/Letters.h" "Parser/Parser.cpp" "Lexer/Keywords.cpp")
+add_executable (TypherCompiler "Core/TypherCompiler.cpp" 
+"Core/CompilerImpl.cpp" 
+"Lexer/Lexer.cpp" 
+"Lexer/Tokens/Token.cpp" 
+"Parser/StatementParser.cpp"
+"Parser/Parser.cpp" 
+"Lexer/Keywords.cpp" 
+"Parser/AST/ASTNode.cpp"  
+"Parser/ExpressionParser.cpp" 
+"Parser/AST/Statements.cpp"
+"Parser/AST/Expressions/Identifier.cpp" 
+"Parser/AssignmentParser.cpp" 
+"Parser/AST/statements/VariableDeclaration.cpp"
+"Parser/AST/statements/VariableDeclarator.cpp"
+ "Checker/Checker.cpp" "Checker/Checker.h" "Parser/AST/Expressions/CallExpression.cpp" "Parser/AST/Expressions/CallExpression.h" "Parser/AST/Expressions/Operator.h" "Parser/AST/Expressions/Operatır.cpp")
 
 target_include_directories(TypherCompiler
     PRIVATE

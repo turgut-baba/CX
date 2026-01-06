@@ -4,13 +4,15 @@
 #include <iostream>
 #include <string>
 
-namespace Lexer {
-	class Token {
+namespace Lex {
+	class Token { // TODO: turn this into a template class and replace individual token types with a single template one.
 	public:
 		friend class Lexer;
 		friend class Keywords;
 		Token();
-		void SetType(TokenType token_type) {
+
+		void SetType(TokenType token_type)
+		{
 			this->type_ = token_type;
 		}
 
@@ -38,6 +40,16 @@ namespace Lexer {
 		template<typename TokenElavType>
 		void SetTokenType(TokenElavType type);
 
+		template<typename TokenElavType>
+		TokenElavType GetTokenType();
+
+		template<typename TokenElavType>
+		bool IsTokenType(TokenElavType type);
+
+		TokenKeyword GetKeywordType()
+		{
+			return keyword_type;
+		}
 	private:
 		TokenType type_;
 		TokenPunctuator punctuator_type;

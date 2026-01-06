@@ -2,7 +2,7 @@
 #include "Letters.h"
 #include "filesystem"
 
-namespace Lexer {
+namespace Lex {
 	Lexer::Lexer(std::string &file_buffer) {
 		this->file_buffer = std::move(file_buffer);
 		this->iterator_ = this->file_buffer.begin();
@@ -105,6 +105,9 @@ namespace Lexer {
 		case LexicalChar::COMMA:
 			current_token.SetIdent(","); // TEMP
 			current_token.SetType(TokenType::Punctuator);
+			break;
+		case LexicalChar::DOUBLE_QUOTE:
+			keyword_parser.ScanStringLiteral();
 			break;
 		case LexicalChar::NUM_0:
 		case LexicalChar::NUM_1:

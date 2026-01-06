@@ -3,7 +3,7 @@
 
 #include <cstdint>
 
-namespace Lexer {
+namespace Lex {
 	enum class LexicalChar : char32_t {
 		NULL_CHAR = 0x00,
 		LINE_FEED = 0x0A,

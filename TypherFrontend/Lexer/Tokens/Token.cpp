@@ -1,6 +1,6 @@
 #include "Token.h"
 
-namespace Lexer {
+namespace Lex {
 
 	Token::Token() 
 	{
@@ -32,8 +32,60 @@ namespace Lexer {
 		}
 	}
 
+	template<typename TokenElavType>
+	TokenElavType Token::GetTokenType() {
+		if constexpr (std::is_same_v<TokenElavType, TokenKeyword>) {
+			return this->keyword_type;
+		}
+		else if constexpr (std::is_same_v<TokenElavType, TokenOperator>) {
+			return this->operator_type;
+		}
+		else if constexpr (std::is_same_v<TokenElavType, TokenPunctuator>) {
+			return this->punctuator_type;
+		}
+		else if constexpr (std::is_same_v<TokenElavType, TokenLiteral>) {
+			return this->literal_type;
+		}
+		else {
+			// TODO: Handle unreachable	
+		}
+	}
+
+	template<typename TokenElavType>
+	bool Token::IsTokenType(TokenElavType type) {
+		TokenElavType actual_type;
+		if constexpr (std::is_same_v<TokenElavType, TokenKeyword>) {
+			actual_type = this->keyword_type;
+		}
+		else if constexpr (std::is_same_v<TokenElavType, TokenOperator>) {
+			actual_type = this->operator_type;
+		}
+		else if constexpr (std::is_same_v<TokenElavType, TokenPunctuator>) {
+			actual_type = this->punctuator_type;
+		}
+		else if constexpr (std::is_same_v<TokenElavType, TokenLiteral>) {
+			actual_type = this->literal_type;
+		}
+		else {
+			// TODO: Handle unreachable	
+		}
+
+		return actual_type == type;
+	}
+
+	// TODO: Turn these into pre-processor macros
 	template void Token::SetTokenType<TokenKeyword>(TokenKeyword);
 	template void Token::SetTokenType<TokenOperator>(TokenOperator);
 	template void Token::SetTokenType<TokenPunctuator>(TokenPunctuator);
 	template void Token::SetTokenType<TokenLiteral>(TokenLiteral);
+
+	template TokenKeyword Token::GetTokenType<TokenKeyword>();
+	template TokenOperator Token::GetTokenType<TokenOperator>();
+	template TokenPunctuator Token::GetTokenType<TokenPunctuator>();
+	template TokenLiteral Token::GetTokenType<TokenLiteral>();
+
+	template bool Token::IsTokenType<TokenKeyword>(TokenKeyword);
+	template bool Token::IsTokenType<TokenOperator>(TokenOperator);
+	template bool Token::IsTokenType<TokenPunctuator>(TokenPunctuator);
+	template bool Token::IsTokenType<TokenLiteral>(TokenLiteral);
 }

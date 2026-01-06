@@ -2,7 +2,7 @@
 #define TOKEN_TYPES_H
 #include <cstdint>
 
-namespace Lexer {
+namespace Lex {
 	enum class TokenType : uint32_t {
 		EOS,
 		Identifier,
@@ -95,6 +95,8 @@ namespace Lexer {
 		BITWISE_NOT, // ~
 		LEFT_SHIFT, // <<
 		RIGHT_SHIFT, // >>
+		RIGHT_PAREN, // )
+		LEFT_PAREN, // (
 	};
 
 	enum class TokenLiteral : char32_t {

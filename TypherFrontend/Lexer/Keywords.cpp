@@ -2,7 +2,7 @@
 #include "Letters.h"
 #include <charconv>
 
-namespace Lexer {
+namespace Lex {
 	#define FNV_OFFSET_BASIS_32 2166136261u;
 	#define FNV_PRIME_32 16777619u;
 
@@ -53,6 +53,9 @@ namespace Lexer {
 		case hash("int"):
 			token.SetTokenType<TokenKeyword>(TokenKeyword::INT);
 			break;
+		case hash("return"):
+			token.SetTokenType<TokenKeyword>(TokenKeyword::RETURN);
+			break;
 		default:
 			token.SetType(TokenType::Identifier);
 		}
@@ -64,7 +67,9 @@ namespace Lexer {
 		token.SetIdent(GetWord());
 	}
 
+	void Keywords::ScanStringLiteral() {
 
+	};
 
 	void Keywords::ScanNumber() {
 		lexer_->GetToken().SetType(TokenType::Literal);

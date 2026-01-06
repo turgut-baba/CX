@@ -6,7 +6,7 @@
 #include <string_view>
 #include "Lexer.h"
 
-namespace Lexer {
+namespace Lex {
 	static const std::unordered_set<std::string_view> keywords = { // TODO: Pottentially unused
 		"if", "else", "for", "while", "return", "enum"
 	};
@@ -17,11 +17,13 @@ namespace Lexer {
 		void PottentialKeyword();
 		void KeyIdentifier();
 		void ScanNumber();
+		void ScanStringLiteral();
 
 	private:
 		std::string GetWord();
 		Lexer* lexer_;
 		char32_t start_letter_;
+		bool isModifier = false;
 	};
 }
 

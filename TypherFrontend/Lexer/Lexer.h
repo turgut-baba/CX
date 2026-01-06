@@ -7,7 +7,7 @@
 #include "Keywords.h"
 #include "Letters.h"
 
-namespace Lexer {
+namespace Lex {
 
 class Lexer {
 public:
