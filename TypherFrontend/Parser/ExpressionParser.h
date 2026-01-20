@@ -9,7 +9,7 @@
 namespace Parser {
 	class ExpressionParser : public Parser {
 	public:
-		ExpressionParser(ParserState* state)
+		ExpressionParser(std::shared_ptr<ParserState> state)
 		{
 			state_ = state;
 		}

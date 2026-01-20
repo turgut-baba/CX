@@ -4,6 +4,7 @@
 #include "Lexer.h"
 #include "AST/Expressions/Identifier.h"
 #include "AST/Statement.h"
+#include "Memory/MemAlloc.h"
 
 namespace Parser {
 
@@ -19,14 +20,17 @@ public:
 
 	Lex::Lexer* Lexer() const;
 
+	MemoryAllocator* Allocator() const;
+
 	~Parser() 
 	{
-		delete state_;
+		
 	}
 protected:
 	AST::Identifier* ExpectIdentifier();
 
-	ParserState* state_; // TODO: write a proper allocator instead of raw ptr
+	std::shared_ptr<ParserState> state_; // TODO: write a proper allocator instead of raw ptr
+	MemoryAllocator allocator_;
 };
 
 }

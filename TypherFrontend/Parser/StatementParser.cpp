@@ -2,10 +2,10 @@
 #include "AssignmentParser.h"
 
 namespace Parser {
-	StatementParser::StatementParser(ParserState* state)
+	StatementParser::StatementParser(std::shared_ptr<ParserState> state)
 	{
 		state_ = state;
-		state_->assignment_parser = new AssignmentParser(state_); // TODO: proper mem management
+		state_->assignment_parser = Allocator()->Allocate<AssignmentParser>(state_);
 	}
 
 	AST::Statement* StatementParser::parse_statement()

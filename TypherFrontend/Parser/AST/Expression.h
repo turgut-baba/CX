@@ -5,6 +5,7 @@
 
 namespace AST {
 	class Expression: public ASTNode {
+	public:
 		virtual ~Expression() = default;
 	};
 }

@@ -1,6 +1,8 @@
 #ifndef PARSER_STATE_H
 #define PARSER_STATE_H
 
+#include "Memory/MemAlloc.h"
+
 namespace Parser {
 
 	class StatementParser;
@@ -15,6 +17,8 @@ namespace Parser {
 		StatementParser* statement_parser;
 		ExpressionParser* expression_parser;
 		AssignmentParser* assignment_parser;
+
+		MemoryAllocator allocator;
 	};
 }
 

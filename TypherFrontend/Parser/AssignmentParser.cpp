@@ -6,7 +6,7 @@ namespace Parser {
 
 	using namespace Lex;
 
-	AssignmentParser::AssignmentParser(ParserState* state)
+	AssignmentParser::AssignmentParser(std::shared_ptr<ParserState> state)
 	{
 		state_ = state;
 	}
@@ -36,7 +36,7 @@ namespace Parser {
 			//declarators[i] = ParseDeclarator();
 			break; // TODO: HANDLE OTHER CASES
 		}
-		return new AST::VariableDeclaration(declarators);
+		return Allocator()->Allocate<AST::VariableDeclaration>(declarators);
 	}
 	
 };

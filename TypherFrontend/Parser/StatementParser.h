@@ -9,7 +9,7 @@ namespace Parser {
 	class StatementParser : public Parser 
 	{
 	public:
-		StatementParser(ParserState* state);
+		StatementParser(std::shared_ptr<ParserState> state);
 
 		AST::Statement* parse_statement();
 	private:

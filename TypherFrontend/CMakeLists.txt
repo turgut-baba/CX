@@ -17,12 +17,14 @@ add_executable (TypherCompiler "Core/TypherCompiler.cpp"
 "Parser/AssignmentParser.cpp" 
 "Parser/AST/statements/VariableDeclaration.cpp"
 "Parser/AST/statements/VariableDeclarator.cpp"
- "Checker/Checker.cpp" "Checker/Checker.h" "Parser/AST/Expressions/CallExpression.cpp" "Parser/AST/Expressions/CallExpression.h" "Parser/AST/Expressions/Operator.h" "Parser/AST/Expressions/Operatır.cpp")
+ "Checker/Checker.cpp" "Parser/AST/Expressions/CallExpression.cpp" "Parser/AST/Expressions/Operator.cpp" "Core/Memory/BumPtrAlloc.h")
+
 
 target_include_directories(TypherCompiler
     PRIVATE
         ${CMAKE_SOURCE_DIR}/TypherFrontend/Lexer
         ${CMAKE_SOURCE_DIR}/TypherFrontend/Parser
+        ${CMAKE_SOURCE_DIR}/TypherFrontend/Core
 )
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)

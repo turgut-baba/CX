@@ -22,6 +22,12 @@ namespace AST {
 		void SetParent(ASTNode* parent)
 		{
 			parent_ = parent;
+			parent->AddChildren(this);
+		}
+
+		void AddChildren(ASTNode* child)
+		{
+			children_.push_back(child);
 		}
 	private:
 		std::vector<ASTNode*> children_; // TODO: convert to custom allocator

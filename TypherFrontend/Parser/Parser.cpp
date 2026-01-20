@@ -11,10 +11,15 @@ namespace Parser {
 		return state_->lexer_.get();
 	}
 
+	MemoryAllocator* Parser::Allocator() const
+	{
+		return &state_->allocator;
+	}
+
 	Parser::Parser(std::string& file_buffer) {
-		state_ = new ParserState(); // TODO: TURN THIS INTO CUSTOM ALLOCATOR
+		state_ = std::make_shared<ParserState>(); // TODO: TURN THIS INTO CUSTOM ALLOCATOR
 		state_->lexer_ = std::make_unique<Lex::Lexer>(file_buffer);
-		state_->statement_parser = new StatementParser(state_); // TODO: TURN THIS INTO CUSTOM ALLOCATOR
+		state_->statement_parser = Allocator()->Allocate<StatementParser>(state_); // TODO: TURN THIS INTO CUSTOM ALLOCATOR
 	}
 
 	void Parser::parse() 
@@ -32,7 +37,7 @@ namespace Parser {
 		const auto token = Lexer()->GetToken();
 		if (token.Type() == Lex::TokenType::Identifier)
 		{
-			AST::Identifier* ident = new AST::Identifier(token.Ident()); // TODO: TURN THIS INTO CUSTOM ALLOCATOR
+			AST::Identifier* ident = Allocator()->Allocate<AST::Identifier>(token.Ident()); // TODO: TURN THIS INTO CUSTOM ALLOCATOR
 			return ident;
 		}
 
