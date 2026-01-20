@@ -37,10 +37,9 @@ public:
     }
 
 	template<typename Type>
-	ArrayAlloc<Type>* ArrayAllocate()
+	ArrayAlloc<Type> ArrayAllocate()
 	{
-		auto arr = new ArrayAlloc<Type>();
-		return arr;
+		return ArrayAlloc<Type>();
 	};
 
     ~MemoryAllocator()

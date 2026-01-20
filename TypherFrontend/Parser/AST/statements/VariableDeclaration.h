@@ -6,7 +6,7 @@
 namespace AST {
 	class VariableDeclaration : public Statement {
 	public:
-		VariableDeclaration(VariableDeclarator* decls);
+		VariableDeclaration(ArrayAlloc<VariableDeclarator*> decls);
 		VariableDeclaration() = default;
 
 		virtual ~VariableDeclaration() = default;

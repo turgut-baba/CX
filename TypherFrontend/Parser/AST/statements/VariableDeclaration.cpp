@@ -1,10 +1,13 @@
 #include "VariableDeclaration.h"
 
 namespace AST {
-	VariableDeclaration::VariableDeclaration(VariableDeclarator* declarators) 
+	VariableDeclaration::VariableDeclaration(ArrayAlloc<VariableDeclarator*> declarators)
 	{
-		for (int i = 0; i < sizeof(declarators); i++) {
-			//declarators[i].SetParent(this);
+		if (!declarators.empty()) {
+			for (int i = 0; i < declarators.size(); i++) {
+				declarators[i]->SetParent(this);
+			}
 		}
+
 	}
 }

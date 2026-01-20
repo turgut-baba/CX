@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include "Memory/MemAlloc.h"
 
 namespace AST {
 	class ASTNode {

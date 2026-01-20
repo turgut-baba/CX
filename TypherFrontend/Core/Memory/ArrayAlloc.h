@@ -10,6 +10,18 @@ public:
 	{
 		vec_.push_back(mem);
 	}
+
+	Type operator[](size_t i) {
+		return vec_[i];
+	}
+
+	bool empty() {
+		return vec_.empty();
+	}
+
+	size_t size() {
+		return vec_.size();
+	}
 };
 
 #endif

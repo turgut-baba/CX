@@ -3,7 +3,6 @@
 
 #include "AST/Statement.h"
 #include "AST/Expression.h"
-
 namespace AST {
 	class VariableDeclarator : public Statement {
 	public:

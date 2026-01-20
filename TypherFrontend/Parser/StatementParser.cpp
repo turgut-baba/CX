@@ -1,11 +1,13 @@
 #include "StatementParser.h"
 #include "AssignmentParser.h"
+#include "ExpressionParser.h"
 
 namespace Parser {
 	StatementParser::StatementParser(std::shared_ptr<ParserState> state)
 	{
 		state_ = state;
 		state_->assignment_parser = Allocator()->Allocate<AssignmentParser>(state_);
+		state_->expression_parser = Allocator()->Allocate<ExpressionParser>(state_);
 	}
 
 	AST::Statement* StatementParser::parse_statement()

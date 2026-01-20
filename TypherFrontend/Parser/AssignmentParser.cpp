@@ -2,6 +2,7 @@
 #include "AST/statements/VariableDeclaration.h"
 #include "ExpressionParser.h"
 
+
 namespace Parser {
 
 	using namespace Lex;
@@ -13,7 +14,10 @@ namespace Parser {
 
 	AST::VariableDeclarator* AssignmentParser::ParseDeclarator()
 	{
-		return nullptr;
+		//switch () { } // TODO: check for =, += or -=.
+		auto exprs = state_->expression_parser->parse_expression();
+		AST::VariableDeclarator* decl = Allocator()->Allocate<AST::VariableDeclarator>(exprs);
+		return decl;
 	}
 
 	AST::Statement* AssignmentParser::parse_assignment()
@@ -25,7 +29,7 @@ namespace Parser {
 			//return ParseFunvtion();
 		}
 
-		AST::VariableDeclarator* declarators;
+		ArrayAlloc<AST::VariableDeclarator*> declarators = Allocator()->ArrayAllocate<AST::VariableDeclarator *>();
 		while (true) {
 			if (token.IsTokenType<TokenPunctuator>(TokenPunctuator::SEMICOLON))
 				break;
@@ -33,7 +37,7 @@ namespace Parser {
 			if (token.IsTokenType<TokenPunctuator>(TokenPunctuator::COMMA))
 				continue;
 
-			//declarators[i] = ParseDeclarator();
+			declarators.push_back(ParseDeclarator());
 			break; // TODO: HANDLE OTHER CASES
 		}
 		return Allocator()->Allocate<AST::VariableDeclaration>(declarators);
