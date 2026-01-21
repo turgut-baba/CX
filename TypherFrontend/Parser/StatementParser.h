@@ -13,6 +13,7 @@ namespace Parser {
 
 		AST::Statement* parse_statement();
 	private:
+		ArrayAlloc<AST::VariableDeclarator*> ParseDeclarators(AST::Identifier* ident);
 		AST::Statement* HandleKeywords();
 		AST::Statement* PottentialVariableOrFunctionDecl();
 	};

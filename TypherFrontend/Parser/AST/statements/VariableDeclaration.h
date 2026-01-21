@@ -7,11 +7,19 @@ namespace AST {
 	class VariableDeclaration : public Statement {
 	public:
 		VariableDeclaration(ArrayAlloc<VariableDeclarator*> decls);
+		VariableDeclaration(VariableDeclarator* declarator) : declarator_(declarator) { }
+
 		VariableDeclaration() = default;
 
 		virtual ~VariableDeclaration() = default;
+
+		std::string String() override
+		{
+			return "DECLARATION node";
+		}
 	private:
-		VariableDeclarator* declarators_;
+		ArrayAlloc<VariableDeclarator*> declarators_;
+		VariableDeclarator* declarator_;
 		bool is_definition = true;
 	};
 }

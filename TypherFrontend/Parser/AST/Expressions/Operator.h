@@ -16,6 +16,11 @@ namespace AST {
 		void SetRHS(AST::ASTNode* rhs);
 
 		virtual ~Operator() = default;
+
+		std::string String() override
+		{
+			return "Operator node";
+		}
 	private:
 		Lex::TokenOperator operator_;
 		AST::ASTNode* lhs_;

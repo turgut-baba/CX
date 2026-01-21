@@ -27,8 +27,20 @@ namespace Parser {
 		while (Lexer()->GetToken().Type() != Lex::TokenType::EOS) {
 			Lexer()->NextToken(); // TODO: Move this out of the while.
 			AST::Statement* current_statement = state_->statement_parser->parse_statement();
-			std::cout << "Token: " << Lexer()->GetToken().Ident() << std::endl;
+			statements_.push_back(current_statement);
 		}
+	}
+
+	bool Parser::IsStatementEnd()
+	{
+		const auto token = Lexer()->GetToken();
+		if (token.Type() == Lex::TokenType::Punctuator &&
+			Lexer()->GetToken().IsTokenType<Lex::TokenPunctuator>(Lex::TokenPunctuator::LEFT_PARENTHESES))
+		{
+			return true;
+		}
+
+		return false;
 	}
 
 	AST::Identifier* Parser::ExpectIdentifier()
@@ -43,5 +55,28 @@ namespace Parser {
 
 		// TODO: LOG ERROR
 		return nullptr;
+	}
+
+	void print_statement(AST::ASTNode* node, int depth)
+	{
+		for (int i = 0; i < depth; i++) {
+			std::cout << "--";
+		}
+		std::cout << node->String() << std::endl;
+		for (auto& child : node->Chlidren())
+		{
+			if (child != nullptr) print_statement(child, depth + 1);
+		}
+	}
+
+	void Parser::PrintAST()
+	{
+		for (auto& node : statements_.vec_)
+		{
+			if (node != nullptr) {
+				print_statement(node, 0);
+				std::cout << std::endl;
+			}
+		}
 	}
 }

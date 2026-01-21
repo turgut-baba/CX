@@ -55,6 +55,7 @@ int main(int argc, char** argv)
         std::string file_buffer = read_file(entry_file);
         Parser::Parser parse = Parser::Parser(file_buffer);
         parse.parse();
+        parse.PrintAST(); // DEBUG
     }
     catch (std::exception& e) {
         std::cout << "Err: " << e.what() << std::endl;

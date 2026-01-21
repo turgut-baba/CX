@@ -2,9 +2,10 @@
 #define PARSER_H
 
 #include "Lexer.h"
-#include "AST/Expressions/Identifier.h"
+#include "AST/Identifier.h"
 #include "AST/Statement.h"
 #include "Memory/MemAlloc.h"
+#include "AST/statements/VariableDeclaration.h"
 
 namespace Parser {
 
@@ -26,8 +27,13 @@ public:
 	{
 		
 	}
+	
+	bool IsStatementEnd();
+
+	void PrintAST(); //Debug
 protected:
 	AST::Identifier* ExpectIdentifier();
+	ArrayAlloc<AST::Statement*> statements_;
 
 	std::shared_ptr<ParserState> state_; // TODO: write a proper allocator instead of raw ptr
 	MemoryAllocator allocator_;

@@ -30,6 +30,11 @@ namespace AST {
 		{
 			children_.push_back(child);
 		}
+
+		virtual std::string String()
+		{
+			return "Default node ";
+		}
 	private:
 		std::vector<ASTNode*> children_; // TODO: convert to custom allocator
 		ASTNode* parent_;

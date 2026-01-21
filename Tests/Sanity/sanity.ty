@@ -1,7 +1,6 @@
-enum Enum {
-	A = 5,
-};
+int b;
+int c = b;
 
 int main() {
-	int a = 3;
+	int a = b + c;
 }

@@ -7,7 +7,6 @@ namespace Parser {
 
 	class StatementParser;
 	class ExpressionParser;
-	class AssignmentParser;
 
 	struct ParserState {
 		// StatementParser* statement_parser;
@@ -16,7 +15,6 @@ namespace Parser {
 
 		StatementParser* statement_parser;
 		ExpressionParser* expression_parser;
-		AssignmentParser* assignment_parser;
 
 		MemoryAllocator allocator;
 	};

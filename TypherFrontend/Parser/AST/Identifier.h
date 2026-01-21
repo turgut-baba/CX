@@ -13,6 +13,11 @@ namespace AST {
 		{
 			return value_;
 		}
+
+		std::string String() override
+		{
+			return ("Ident node: " + value_);
+		}
 	private:
 		std::string value_;
 	};
