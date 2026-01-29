@@ -4,6 +4,7 @@
 #include "Parser.h"
 #include "AST/Statement.h"
 #include "ParserState.h"
+#include "AST/Function.h"
 
 namespace Parser {
 	class StatementParser : public Parser 
@@ -12,10 +13,14 @@ namespace Parser {
 		StatementParser(std::shared_ptr<ParserState> state);
 
 		AST::Statement* parse_statement();
+
+		AST::Statement* ParseFunction(AST::Identifier* ident);
 	private:
 		ArrayAlloc<AST::VariableDeclarator*> ParseDeclarators(AST::Identifier* ident);
 		AST::Statement* HandleKeywords();
 		AST::Statement* PottentialVariableOrFunctionDecl();
+
+		AST::Statement* ParseFunctionBody(AST::Function* functionDecl);
 	};
 }
 

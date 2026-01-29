@@ -6,6 +6,21 @@
 
 namespace Parser {
 
+	Parser::Parser(std::string& file_buffer) {
+		state_ = std::make_shared<ParserState>(); // TODO: TURN THIS INTO CUSTOM ALLOCATOR
+		state_->lexer_ = std::make_unique<Lex::Lexer>(file_buffer);
+		state_->statement_parser = Allocator()->Allocate<StatementParser>(state_); // TODO: TURN THIS INTO CUSTOM ALLOCATOR
+	}
+
+	void Parser::parse()
+	{
+		Lexer()->NextToken(); // TODO: Move this out of the while.
+		while (Lexer()->GetToken().Type() != Lex::TokenType::EOS) {
+			AST::Statement* current_statement = state_->statement_parser->parse_statement();
+			statements_.push_back(current_statement);
+		}
+	}
+
 	Lex::Lexer* Parser::Lexer() const
 	{
 		return state_->lexer_.get();
@@ -16,26 +31,11 @@ namespace Parser {
 		return &state_->allocator;
 	}
 
-	Parser::Parser(std::string& file_buffer) {
-		state_ = std::make_shared<ParserState>(); // TODO: TURN THIS INTO CUSTOM ALLOCATOR
-		state_->lexer_ = std::make_unique<Lex::Lexer>(file_buffer);
-		state_->statement_parser = Allocator()->Allocate<StatementParser>(state_); // TODO: TURN THIS INTO CUSTOM ALLOCATOR
-	}
-
-	void Parser::parse() 
-	{
-		while (Lexer()->GetToken().Type() != Lex::TokenType::EOS) {
-			Lexer()->NextToken(); // TODO: Move this out of the while.
-			AST::Statement* current_statement = state_->statement_parser->parse_statement();
-			statements_.push_back(current_statement);
-		}
-	}
-
 	bool Parser::IsStatementEnd()
 	{
 		const auto token = Lexer()->GetToken();
 		if (token.Type() == Lex::TokenType::Punctuator &&
-			Lexer()->GetToken().IsTokenType<Lex::TokenPunctuator>(Lex::TokenPunctuator::LEFT_PARENTHESES))
+			Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::SEMICOLON))
 		{
 			return true;
 		}

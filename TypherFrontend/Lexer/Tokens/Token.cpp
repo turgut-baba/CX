@@ -32,6 +32,20 @@ namespace Lex {
 		}
 	}
 
+	template <typename E>
+	void Zero(E& e) {
+		e = static_cast<E>(0);
+	}
+
+	void Token::RestTokenTypes()
+	{
+		Zero(punctuator_type); 
+		Zero(operator_type);
+		Zero(keyword_type);
+		Zero(literal_type);
+	}
+
+
 	template<typename TokenElavType>
 	TokenElavType Token::GetTokenType() {
 		if constexpr (std::is_same_v<TokenElavType, TokenKeyword>) {

@@ -95,8 +95,6 @@ namespace Lex {
 		BITWISE_NOT, // ~
 		LEFT_SHIFT, // <<
 		RIGHT_SHIFT, // >>
-		RIGHT_PAREN, // )
-		LEFT_PAREN, // (
 	};
 
 	enum class TokenLiteral : char32_t {

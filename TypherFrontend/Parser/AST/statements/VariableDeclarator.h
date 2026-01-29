@@ -10,7 +10,7 @@ namespace AST {
 	public:
 		VariableDeclarator(Expression* expr, Identifier* ident);
 
-		VariableDeclarator(Identifier* ident) : ident_(ident) {}
+		VariableDeclarator(Identifier* ident);
 
 		virtual ~VariableDeclarator() = default;
 

@@ -53,6 +53,9 @@ namespace Lex {
 		case hash("int"):
 			token.SetTokenType<TokenKeyword>(TokenKeyword::INT);
 			break;
+		case hash("double"):
+			token.SetTokenType<TokenKeyword>(TokenKeyword::DOUBLE);
+			break;
 		case hash("return"):
 			token.SetTokenType<TokenKeyword>(TokenKeyword::RETURN);
 			break;

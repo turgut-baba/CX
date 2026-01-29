@@ -30,6 +30,8 @@ namespace Parser {
 			// TODO: handle unreachable
 		};
 
+		
+
 		return statement;
 	}
 
@@ -41,16 +43,19 @@ namespace Parser {
 
 		ArrayAlloc<AST::VariableDeclarator*> declarators = Allocator()->ArrayAllocate<AST::VariableDeclarator*>();
 		while (true) {
-			if (IsStatementEnd())
-				break;
-
 			auto expr = state_->expression_parser->parse_expression();
 			AST::VariableDeclarator* decl = Allocator()->Allocate<AST::VariableDeclarator>(expr, ident);
 			declarators.push_back(decl);
 
+			if (IsStatementEnd())
+			{
+				Lexer()->NextToken();
+				break;
+			}
+
 			if (token.IsTokenType<Lex::TokenPunctuator>(Lex::TokenPunctuator::COMMA)) {
 				Lexer()->NextToken();
-				PottentialVariableOrFunctionDecl(); // THIS CAUSES AN ERROR.  declarators REDIFNED ON EACH CALL.
+				ParseDeclarators(ident); // THIS CAUSES AN ERROR.  declarators REDIFNED ON EACH CALL.
 				continue;
 			}
 
@@ -74,13 +79,16 @@ namespace Parser {
 
 		Lexer()->NextToken();
 		auto token = Lexer()->GetToken();
-
 		switch (token.Type()) {
 			case Lex::TokenType::Punctuator:
 			{
-				if (token.IsTokenType(Lex::TokenPunctuator::SEMICOLON)) {
+				if (token.IsTokenType(Lex::TokenPunctuator::LEFT_PARENTHESES)) {
+					return ParseFunction(Ident);
+				} else if (token.IsTokenType(Lex::TokenPunctuator::SEMICOLON)) {
 					auto declarator = Allocator()->Allocate<AST::VariableDeclarator>(Ident);
-					return Allocator()->Allocate<AST::VariableDeclaration>(declarator);
+					auto declaration = Allocator()->Allocate<AST::VariableDeclaration>(declarator);
+					Lexer()->NextToken();
+					return declaration;
 				}
 				else {
 					// throw error
@@ -89,10 +97,7 @@ namespace Parser {
 			}
 			case Lex::TokenType::Operator:
 			{
-				if (token.IsTokenType(Lex::TokenOperator::LEFT_PAREN)) {
-					// Parse func
-				}
-				else if (token.IsTokenType(Lex::TokenOperator::ASSIGNMENT)) {
+				if (token.IsTokenType(Lex::TokenOperator::ASSIGNMENT)) {
 					auto declarators = ParseDeclarators(Ident); // THIS CAUSES AN ERROR. 
 					return Allocator()->Allocate<AST::VariableDeclaration>(declarators);
 				}
@@ -100,6 +105,36 @@ namespace Parser {
 		}
 
 		return nullptr;
+	}
+
+	AST::Statement* StatementParser::ParseFunctionBody(AST::Function* functionDecl)
+	{
+		Lexer()->NextToken(); // Skip '{'
+		while (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::RIGHT_CURLY_BRACE)) {
+			auto statement = parse_statement();
+			statement->SetParent(functionDecl);
+		}
+		Lexer()->NextToken(); // Skip '}'
+		return functionDecl;
+	}
+
+	AST::Statement* StatementParser::ParseFunction(AST::Identifier* ident)
+	{
+		Lexer()->NextToken(); // Skip '('
+		AST::Function* functionDecl = Allocator()->Allocate<AST::Function>(ident);
+		while (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::RIGHT_PARENTHESES)) {
+			// ParseParameter();
+			if (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::COMMA)) {
+				// Log error
+			}
+		}
+		Lexer()->NextToken(); // Skip ')'
+
+		if (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::SEMICOLON)) {
+			// return;
+		}
+
+		return ParseFunctionBody(functionDecl);
 	}
 
 	AST::Statement* StatementParser::HandleKeywords() 

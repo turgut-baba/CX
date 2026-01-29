@@ -50,6 +50,8 @@ namespace Lex {
 		{
 			return keyword_type;
 		}
+
+		void RestTokenTypes();
 	private:
 		TokenType type_;
 		TokenPunctuator punctuator_type;

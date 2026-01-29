@@ -3,6 +3,7 @@
 
 #include "TypherCompiler.h"
 #include "Parser.h"
+#include "MLIRGen.h"
 #include <filesystem>
 #include <fstream>
 #include <sstream>
@@ -56,6 +57,10 @@ int main(int argc, char** argv)
         Parser::Parser parse = Parser::Parser(file_buffer);
         parse.parse();
         parse.PrintAST(); // DEBUG
+        MLIR::Generator gen = MLIR::Generator();
+        auto ast = parse.AST();
+        gen.Generate(ast);
+        gen.Print();
     }
     catch (std::exception& e) {
         std::cout << "Err: " << e.what() << std::endl;

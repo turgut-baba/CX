@@ -9,4 +9,12 @@ namespace AST{
 		}
 	}
 
+	VariableDeclarator::VariableDeclarator(Identifier* ident)
+		: ident_(ident)
+	{
+		if (ident != nullptr) {
+			ident->SetParent(this);
+		}
+	}
+
 }

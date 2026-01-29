@@ -5,6 +5,8 @@
 #include "AST/Expression.h"
 #include "AST/Expressions/CallExpression.h"
 #include "AST/Expressions/Operator.h"
+#include "AST/Literals/IntegerLiteral.h"
+#include "AST/Literals/Literal.h"
 #include "ParserState.h"
 
 namespace Parser {
@@ -22,7 +24,7 @@ namespace Parser {
 		AST::ASTNode* CheckIdentifier();
 		AST::ASTNode* ParsePrimaryExpression();
 		AST::Expression* ParseAdditiveExpression();
-		AST::Identifier* CheckLiteral();
+		AST::Literal* CheckLiteral();
 	};
 }
 

@@ -16,7 +16,12 @@ add_executable (TypherCompiler "Core/TypherCompiler.cpp"
 "Parser/AST/Identifier.cpp" 
 "Parser/AST/statements/VariableDeclaration.cpp"
 "Parser/AST/statements/VariableDeclarator.cpp"
- "Checker/Checker.cpp" "Parser/AST/Expressions/CallExpression.cpp" "Parser/AST/Expressions/Operator.cpp" "Core/Memory/BumPtrAlloc.h")
+ "Checker/Checker.cpp" 
+ "Parser/AST/Expressions/CallExpression.cpp"
+ "Parser/AST/Expressions/Operator.cpp" 
+ "Parser/AST/Literals/Literal.h"
+"MLIR/MLIRGen.cpp")
+ # "MLIR/MLIRGen.h" "MLIR/MLIRGen.cpp" "MLIR/MLIRBuilder.h" "MLIR/MLIRBuilder.cpp" "Checker/Analyzer.cpp" "Checker/Analyzedr.h")
 
 
 target_include_directories(TypherCompiler
@@ -24,6 +29,7 @@ target_include_directories(TypherCompiler
         ${CMAKE_SOURCE_DIR}/TypherFrontend/Lexer
         ${CMAKE_SOURCE_DIR}/TypherFrontend/Parser
         ${CMAKE_SOURCE_DIR}/TypherFrontend/Core
+        ${CMAKE_SOURCE_DIR}/TypherFrontend/MLIR
 )
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)

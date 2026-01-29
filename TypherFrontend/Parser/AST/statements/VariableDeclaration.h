@@ -7,7 +7,12 @@ namespace AST {
 	class VariableDeclaration : public Statement {
 	public:
 		VariableDeclaration(ArrayAlloc<VariableDeclarator*> decls);
-		VariableDeclaration(VariableDeclarator* declarator) : declarator_(declarator) { }
+
+		VariableDeclaration(VariableDeclarator* declarator) 
+			: declarator_(declarator) 
+		{
+			declarator->SetParent(this);
+		}
 
 		VariableDeclaration() = default;
 

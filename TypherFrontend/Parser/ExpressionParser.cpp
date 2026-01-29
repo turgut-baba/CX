@@ -1,6 +1,5 @@
 #include "ExpressionParser.h"
 
-
 namespace Parser {
 	AST::CallExpression* ExpressionParser::ParseFunctionCall(AST::Identifier* ident)
 	{
@@ -13,7 +12,7 @@ namespace Parser {
 		AST::Identifier* ident = Allocator()->Allocate<AST::Identifier>(Lexer()->GetToken().Ident());
 		Lexer()->NextToken();
 
-		if (Lexer()->GetToken().IsTokenType<Lex::TokenOperator>(Lex::TokenOperator::LEFT_PAREN)) {
+		if (Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::LEFT_PARENTHESES)) {
 			AST::CallExpression* callExpr = ParseFunctionCall(ident);
 			return callExpr;
 		}
@@ -22,23 +21,26 @@ namespace Parser {
 		}
 
 		return ident;
-
 	}
 
-	AST::Identifier* ExpressionParser::CheckLiteral()
+	AST::Literal* ExpressionParser::CheckLiteral()
 	{
-		//AST::Literal* ident = Allocator()->Allocate<AST::Identifier>(Lexer()->GetToken().Ident());
+		switch (Lexer()->GetToken().GetTokenType<Lex::TokenLiteral>()) {
+		case Lex::TokenLiteral::DECIMAL: {
+			int number = stoi(Lexer()->GetToken().Ident());
+			AST::IntegerLiteral* ident = Allocator()->Allocate<AST::IntegerLiteral>(number);
+			return ident;
+		}
+
+		}
 		return nullptr;
 	}
 
 	AST::Expression* ExpressionParser::ParseAdditiveExpression()
 	{
-		AST::Operator* operator_;
-
 		AST::ASTNode* lhs;
-		AST::ASTNode* rhs;
 
-		if (Lexer()->GetToken().IsTokenType<Lex::TokenPunctuator>(Lex::TokenPunctuator::LEFT_PARENTHESES)) {
+		if (Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::LEFT_PARENTHESES)) {
 			Lexer()->NextToken();// Skip '('
 			lhs = parse_expression();
 			Lexer()->NextToken(); // Skip ')'
@@ -49,23 +51,34 @@ namespace Parser {
 			lhs = CheckIdentifier();
 		}
 
+		if (IsStatementEnd()) {
+			return (AST::Expression*)lhs;
+		}
+
 		if (Lexer()->GetToken().Type() != Lex::TokenType::Operator) {
 			//TODO:: raise error
 		}
 
-		operator_ = new AST::Operator(Lexer()->GetToken().GetTokenType<Lex::TokenOperator>());
+		const auto tokenType = Lexer()->GetToken().GetTokenType<Lex::TokenOperator>();
+		AST::Operator* operator_ = Allocator()->Allocate<AST::Operator>(tokenType);
 
 		lhs->SetParent(operator_);
 
 		Lexer()->NextToken();
 
-		if (Lexer()->GetToken().IsTokenType<Lex::TokenPunctuator>(Lex::TokenPunctuator::LEFT_PARENTHESES)) {
+		AST::ASTNode* rhs;
+
+		if (Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::LEFT_PARENTHESES)) {
+			Lexer()->NextToken();// Skip '('
 			rhs = parse_expression();
-		}
-		else {
+			Lexer()->NextToken(); // Skip ')'		
+		} else if (Lexer()->GetToken().Type() == Lex::TokenType::Literal) {
+			rhs = CheckLiteral();
+			Lexer()->NextToken();
+		} else {
 			rhs = CheckIdentifier();
 		}
-
+		
 		rhs->SetParent(operator_);
 
 		operator_->SetLHS(lhs);
@@ -76,13 +89,7 @@ namespace Parser {
 
 	AST::Expression* ExpressionParser::parse_expression() 
 	{
-		if (Lexer()->GetToken().Type() == Lex::TokenType::Identifier || 
-			Lexer()->GetToken().Type() == Lex::TokenType::Literal)
-		{
-			return ParseAdditiveExpression();
-		}
-
-		return nullptr;
+		return ParseAdditiveExpression();
 	}
 
 

@@ -19,18 +19,40 @@ public:
 
 	void parse();
 
+	ArrayAlloc<AST::Statement*> AST()
+	{
+		return statements_;
+	}
+
+	void PrintAST(); //Debug
+protected:
 	Lex::Lexer* Lexer() const;
 
 	MemoryAllocator* Allocator() const;
 
-	~Parser() 
-	{
-		
-	}
-	
 	bool IsStatementEnd();
 
-	void PrintAST(); //Debug
+	template<typename TokenType>
+	AST::ASTNode* ExpectToken(TokenType expected)
+	{
+		if (Lexer()->GetToken().IsTokenType(expected))
+		{
+			return Lexer()->GetToken();
+		}
+
+		// TODO: Log error
+		return nullptr;
+	}
+
+	template<typename TokenType>
+	void SkipToken(TokenType expected)
+	{
+		Lexer()->NextToken();
+		if (!Lexer()->GetToken().IsTokenType(expected))
+		{
+			// TODO: Log error
+		}
+	}
 protected:
 	AST::Identifier* ExpectIdentifier();
 	ArrayAlloc<AST::Statement*> statements_;

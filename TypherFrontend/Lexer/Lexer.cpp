@@ -71,6 +71,7 @@ namespace Lex {
 		Keywords keyword_parser(this, (char32_t)cp);
 
 		current_token.SetType(TokenType::EOS); // TODO: add this as a case.
+		current_token.RestTokenTypes();
 
 		switch (cp) {
 		case LexicalChar::LEFT_PAREN:
@@ -120,6 +121,8 @@ namespace Lex {
 		case LexicalChar::NUM_8:
 		case LexicalChar::NUM_9: {
 			keyword_parser.ScanNumber();
+			current_token.SetTokenType<TokenLiteral>(
+				TokenLiteral::DECIMAL);
 			current_token.SetIdent(std::to_string(current_token.numeric_value)); // TEMP
 			break;
 		}
