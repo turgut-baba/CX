@@ -7,6 +7,8 @@
 #include "Memory/MemAlloc.h"
 #include "AST/statements/VariableDeclaration.h"
 
+#include <memory>
+
 namespace Parser {
 
 struct ParserState;
@@ -33,7 +35,7 @@ protected:
 	bool IsStatementEnd();
 
 	template<typename TokenType>
-	AST::ASTNode* ExpectToken(TokenType expected)
+	Lex::Token ExpectToken(TokenType expected)
 	{
 		if (Lexer()->GetToken().IsTokenType(expected))
 		{
@@ -41,7 +43,6 @@ protected:
 		}
 
 		// TODO: Log error
-		return nullptr;
 	}
 
 	template<typename TokenType>

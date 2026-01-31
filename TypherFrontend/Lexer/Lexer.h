@@ -28,7 +28,9 @@ public:
 
 	inline void IterForward(size_t fwd = 1)
 	{
-		if (std::distance(iterator_, file_buffer.end()) >= fwd)
+		auto dist = std::distance(iterator_, file_buffer.end());
+
+		if (dist > 0 && static_cast<size_t>(dist) >= fwd)
 		{
 			this->iterator_ += fwd;
 		}
@@ -36,7 +38,9 @@ public:
 
 	inline void IterBack(size_t bck = 1)
 	{
-		if (std::distance(file_buffer.begin(), iterator_) >= bck)
+		auto dist = std::distance(file_buffer.begin(), iterator_);
+
+		if (dist > 0 && static_cast<size_t>(dist) >= bck)
 		{
 			this->iterator_ -= bck;
 		}

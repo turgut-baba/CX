@@ -7,6 +7,9 @@
 #include "Lexer.h"
 
 namespace Lex {
+
+	class Lexer;
+
 	static const std::unordered_set<std::string_view> keywords = { // TODO: Pottentially unused
 		"if", "else", "for", "while", "return", "enum"
 	};

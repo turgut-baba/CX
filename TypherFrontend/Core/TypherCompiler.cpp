@@ -8,6 +8,7 @@
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
+#include <cstring>
 
 std::string read_file(const std::filesystem::path& path) {
     if (!std::filesystem::exists(path))
@@ -35,7 +36,7 @@ bool check_file_end(std::string filename, const char* suffix)
         result_suffix[i - suffix_index] = filename[i];
     }
     result_suffix[3] = '\0';
-    return(std::strcmp(result_suffix, suffix) == 0);
+    return(strcmp(result_suffix, suffix) == 0);
 }
 
 int main(int argc, char** argv)

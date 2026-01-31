@@ -1,11 +1,11 @@
 int b;
 int c = 5;
 
-int test()
+double test()
 {
 	double d = (5 + 6) + (c + c);
 }
 
-double main() {
+int main() {
 	int a = b + (c + c);
 }

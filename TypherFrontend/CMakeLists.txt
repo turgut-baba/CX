@@ -36,4 +36,9 @@ if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET TypherCompiler PROPERTY CXX_STANDARD 20)
 endif()
 
+if(LINUX)
+  set(CMAKE_C_COMPILER clang)
+  target_compile_options(TypherCompiler PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
 # TODO: Add tests and install targets if needed.
