@@ -16,21 +16,90 @@ add_executable (TypherCompiler "Core/TypherCompiler.cpp"
 "Parser/AST/Identifier.cpp" 
 "Parser/AST/statements/VariableDeclaration.cpp"
 "Parser/AST/statements/VariableDeclarator.cpp"
- "Checker/Checker.cpp" 
- "Parser/AST/Expressions/CallExpression.cpp"
- "Parser/AST/Expressions/Operator.cpp" 
- "Parser/AST/Literals/Literal.h"
-"MLIR/MLIRGen.cpp")
- # "MLIR/MLIRGen.h" "MLIR/MLIRGen.cpp" "MLIR/MLIRBuilder.h" "MLIR/MLIRBuilder.cpp" "Checker/Analyzer.cpp" "Checker/Analyzedr.h")
-
+"Checker/Checker.cpp" 
+"Parser/AST/Expressions/CallExpression.cpp"
+"Parser/AST/Expressions/Operator.cpp" 
+"Parser/AST/Literals/Literal.h"
+"MLIR/MLIRGen.cpp"
+"MLIR/MLIRBuilder.cpp"
+#"MLIR/Dialect/TypherDialect.cpp"
+ )
+ # "MLIR/MLIRGen.h" "MLIR/MLIRGen.cpp" "MLIR/MLIRBuilder.h" "MLIR/MLIRBuilder.cpp" "Checker/Analyzer.cpp" "Checker/Analyzedr.h"
 
 target_include_directories(TypherCompiler
-    PRIVATE
-        ${CMAKE_SOURCE_DIR}/TypherFrontend/Lexer
-        ${CMAKE_SOURCE_DIR}/TypherFrontend/Parser
-        ${CMAKE_SOURCE_DIR}/TypherFrontend/Core
-        ${CMAKE_SOURCE_DIR}/TypherFrontend/MLIR
+  PRIVATE
+  ${CMAKE_SOURCE_DIR}/TypherFrontend/Lexer
+  ${CMAKE_SOURCE_DIR}/TypherFrontend/Parser
+  ${CMAKE_SOURCE_DIR}/TypherFrontend/Core
+  ${CMAKE_SOURCE_DIR}/TypherFrontend/MLIR
 )
+
+# MLIR SETUP --------------------
+
+set(LLVM_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/llvm-project" CACHE INTERNAL "")
+
+set(LIBS
+  MLIRAnalysis
+  MLIRIR
+  MLIRParser
+  MLIRRegisterAllDialects
+  MLIRRegisterAllExtensions
+  MLIRRegisterAllPasses
+  MLIRSupport
+  MLIRTransformDialect
+  MLIRTransformDialectTransforms
+  MLIRTransforms
+)
+
+set(LLVM_BUILD_DIR "${LLVM_ROOT}/build") 
+
+# 2. Point specifically to the folders containing the Config.cmake files
+set(MLIR_DIR "${LLVM_BUILD_DIR}/lib/cmake/mlir")
+set(LLVM_DIR "${LLVM_BUILD_DIR}/lib/cmake/llvm")
+
+list(APPEND CMAKE_MODULE_PATH "${LLVM_PROJ_SRC}/llvm/cmake/modules")
+
+# 3. Now find_package will work
+find_package(MLIR REQUIRED CONFIG)
+find_package(LLVM REQUIRED CONFIG)
+
+list(APPEND CMAKE_MODULE_PATH ${MLIR_CMAKE_DIR})
+list(APPEND CMAKE_MODULE_PATH ${LLVM_CMAKE_DIR})
+
+include(AddLLVM)
+include(TableGen)
+include(AddMLIR)
+
+include_directories(${LLVM_INCLUDE_DIRS})
+include_directories(${MLIR_INCLUDE_DIRS})
+include_directories(${MLIR_GENERATED_INCLUDE_DIRS})
+
+target_include_directories(TypherCompiler SYSTEM PRIVATE 
+    ${LLVM_INCLUDE_DIRS} 
+    ${MLIR_INCLUDE_DIRS}
+)
+# DIALECT -------
+
+add_mlir_dialect(TypherOps Typher)
+
+set(LLVM_TARGET_DEFINITIONS MLIR/Dialect/Ops.td)
+mlir_tablegen(MLIR/Dialect/Ops.h.inc -gen-op-decls)
+mlir_tablegen(MLIR/Dialect/Ops.cpp.inc -gen-op-defs)
+add_public_tablegen_target(TypherGenTarget)
+
+add_llvm_library(TypherDialect
+  MLIR/Dialect/TypherDialect.cpp
+  MLIR/Dialect/TypherDialect.h
+
+  DEPENDS
+  TypherGenTarget
+)
+
+add_dependencies(TypherCompiler TypherDialect)
+
+# MLIR SETU END --------------------
+
+target_link_libraries(TypherCompiler PRIVATE ${LIBS})
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET TypherCompiler PROPERTY CXX_STANDARD 20)

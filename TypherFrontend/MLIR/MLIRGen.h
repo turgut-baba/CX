@@ -22,6 +22,10 @@ namespace MLIR {
 		std::ofstream& GetFile();
 
 		void Print() {
+			Builder bldr = Builder();
+			bldr.BuildModule();
+
+
 			file << "}";
 			file.flush(); // ensure data is written
 
