@@ -1,6 +1,5 @@
 module attributes {gpu.container_module} {
   gpu.module @kernels {
-    // The 'return' is now a 'store' into a result buffer
     gpu.func @res_kernel(%a: i32, %out: memref<1xi32>) kernel {
       %c2 = arith.constant 2 : i32
       %res = arith.addi %a, %c2 : i32
@@ -12,14 +11,16 @@ module attributes {gpu.container_module} {
 
   func.func @main() {
     %b = arith.constant 3 : i32
-    // Compiler allocates a small slot for the 'return' value
+    %c0 = arith.constant 0 : index
+    %c1 = arith.constant 1 : index
+    
     %temp_buf = gpu.alloc() : memref<1xi32> 
     
-    // Launching the GPU module
     gpu.launch_func @kernels::@res_kernel 
+        blocks in (%c1, %c1, %c1)
+        threads in (%c1, %c1, %c1)
         args(%b : i32, %temp_buf : memref<1xi32>)
     
-    // Load the 'returned' value back into a CPU variable
     %c = memref.load %temp_buf[%c0] : memref<1xi32>
     return
   }

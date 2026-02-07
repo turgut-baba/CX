@@ -14,6 +14,8 @@ namespace AST {
 			return "Expression node ";
 		}
 
+		void Accept(NodeVisitor* v) override { v->Visit(this); }
+
 		Lex::TokenKeyword type_; // TODO: turn this into a type class.
 	};
 }

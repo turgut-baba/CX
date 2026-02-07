@@ -2,54 +2,87 @@
 
 namespace MLIR {
 	Generator::Generator()
-		:file("test.mlir")
 	{
-		AddLine("module {");
-		ident++;
+
 	}
 
 	Generator::~Generator()
 	{
-		file.close();
-	}
 
-	std::ofstream& Generator::GetFile()
-	{
-		file << "}";
-		ident--;
-
-		return file;
 	}
 
 	void Generator::Generate(ArrayAlloc<AST::Statement*>& ASTTree) {
-		for (AST::ASTNode* node : ASTTree.vec_) {
-			if (node->IsNodeType(AST::NodeType::FUNCTION))
-				Gen(static_cast<AST::Function*>(node));
+		
+		mlir::registerAsmPrinterCLOptions();
+        mlir::registerMLIRContextCLOptions();
+
+        mlir::MLIRContext context;
+		builder = std::make_shared<mlir::OpBuilder>(&context);
+        // Load our Dialect in this MLIR Context.
+        context.getOrLoadDialect<mlir::typher::TypherDialect>();
+
+		theModule = mlir::ModuleOp::create(builder->getUnknownLoc());
+
+		for (AST::ASTNode* node : ASTTree.vec_)
+      		node->Accept(this);
+
+		if (failed(mlir::verify(theModule))) {
+			theModule.emitError("module verification error");
+			return;
 		}
+
+        theModule->dump();
+	}
+
+	void Generator::Visit(AST::Function* node)
+	{
+    	llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> varScope(symbolTable);
+
+		builder->setInsertionPointToEnd(theModule.getBody());
+		mlir::typher::FuncOp function ;//= mlirGen(*funcAST.getProto());
+
+		std::cout << "Funkin" << std::endl;
+
+		return ;//function;
+	}
+
+	void Generator::Visit(AST::Statement* node)
+	{
+		std::cout << "Statin" << std::endl;
+	}
+
+	void Generator::Visit(AST::VariableDeclarator* node) 
+	{
+
+	}
+    void Generator::Visit(AST::Expression* node) 
+	{
+
+	}
+	void Generator::Visit(AST::Identifier* node) 
+	{
+
+	}
+	void Generator::Visit(AST::IntegerLiteral* node) 
+	{
 
 	}
 
-	void Generator::Gen(AST::Function* node)
+	mlir::typher::FuncOp Generator::GenNode(AST::Statement* node)
 	{
-		AddLine("func.func ", false);
-		file << "@" << node->Name() << "(";
+    	llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> varScope(symbolTable);
 
-/*
-		for (auto param : node->Params()) {
-			file << param.String();
-		}
-*/
+		builder->setInsertionPointToEnd(theModule.getBody());
+		mlir::typher::FuncOp function ;//= mlirGen(*funcAST.getProto());
 
-		AddLine(") -> i32 {");
-		ident++;
+		std::cout << "Statin" << std::endl;
 
-		for (auto& child : node->Chlidren())
-		{
-			//if (child != nullptr) Gen(child);
-		}
+		return function;
+	}
 
-		ident--;
-		AddLine("}");
+	mlir::typher::FuncOp Generator::GenNode(AST::Function* node)
+	{
+
 	}
 
 }

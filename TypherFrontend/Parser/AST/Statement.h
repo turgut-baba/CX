@@ -5,6 +5,8 @@
 
 namespace AST {
 	class Statement : public ASTNode {
+	public:
+		void Accept(NodeVisitor* v) override { v->Visit(this); }
 	protected:
 		virtual ~Statement() = default;
 

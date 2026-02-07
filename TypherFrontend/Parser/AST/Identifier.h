@@ -18,6 +18,8 @@ namespace AST {
 		{
 			return ("Ident node: " + value_);
 		}
+
+		void Accept(NodeVisitor* v) override { v->Visit(this); }
 	private:
 		std::string value_;
 	};

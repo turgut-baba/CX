@@ -4,6 +4,7 @@
 #include "AST/Statement.h"
 #include "AST/Expression.h"
 #include "AST/Identifier.h"
+#include "AST/Visitor.h"
 
 namespace AST {
 	class VariableDeclarator : public Expression {
@@ -18,6 +19,9 @@ namespace AST {
 		{
 			return ("Declarator node: " + ident_->Value());
 		}
+		
+		void Accept(NodeVisitor* v) override { v->Visit(this); }
+
 	private:
 		Identifier* ident_;
 		Lex::TokenKeyword type_; // TODO: turn this into a type class.

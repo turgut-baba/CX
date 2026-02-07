@@ -1,64 +1,49 @@
 #ifndef MLIR_GEN_H
 #define MLIR_GEN_H
 
-#include "Parser.h" // TODO: change this to checker/analyzer.
-#include "MLIRBuilder.h"
+#include "mlir/Dialect/Arith/IR/Arith.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
+#include "mlir/IR/Builders.h"
+#include "mlir/IR/BuiltinOps.h"
+#include "mlir/IR/MLIRContext.h"
+#include "mlir/IR/Verifier.h"
+#include "mlir/IR/AsmState.h"
+
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/ScopedHashTable.h"
+#include "llvm/ADT/StringRef.h"
+
+#include "Dialect/TypherDialect.h"
 #include "AST/Function.h"
+#include "AST/Visitor.h"
 
 #include <fstream>
 
 namespace MLIR {
-	class ModuleOp;
 
-	class Generator {
+	class Generator: public AST::NodeVisitor {
 	public:
 		Generator();
 		~Generator();
 
-		//Generator(mlir::MLIRContext& context) : builder(&context) {}
-
 		void Generate(ArrayAlloc<AST::Statement*>& ASTTree);
-
-		std::ofstream& GetFile();
-
-		void Print() {
-			Builder bldr = Builder();
-			bldr.BuildModule();
-
-
-			file << "}";
-			file.flush(); // ensure data is written
-
-			std::ifstream in("test.mlir");
-			std::string line;
-			while (std::getline(in, line)) {
-				std::cout << line << '\n';
-			}
-		}
+	
 	private:
-		template<typename Str>
-		void AddLine(Str str, bool new_line = true)
-		{
-			for (int i = 0; i < ident; i++)
-			{
-				file << "   ";
-			}
+		mlir::OwningOpRef<mlir::ModuleOp> GenTree();
 
-			file << str;
+		mlir::typher::FuncOp GenNode(AST::Function* node);
+		mlir::typher::FuncOp GenNode(AST::Statement* node);
 
-			if (new_line)
-				file << "\n";
-		}
+		void Visit(AST::Function* node) override;
+		void Visit(AST::Statement* node) override;
+		void Visit(AST::VariableDeclarator* node) override;
+        void Visit(AST::Expression* node) override;
+		void Visit(AST::Identifier* node) override;
+		void Visit(AST::IntegerLiteral* node) override;
 
-		std::ofstream file;
-
-		//mlir::ModuleOp Module_;
-
-		void Gen(AST::Function* node);
-		int ident = 0;
-		//void Gen(AST::Operator* node);
-		//void Gen(AST::Statement* node);
-		//void Gen(AST::Expression* node);
+		mlir::ModuleOp theModule;
+		std::shared_ptr<mlir::OpBuilder> builder;
+		llvm::ScopedHashTable<llvm::StringRef, mlir::Value> symbolTable;
 	};
 }
 

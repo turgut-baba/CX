@@ -5,6 +5,7 @@
 #include <vector>
 #include "Memory/MemAlloc.h"
 #include <functional>
+#include "AST/Visitor.h"
 
 namespace AST {
 
@@ -51,6 +52,7 @@ namespace AST {
 		void ChangeChildrenNodesRecursively(const NodeFunction& func);
 
 		ASTNode* HasChild(const ConditionalNodeFunction& cb) const;
+		virtual void Accept(NodeVisitor* visitor) = 0;
 
 		bool IsNodeType(NodeType type)
 		{
