@@ -4,7 +4,7 @@ out/
 
 **/CMakeFiles/
 
-**/Compiler
+**/TypherCompiler
 
 **/Makefile
 **/cmake_install.cmake

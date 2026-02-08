@@ -15,9 +15,9 @@ namespace AST {
 
 		virtual ~VariableDeclarator() = default;
 
-		std::string String() override
+		std::string Name()
 		{
-			return ("Declarator node: " + ident_->Value());
+			return ident_->Value();
 		}
 		
 		void Accept(NodeVisitor* v) override { v->Visit(this); }

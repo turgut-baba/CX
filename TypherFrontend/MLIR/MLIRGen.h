@@ -41,6 +41,17 @@ namespace MLIR {
 		void Visit(AST::Identifier* node) override;
 		void Visit(AST::IntegerLiteral* node) override;
 
+		mlir::Location loc(const Location &loc) {
+			return mlir::FileLineColLoc::get(builder->getStringAttr(loc.file), loc.line, loc.col);
+		}
+		llvm::LogicalResult declare(llvm::StringRef var, mlir::Value value) {
+			if (symbolTable.count(var))
+				return mlir::failure();
+			
+			symbolTable.insert(var, value);
+			return mlir::success();
+		}	
+
 		mlir::ModuleOp theModule;
 		std::shared_ptr<mlir::OpBuilder> builder;
 		llvm::ScopedHashTable<llvm::StringRef, mlir::Value> symbolTable;

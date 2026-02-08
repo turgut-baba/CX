@@ -6,6 +6,7 @@
 #include "Memory/MemAlloc.h"
 #include <functional>
 #include "AST/Visitor.h"
+#include "Location.h"
 
 namespace AST {
 
@@ -58,10 +59,16 @@ namespace AST {
 		{
 			return type == node_type_;
 		}
+
+		Location Loc() const
+		{
+			return loc_;
+		}
 	protected:
 		std::vector<ASTNode*> children_; // TODO: convert to custom allocator
 		ASTNode* parent_;
 		NodeType node_type_;
+		Location loc_; // debug
 		//Flags flags_{};
 		// Scope* current_scope
 	};

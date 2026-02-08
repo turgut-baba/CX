@@ -1,6 +1,7 @@
 #include "MLIRGen.h" // TODO: change this to checker/analyzer.
 
 namespace MLIR {
+
 	Generator::Generator()
 	{
 
@@ -39,9 +40,47 @@ namespace MLIR {
     	llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> varScope(symbolTable);
 
 		builder->setInsertionPointToEnd(theModule.getBody());
-		mlir::typher::FuncOp function ;//= mlirGen(*funcAST.getProto());
 
-		std::cout << "Funkin" << std::endl;
+		auto location = loc(node->Loc());
+		llvm::SmallVector<mlir::Type, 4> argTypes(node->Params().size(),
+												builder->getI32Type()); // TODO: change this to accept all types.
+
+		auto funcType = builder->getFunctionType(argTypes, {});
+		mlir::typher::FuncOp function = mlir::typher::FuncOp::create(*builder, location, node->Name(),
+										funcType);
+
+		mlir::Type expectedType = builder->getI32Type(); // TODO: change this to accept all types.
+
+		mlir::Block &entryBlock = function.front();
+    	auto funcArgs = node->Params();
+		auto entryArgs = entryBlock.getArguments();
+
+		for (size_t i = 0; i < funcArgs.size(); i++) 
+		{
+			if (entryArgs[i].getType() != expectedType) {
+				return;
+			}
+
+			if (failed(declare(funcArgs[i]->Name(), entryArgs[i])))
+				return;
+		}
+
+		builder->setInsertionPointToStart(&entryBlock);
+		
+		/* if (mlir::failed(mlirGen(*funcAST.getBody()))) {
+      		function.erase();
+      		return nullptr;
+    	} */
+ 		mlir::typher::ReturnOp returnOp;
+		if (!entryBlock.empty())
+      		returnOp = dynamic_cast<mlir::typher::ReturnOp>(entryBlock.back());
+
+		if (!returnOp) {
+			mlir::typher::ReturnOp::create(*builder, location);
+		} else if (returnOp.hasOperand()) {
+			function.setType(builder->getFunctionType(
+          		function.getFunctionType().getInputs(), builder->getI32Type()));
+		}
 
 		return ;//function;
 	}
