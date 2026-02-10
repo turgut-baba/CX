@@ -9,22 +9,27 @@ namespace AST {
 		VariableDeclaration(ArrayAlloc<VariableDeclarator*> decls);
 
 		VariableDeclaration(VariableDeclarator* declarator) 
-			: declarator_(declarator) 
 		{
 			declarator->SetParent(this);
+			declarators_.push_back(declarator);
 		}
 
 		VariableDeclaration() = default;
-
 		virtual ~VariableDeclaration() = default;
 
 		std::string String() override
 		{
 			return "DECLARATION node";
 		}
+
+		ArrayAlloc<VariableDeclarator*> Declarators()
+		{
+			return declarators_;
+		}
+
+		void Accept(NodeVisitor* v) override { v->Visit(this); }
 	private:
 		ArrayAlloc<VariableDeclarator*> declarators_;
-		VariableDeclarator* declarator_;
 		bool is_definition = true;
 	};
 }

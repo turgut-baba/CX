@@ -16,6 +16,10 @@
 #include "Dialect/TypherDialect.h"
 #include "AST/Function.h"
 #include "AST/Visitor.h"
+#include "AST/Expressions/Operator.h"
+#include "AST/Expressions/CallExpression.h"
+#include "AST/Literals/IntegerLiteral.h"
+
 
 #include <fstream>
 
@@ -40,21 +44,29 @@ namespace MLIR {
         void Visit(AST::Expression* node) override;
 		void Visit(AST::Identifier* node) override;
 		void Visit(AST::IntegerLiteral* node) override;
+		void Visit(AST::VariableDeclaration* node) override;
+		void Visit(AST::Operator* node) override;
 
 		mlir::Location loc(const Location &loc) {
 			return mlir::FileLineColLoc::get(builder->getStringAttr(loc.file), loc.line, loc.col);
 		}
+
 		llvm::LogicalResult declare(llvm::StringRef var, mlir::Value value) {
-			if (symbolTable.count(var))
+			auto persistentName = mlir::StringAttr::get(&context, var).getValue();
+			if (symbolTable.count(persistentName))
 				return mlir::failure();
 			
-			symbolTable.insert(var, value);
+			symbolTable.insert(persistentName, value);
 			return mlir::success();
 		}	
 
 		mlir::ModuleOp theModule;
 		std::shared_ptr<mlir::OpBuilder> builder;
 		llvm::ScopedHashTable<llvm::StringRef, mlir::Value> symbolTable;
+
+		mlir::Value retValue;
+		mlir::MLIRContext context;
+		void GenFunctionBody(AST::Function* node);
 	};
 }
 

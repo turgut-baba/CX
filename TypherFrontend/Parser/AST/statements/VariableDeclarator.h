@@ -22,12 +22,20 @@ namespace AST {
 		
 		void Accept(NodeVisitor* v) override { v->Visit(this); }
 
+		Expression* Expr() const
+		{
+			return expression;
+		}
+
+		std::string String() override
+		{
+			return "DECLARATOR node";
+		}
+
 	private:
 		Identifier* ident_;
 		Lex::TokenKeyword type_; // TODO: turn this into a type class.
-/*
-		Expression* sub_expressions;
-*/
+		Expression* expression;
 	};
 }
 

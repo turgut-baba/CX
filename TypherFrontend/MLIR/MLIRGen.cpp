@@ -1,6 +1,7 @@
 #include "MLIRGen.h" // TODO: change this to checker/analyzer.
 
 namespace MLIR {
+	using llvm::dyn_cast;
 
 	Generator::Generator()
 	{
@@ -17,12 +18,14 @@ namespace MLIR {
 		mlir::registerAsmPrinterCLOptions();
         mlir::registerMLIRContextCLOptions();
 
-        mlir::MLIRContext context;
 		builder = std::make_shared<mlir::OpBuilder>(&context);
         // Load our Dialect in this MLIR Context.
         context.getOrLoadDialect<mlir::typher::TypherDialect>();
 
 		theModule = mlir::ModuleOp::create(builder->getUnknownLoc());
+
+		// TODO: Add global(modular) context.
+    	//llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> varScope(symbolTable);
 
 		for (AST::ASTNode* node : ASTTree.vec_)
       		node->Accept(this);
@@ -35,6 +38,15 @@ namespace MLIR {
         theModule->dump();
 	}
 
+	void Generator::GenFunctionBody(AST::Function* node) 
+	{
+		llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> varScope(symbolTable);
+		for (AST::ASTNode* child: node->Chlidren()) {
+			child->Accept(this);
+			// if (SOME ERROR HANDLING) { function.erase(); return; }
+    	}
+	}
+
 	void Generator::Visit(AST::Function* node)
 	{
     	llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> varScope(symbolTable);
@@ -43,7 +55,7 @@ namespace MLIR {
 
 		auto location = loc(node->Loc());
 		llvm::SmallVector<mlir::Type, 4> argTypes(node->Params().size(),
-												builder->getI32Type()); // TODO: change this to accept all types.
+												  builder->getI32Type()); // TODO: change this to accept all types.
 
 		auto funcType = builder->getFunctionType(argTypes, {});
 		mlir::typher::FuncOp function = mlir::typher::FuncOp::create(*builder, location, node->Name(),
@@ -67,13 +79,10 @@ namespace MLIR {
 
 		builder->setInsertionPointToStart(&entryBlock);
 		
-		/* if (mlir::failed(mlirGen(*funcAST.getBody()))) {
-      		function.erase();
-      		return nullptr;
-    	} */
+		GenFunctionBody(node);
  		mlir::typher::ReturnOp returnOp;
 		if (!entryBlock.empty())
-      		returnOp = dynamic_cast<mlir::typher::ReturnOp>(entryBlock.back());
+      		returnOp = dyn_cast<mlir::typher::ReturnOp>(entryBlock.back());
 
 		if (!returnOp) {
 			mlir::typher::ReturnOp::create(*builder, location);
@@ -81,8 +90,6 @@ namespace MLIR {
 			function.setType(builder->getFunctionType(
           		function.getFunctionType().getInputs(), builder->getI32Type()));
 		}
-
-		return ;//function;
 	}
 
 	void Generator::Visit(AST::Statement* node)
@@ -92,31 +99,78 @@ namespace MLIR {
 
 	void Generator::Visit(AST::VariableDeclarator* node) 
 	{
+		if(node->Expr() == nullptr) {
+			if (auto variable = symbolTable.lookup(node->Name())) {
+				retValue = variable;
+				return;
+			}
+			// TODO: Log error, unknown variable.
+		}
 
+		// TODO: This could be any expression.
+		AST::Operator* Operation = (AST::Operator*)node->Expr(); // TODO: Could be standalone literal not an operation.
+		Visit(Operation);
 	}
-    void Generator::Visit(AST::Expression* node) 
+	
+	void Generator::Visit(AST::VariableDeclaration* node) 
 	{
-
+		std::cout << "Declared" << std::endl;
+		auto decl_list = node->Declarators();
+		for(int i = 0; i < decl_list.size(); i++)
+		{
+			Visit(decl_list[i]);
+			if (failed(declare(decl_list[i]->Name(), retValue)))
+				return;
+		}
 	}
+	
+	void Generator::Visit(AST::Expression* node) 
+	{
+		if (AST::CallExpression* c1 = dynamic_cast<AST::CallExpression*>(node)) {
+			std::cout << "CallExpression" << std::endl;
+		} else if (AST::Operator* c2 = dynamic_cast<AST::Operator*>(node)) {
+			Visit((AST::Operator*)node);
+		} else if (AST::VariableDeclarator* c2 = dynamic_cast<AST::VariableDeclarator*>(node)) {
+			std::cout << "VariableDeclarator" << std::endl;
+		}
+		std::cout << "Expressin" << std::endl;
+	}
+
 	void Generator::Visit(AST::Identifier* node) 
 	{
-
+		
 	}
+
 	void Generator::Visit(AST::IntegerLiteral* node) 
 	{
+		retValue = mlir::typher::ConstantOp::create(*builder,
+			 loc(node->Loc()), node->Value());
+	}
 
+	void Generator::Visit(AST::Operator* node) 
+	{
+		Visit((AST::IntegerLiteral*)node->GetLHS()); // TODO: Fix this
+		mlir::Value lhs = retValue;
+		if (!lhs)
+			return;
+
+		Visit((AST::IntegerLiteral*)node->GetRHS()); // TODO: Fix this
+		mlir::Value rhs = retValue;
+		if (!rhs)
+			return;
+
+		auto location = loc(node->Loc());
+
+		switch(node->OperatorType()) {
+			case AST::OperatorKind::ADD: {
+				retValue = mlir::typher::AddOp::create(*builder, location, lhs, rhs);
+			}
+		}
 	}
 
 	mlir::typher::FuncOp Generator::GenNode(AST::Statement* node)
 	{
-    	llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> varScope(symbolTable);
 
-		builder->setInsertionPointToEnd(theModule.getBody());
-		mlir::typher::FuncOp function ;//= mlirGen(*funcAST.getProto());
-
-		std::cout << "Statin" << std::endl;
-
-		return function;
 	}
 
 	mlir::typher::FuncOp Generator::GenNode(AST::Function* node)

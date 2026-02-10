@@ -4,6 +4,13 @@ namespace AST {
 	Operator::Operator(Lex::TokenOperator op)
 	{
 		operator_ = op;
+		switch(operator_) {
+			case Lex::TokenOperator::ADD:
+			{
+				OpType = OperatorKind::ADD;
+				break;
+			}
+		}
 	}
 
 	void Operator::SetLHS(AST::ASTNode* lhs)
@@ -14,5 +21,15 @@ namespace AST {
 	void Operator::SetRHS(AST::ASTNode* rhs)
 	{
 		rhs_ = rhs;
+	}
+
+	AST::ASTNode* Operator::GetLHS() 
+	{
+		return lhs_;
+	}
+
+	AST::ASTNode* Operator::GetRHS()
+	{
+		return rhs_;
 	}
 }

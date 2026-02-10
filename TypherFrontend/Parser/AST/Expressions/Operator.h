@@ -6,6 +6,15 @@
 #include "AST/Expression.h"
 
 namespace AST {
+
+	enum OperatorKind {
+		ADD,
+		SUB,
+		MUL,
+		DIV,
+		MOD
+	};
+
 	class Operator : public Expression {
 	public:
 		Operator() = default;
@@ -15,14 +24,25 @@ namespace AST {
 		void SetLHS(AST::ASTNode* lhs);
 		void SetRHS(AST::ASTNode* rhs);
 
+		AST::ASTNode* GetLHS();
+		AST::ASTNode* GetRHS();
+
 		virtual ~Operator() = default;
 
 		std::string String() override
 		{
 			return "Operator node";
 		}
+		
+		OperatorKind OperatorType()
+		{
+			return OpType;
+		}
+
+		void Accept(NodeVisitor* v) override { v->Visit(this); }
 	private:
-		Lex::TokenOperator operator_;
+		OperatorKind OpType;
+		Lex::TokenOperator operator_; // TODO: Put this in an enum.
 		AST::ASTNode* lhs_;
 		AST::ASTNode* rhs_;
 	};
