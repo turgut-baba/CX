@@ -18,6 +18,7 @@
 #include "AST/Visitor.h"
 #include "AST/Expressions/Operator.h"
 #include "AST/Expressions/CallExpression.h"
+#include "AST/statements/ReturnStatement.h"
 #include "AST/Literals/IntegerLiteral.h"
 
 
@@ -35,9 +36,6 @@ namespace MLIR {
 	private:
 		mlir::OwningOpRef<mlir::ModuleOp> GenTree();
 
-		mlir::typher::FuncOp GenNode(AST::Function* node);
-		mlir::typher::FuncOp GenNode(AST::Statement* node);
-
 		void Visit(AST::Function* node) override;
 		void Visit(AST::Statement* node) override;
 		void Visit(AST::VariableDeclarator* node) override;
@@ -46,6 +44,8 @@ namespace MLIR {
 		void Visit(AST::IntegerLiteral* node) override;
 		void Visit(AST::VariableDeclaration* node) override;
 		void Visit(AST::Operator* node) override;
+		void Visit(AST::CallExpression* node) override;
+		void Visit(AST::ReturnStatement* node) override;
 
 		mlir::Location loc(const Location &loc) {
 			return mlir::FileLineColLoc::get(builder->getStringAttr(loc.file), loc.line, loc.col);

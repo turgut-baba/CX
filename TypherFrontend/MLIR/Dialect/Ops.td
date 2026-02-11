@@ -37,42 +37,30 @@ class Typher_Op<string mnemonic, list<Trait> traits = []> :
 // constant operation is marked as 'Pure' as it is a pure operation
 // and may be removed if dead.
 def ConstantOp : Typher_Op<"constant", [Pure]> {
-  // Provide a summary and description for this operation. This can be used to
-  // auto-generate documentation of the operations within our dialect.
-  let summary = "constant";
+  let summary = "scalar constant operation";
   let description = [{
-    Constant operation turns a literal into an SSA value. The data is attached
-    to the operation as an attribute. For example:
-
+    The "constant" operation creates a scalar SSA value from a literal attribute.
+    This mimics C literals like '42' or '3.14'.
+    
+    Example:
     ```mlir
-      %0 = toy.constant dense<[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]>
-                        : tensor<2x3xf64>
+      %0 = typher.constant 1.0 : f64
+      %1 = typher.constant 42 : i32
     ```
   }];
 
-  // The constant operation takes an attribute as the only input.
-  let arguments = (ins F64ElementsAttr:$value);
+  // 1. Changed from AnyType to AnyAttr (Attributes store the actual data)
+  let arguments = (ins AnyAttr:$value);
 
-  // The constant operation returns a single value of TensorType.
-  let results = (outs F64Tensor);
+  // 2. Changed result to be a scalar integer or float
+  let results = (outs I32:$result);
 
-  // Indicate that the operation has a custom parser and printer method.
   let hasCustomAssemblyFormat = 1;
 
-  // Add custom build methods for the constant operation. These method populates
-  // the `state` that MLIR uses to create operations, i.e. these are used when
-  // using `ConstantOp::create(builder, ...)`.
   let builders = [
-    // Build a constant with a given constant tensor value.
-    OpBuilder<(ins "DenseElementsAttr":$value), [{
-      build($_builder, $_state, value.getType(), value);
-    }]>,
-
-    // Build a constant with a given constant floating-point value.
-    OpBuilder<(ins "double":$value)>
+    OpBuilder<(ins "int":$value)>,
   ];
 
-  // Indicate that additional verification for this operation is necessary.
   let hasVerifier = 1;
 }
 
@@ -82,24 +70,29 @@ def ConstantOp : Typher_Op<"constant", [Pure]> {
 //===----------------------------------------------------------------------===//
 
 def AddOp : Typher_Op<"add"> {
-  let summary = "element-wise addition operation";
+  let summary = "scalar addition operation";
   let description = [{
-    The "add" operation performs element-wise addition between two tensors.
-    The shapes of the tensor operands are expected to match.
+    The "add" operation performs addition between two scalar values.
+    It supports standard C types including integers and floating-point values.
+    Both operands and the result must share the same type.
   }];
 
-  let arguments = (ins F64Tensor:$lhs, F64Tensor:$rhs);
-  let results = (outs F64Tensor);
+  // Define a constraint for C-like scalar types
+  let arguments = (ins 
+    AnyTypeOf<[AnyInteger, AnyFloat]>:$lhs, 
+    AnyTypeOf<[AnyInteger, AnyFloat]>:$rhs
+  );
 
-  // Indicate that the operation has a custom parser and printer method.
+  let results = (outs 
+    AnyTypeOf<[AnyInteger, AnyFloat]>:$result
+  );
+
   let hasCustomAssemblyFormat = 1;
 
-  // Allow building an AddOp with from the two input operands.
   let builders = [
     OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
   ];
 }
-
 
 //===----------------------------------------------------------------------===//
 // FuncOp
@@ -179,10 +172,10 @@ def GenericCallOp : Typher_Op<"generic_call"> {
 
   // The generic call operation takes a symbol reference attribute as the
   // callee, and inputs for the call.
-  let arguments = (ins FlatSymbolRefAttr:$callee, Variadic<F64Tensor>:$inputs);
+  let arguments = (ins FlatSymbolRefAttr:$callee, Variadic<I32>:$inputs);
 
   // The generic call operation returns a single value of TensorType.
-  let results = (outs F64Tensor);
+  let results = (outs I32);
 
   // Specialize assembly printing and parsing using a declarative format.
   let assemblyFormat = [{
@@ -219,20 +212,15 @@ def ReturnOp : Typher_Op<"return", [Pure, HasParent<"FuncOp">,
 
   // The return operation takes an optional input operand to return. This
   // value must match the return type of the enclosing function.
-  let arguments = (ins Variadic<F64Tensor>:$input);
+  let arguments = (ins I32:$input);
 
   // The return operation only emits the input in the format if it is present.
-  let assemblyFormat = "($input^ `:` type($input))? attr-dict ";
+  let assemblyFormat = "$input attr-dict `:` type($input)";
 
   // Allow building a ReturnOp with no return operand.
   let builders = [
     OpBuilder<(ins), [{ build($_builder, $_state, {}); }]>
   ];
-
-  // Provide extra utility definitions on the c++ operation class definition.
-  let extraClassDeclaration = [{
-    bool hasOperand() { return getNumOperands() != 0; }
-  }];
 
   // Invoke a static verify method to verify this return operation.
   let hasVerifier = 1;

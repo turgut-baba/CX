@@ -3,7 +3,17 @@
 namespace Parser {
 	AST::CallExpression* ExpressionParser::ParseFunctionCall(AST::Identifier* ident)
 	{
-		return nullptr;
+		ArrayAlloc<AST::Expression*> params;
+		Lexer()->NextToken();
+		while (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::RIGHT_PARENTHESES)) {
+			params.push_back(parse_expression());
+			if (Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::COMMA)) {
+				Lexer()->NextToken(); // Skip ','
+			}
+		}
+		Lexer()->NextToken(); // Skip ')'
+
+		return Allocator()->Allocate<AST::CallExpression>(ident->Value(), params);
 	}
 
 
@@ -41,13 +51,16 @@ namespace Parser {
 		AST::ASTNode* lhs;
 
 		if (Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::LEFT_PARENTHESES)) {
+			// Check if the lhs is an expression itself with () for example: (a + 5) + b
 			Lexer()->NextToken();// Skip '('
 			lhs = parse_expression();
 			Lexer()->NextToken(); // Skip ')'
 		} else if (Lexer()->GetToken().Type() == Lex::TokenType::Literal) {
+			// Check individual literals for example: 5 + b
 			lhs = CheckLiteral();
 			Lexer()->NextToken();
 		} else {		
+			// Check individual identifiers for example: a + b
 			lhs = CheckIdentifier();
 		}
 
@@ -67,14 +80,16 @@ namespace Parser {
 		Lexer()->NextToken();
 
 		AST::ASTNode* rhs;
-
+		
 		if (Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::LEFT_PARENTHESES)) {
 			Lexer()->NextToken();// Skip '('
 			rhs = parse_expression();
 			Lexer()->NextToken(); // Skip ')'		
 		} else if (Lexer()->GetToken().Type() == Lex::TokenType::Literal) {
+			
 			rhs = CheckLiteral();
 			Lexer()->NextToken();
+
 		} else {
 			rhs = CheckIdentifier();
 		}

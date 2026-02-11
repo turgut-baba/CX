@@ -9,7 +9,28 @@ namespace AST {
 	public:
 		CallExpression() = default;
 
+		CallExpression(std::string callee, ArrayAlloc<Expression*> args) 
+			: Arguments_(args) {}
+
 		virtual ~CallExpression() = default;
+
+		std::string Callee()
+		{
+			return callee_;
+		}
+
+		ArrayAlloc<Expression*> Args()
+		{
+			return Arguments_;
+		}
+
+		std::string String()
+		{
+			return "Call Expression";
+		}
+	private:
+		ArrayAlloc<Expression*> Arguments_;
+		std::string callee_;
 	};
 }
 

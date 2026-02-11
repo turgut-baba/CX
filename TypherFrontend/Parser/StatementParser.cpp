@@ -35,6 +35,8 @@ namespace Parser {
 		return statement;
 	}
 
+	// TODO: move this to expression parser. Declaration should be a statement but declarator should be 
+	// an expression.
 	ArrayAlloc<AST::VariableDeclarator*> StatementParser::ParseDeclarators(AST::Identifier* ident) 
 	{
 		// This handles int a, b = 5;. The 'a, b = 5;' part.
@@ -137,6 +139,20 @@ namespace Parser {
 		return ParseFunctionBody(functionDecl);
 	}
 
+	AST::ReturnStatement* StatementParser::HandleReturnStatement()
+	{
+		// TODO: also add which function it belongs to.
+		Lexer()->NextToken(); // Skip 'return'
+
+		if (Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::SEMICOLON)) {
+			return Allocator()->Allocate<AST::ReturnStatement>();
+		}
+
+		auto ReturnedExpr = state_->expression_parser->parse_expression();
+		Lexer()->NextToken(); // Skip ';'
+		return Allocator()->Allocate<AST::ReturnStatement>(ReturnedExpr);
+	}
+
 	AST::Statement* StatementParser::HandleKeywords() 
 	{
 		auto token = Lexer()->GetToken();
@@ -152,6 +168,11 @@ namespace Parser {
 			statement = PottentialVariableOrFunctionDecl();
 			break;
 		case Lex::TokenKeyword::IF:
+			break;
+		case Lex::TokenKeyword::RETURN:
+			std::cout << "Handling return:" << std::endl;
+			statement = HandleReturnStatement();
+			std::cout << "Done." << std::endl;
 			break;
 		};
 

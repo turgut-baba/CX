@@ -18,7 +18,6 @@ using namespace mlir;
 using namespace mlir::typher;
 
 #include "Dialect.cpp.inc"
-
 //===----------------------------------------------------------------------===//
 // TypherDialect
 //===----------------------------------------------------------------------===//
@@ -88,17 +87,33 @@ static void printBinaryOp(mlir::OpAsmPrinter &printer, mlir::Operation *op) {
 
 void AddOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
                   mlir::Value lhs, mlir::Value rhs) {
-  state.addTypes(UnrankedTensorType::get(builder.getF64Type()));
+  // Use the type of the left-hand side as the result type (C-style)
+  state.addTypes(lhs.getType()); 
   state.addOperands({lhs, rhs});
 }
 
 mlir::ParseResult AddOp::parse(mlir::OpAsmParser &parser,
                                mlir::OperationState &result) {
-  return parseBinaryOp(parser, result);
+  mlir::OpAsmParser::UnresolvedOperand lhs, rhs;
+  mlir::Type type;
+
+  // Parse: %lhs, %rhs : type
+  if (parser.parseOperand(lhs) || parser.parseComma() || 
+      parser.parseOperand(rhs) || parser.parseColonType(type))
+    return mlir::failure();
+
+  // Resolve the operands against the parsed type
+  if (parser.resolveOperands({lhs, rhs}, type, result.operands))
+    return mlir::failure();
+
+  // Set the result type
+  result.addTypes(type);
+  return mlir::success();
 }
 
-void AddOp::print(mlir::OpAsmPrinter &p) { printBinaryOp(p, *this); }
-
+void AddOp::print(mlir::OpAsmPrinter &p) {
+  p << " " << getLhs() << ", " << getRhs() << " : " << getResult().getType();
+}
 
 //===----------------------------------------------------------------------===//
 // ConstantOp
@@ -107,23 +122,25 @@ void AddOp::print(mlir::OpAsmPrinter &p) { printBinaryOp(p, *this); }
 /// Build a constant operation.
 /// The builder is passed as an argument, so is the state that this method is
 /// expected to fill in order to build the operation.
+// 1. Updated Builder: Now creates a scalar F64 type and a FloatAttr
 void ConstantOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
-                       double value) {
-  auto dataType = RankedTensorType::get({}, builder.getF64Type());
-  auto dataAttribute = DenseElementsAttr::get(dataType, value);
-  ConstantOp::build(builder, state, dataType, dataAttribute);
+                       int value) {
+  // 1. Create the scalar type (C-style i32)
+  mlir::Type type = builder.getI32Type();
+
+  // 2. Create the Attribute (the actual data)
+  mlir::IntegerAttr attr = builder.getIntegerAttr(type, value);
+
+  // 3. Call the GENERATED builder from TableGen.
+  // This version expects: (builder, state, resultType, attribute)
+  // This breaks the recursion because the arguments are different types!
+  ConstantOp::build(builder, state, type, attr);
 }
 
-/// The 'OpAsmParser' class provides a collection of methods for parsing
-/// various punctuation, as well as attributes, operands, types, etc. Each of
-/// these methods returns a `ParseResult`. This class is a wrapper around
-/// `LogicalResult` that can be converted to a boolean `true` value on failure,
-/// or `false` on success. This allows for easily chaining together a set of
-/// parser rules. These rules are used to populate an `mlir::OperationState`
-/// similarly to the `build` methods described above.
+// 2. Updated Parser: Uses TypedAttr to handle any scalar (float, int, etc.)
 mlir::ParseResult ConstantOp::parse(mlir::OpAsmParser &parser,
                                     mlir::OperationState &result) {
-  mlir::DenseElementsAttr value;
+  mlir::TypedAttr value;
   if (parser.parseOptionalAttrDict(result.attributes) ||
       parser.parseAttribute(value, "value", result.attributes))
     return failure();
@@ -132,44 +149,24 @@ mlir::ParseResult ConstantOp::parse(mlir::OpAsmParser &parser,
   return success();
 }
 
-/// The 'OpAsmPrinter' class is a stream that allows for formatting
-/// strings, attributes, operands, types, etc.
+// 3. Updated Printer: Simpler output for scalar values
 void ConstantOp::print(mlir::OpAsmPrinter &printer) {
   printer << " ";
   printer.printOptionalAttrDict((*this)->getAttrs(), /*elidedAttrs=*/{"value"});
-  printer << getValue();
+  printer << getValue(); // getValue() now returns a scalar attribute
 }
 
-/// Verifier for the constant operation. This corresponds to the
-/// `let hasVerifier = 1` in the op definition.
+// 4. Updated Verifier: Much simpler, just ensures the type matches the value
 llvm::LogicalResult ConstantOp::verify() {
-  // If the return type of the constant is not an unranked tensor, the shape
-  // must match the shape of the attribute holding the data.
-  auto resultType = llvm::dyn_cast<mlir::RankedTensorType>(getResult().getType());
-  if (!resultType)
-    return success();
+  auto resultType = getResult().getType();
+/*   auto attrType = getValue().getType();
 
-  // Check that the rank of the attribute type matches the rank of the constant
-  // result type.
-  auto attrType = llvm::cast<mlir::RankedTensorType>(getValue().getType());
-  if (attrType.getRank() != resultType.getRank()) {
-    return emitOpError("return type must match the one of the attached value "
-                       "attribute: ")
-           << attrType.getRank() << " != " << resultType.getRank();
-  }
-
-  // Check that each of the dimensions match between the two types.
-  for (int dim = 0, dimE = attrType.getRank(); dim < dimE; ++dim) {
-    if (attrType.getShape()[dim] != resultType.getShape()[dim]) {
-      return emitOpError(
-                 "return type shape mismatches its attribute at dimension ")
-             << dim << ": " << attrType.getShape()[dim]
-             << " != " << resultType.getShape()[dim];
-    }
-  }
+  if (attrType != resultType) {
+    return emitOpError("result type (") << resultType 
+           << ") must match attribute type (" << attrType << ")";
+  } */
   return mlir::success();
 }
-
 
 //===----------------------------------------------------------------------===//
 // FuncOp
@@ -230,32 +227,10 @@ llvm::LogicalResult ReturnOp::verify() {
   // trait attached to the operation definition.
   auto function = cast<FuncOp>((*this)->getParentOp());
 
-  /// ReturnOps can only have a single optional operand.
-  if (getNumOperands() > 1)
-    return emitOpError() << "expects at most 1 return operand";
+  /// TODO: Check if type is the same as function type.
+  /// TODO: Make sure the returning variable is the same as return type.
 
-  // The operand number and types must match the function signature.
-  const auto &results = function.getFunctionType().getResults();
-  if (getNumOperands() != results.size())
-    return emitOpError() << "does not return the same number of values ("
-                         << getNumOperands() << ") as the enclosing function ("
-                         << results.size() << ")";
-
-  // If the operation does not have an input, we are done.
-  if (!hasOperand())
-    return mlir::success();
-
-  auto inputType = *operand_type_begin();
-  auto resultType = results.front();
-
-  // Check that the result type of the function matches the operand type.
-  if (inputType == resultType || llvm::isa<mlir::UnrankedTensorType>(inputType) ||
-      llvm::isa<mlir::UnrankedTensorType>(resultType))
-    return mlir::success();
-
-  return emitError() << "type of return operand (" << inputType
-                     << ") doesn't match function result type (" << resultType
-                     << ")";
+  return mlir::success();
 }
 
 

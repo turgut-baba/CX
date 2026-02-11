@@ -69,6 +69,7 @@ namespace Lex {
 		IterForward();
 
 		Keywords keyword_parser(this, (char32_t)cp);
+		std::cout << "Token: " << static_cast<char>(cp) << std::endl;
 
 		current_token.SetType(TokenType::EOS); // TODO: add this as a case.
 		current_token.RestTokenTypes();

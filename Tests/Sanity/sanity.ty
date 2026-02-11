@@ -1,5 +1,5 @@
-int main() {
-
-	int c = 4 + 5;
-
+int test() {
+	int c = caller() + 5;
+	return c;
 }
+

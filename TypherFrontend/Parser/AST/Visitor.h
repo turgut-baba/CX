@@ -10,6 +10,8 @@ namespace AST {
     class Identifier;
     class IntegerLiteral;
     class Operator;
+    class CallExpression;
+    class ReturnStatement;
     
     class NodeVisitor {
     public:
@@ -21,6 +23,8 @@ namespace AST {
         virtual void Visit(Identifier* node) = 0;
         virtual void Visit(IntegerLiteral* node) = 0;
         virtual void Visit(Operator* node) = 0;
+        virtual void Visit(CallExpression* node) = 0;
+        virtual void Visit(ReturnStatement* node) = 0;
     };
 }
 

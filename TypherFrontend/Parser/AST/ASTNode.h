@@ -34,7 +34,7 @@ namespace AST {
 			return parent_;
 		}
 
-		void SetParent(ASTNode* parent)
+		virtual void SetParent(ASTNode* parent)
 		{
 			parent_ = parent;
 			parent->AddChildren(this);

@@ -2,6 +2,7 @@
 
 namespace MLIR {
 	using llvm::dyn_cast;
+	using llvm::SmallVector;
 
 	Generator::Generator()
 	{
@@ -86,7 +87,7 @@ namespace MLIR {
 
 		if (!returnOp) {
 			mlir::typher::ReturnOp::create(*builder, location);
-		} else if (returnOp.hasOperand()) {
+		} else {
 			function.setType(builder->getFunctionType(
           		function.getFunctionType().getInputs(), builder->getI32Type()));
 		}
@@ -107,9 +108,7 @@ namespace MLIR {
 			// TODO: Log error, unknown variable.
 		}
 
-		// TODO: This could be any expression.
-		AST::Operator* Operation = (AST::Operator*)node->Expr(); // TODO: Could be standalone literal not an operation.
-		Visit(Operation);
+		node->Expr()->Accept(this);
 	}
 	
 	void Generator::Visit(AST::VariableDeclaration* node) 
@@ -118,7 +117,7 @@ namespace MLIR {
 		auto decl_list = node->Declarators();
 		for(int i = 0; i < decl_list.size(); i++)
 		{
-			Visit(decl_list[i]);
+			decl_list[i]->Accept(this);
 			if (failed(declare(decl_list[i]->Name(), retValue)))
 				return;
 		}
@@ -127,7 +126,7 @@ namespace MLIR {
 	void Generator::Visit(AST::Expression* node) 
 	{
 		if (AST::CallExpression* c1 = dynamic_cast<AST::CallExpression*>(node)) {
-			std::cout << "CallExpression" << std::endl;
+			Visit((AST::CallExpression*)node);
 		} else if (AST::Operator* c2 = dynamic_cast<AST::Operator*>(node)) {
 			Visit((AST::Operator*)node);
 		} else if (AST::VariableDeclarator* c2 = dynamic_cast<AST::VariableDeclarator*>(node)) {
@@ -136,25 +135,65 @@ namespace MLIR {
 		std::cout << "Expressin" << std::endl;
 	}
 
+	void Generator::Visit(AST::CallExpression* node) 
+	{
+		std::cout << "Startin call expr" << std::endl;
+		llvm::StringRef callee = node->Callee();
+		auto location = loc(node->Loc());
+
+		// Codegen the operands first.
+		SmallVector<mlir::Value, 4> operands;
+		for (auto &expr : node->Args().vec_) {
+			expr->Accept(this);
+			operands.push_back(retValue);
+		}
+
+		// Otherwise this is a call to a user-defined function. Calls to
+		// user-defined functions are mapped to a custom call that takes the callee
+		// name as an attribute.
+		retValue = mlir::typher::GenericCallOp::create(*builder, location, callee, operands);
+	}
+
+	void Generator::Visit(AST::ReturnStatement* node) 
+	{
+		auto location = loc(node->Loc());
+
+		// 'return' takes an optional expression, handle that case here.
+		bool has_expr = false;
+		if (node->Expr() != nullptr) {
+			node->Expr()->Accept(this);
+			has_expr = true;
+		}
+
+		// Otherwise, this return operation has zero operands.
+		mlir::typher::ReturnOp::create(*builder, location,
+						retValue);
+	}
+
 	void Generator::Visit(AST::Identifier* node) 
 	{
-		
+		if (auto variable = symbolTable.lookup(node->Value()))
+      		retValue = variable;
+		// TODO: log error
+		return;
 	}
 
 	void Generator::Visit(AST::IntegerLiteral* node) 
 	{
 		retValue = mlir::typher::ConstantOp::create(*builder,
-			 loc(node->Loc()), node->Value());
+			 loc(node->Loc()), (int)node->Value());
 	}
 
 	void Generator::Visit(AST::Operator* node) 
 	{
-		Visit((AST::IntegerLiteral*)node->GetLHS()); // TODO: Fix this
+		std::cout << "Aight op" << std::endl;
+		node->GetLHS()->Accept(this);
+		std::cout << "Acceptin" << std::endl;
 		mlir::Value lhs = retValue;
 		if (!lhs)
 			return;
 
-		Visit((AST::IntegerLiteral*)node->GetRHS()); // TODO: Fix this
+		node->GetRHS()->Accept(this);
 		mlir::Value rhs = retValue;
 		if (!rhs)
 			return;
@@ -166,16 +205,6 @@ namespace MLIR {
 				retValue = mlir::typher::AddOp::create(*builder, location, lhs, rhs);
 			}
 		}
-	}
-
-	mlir::typher::FuncOp Generator::GenNode(AST::Statement* node)
-	{
-
-	}
-
-	mlir::typher::FuncOp Generator::GenNode(AST::Function* node)
-	{
-
 	}
 
 }

@@ -5,6 +5,7 @@
 #include "AST/Statement.h"
 #include "ParserState.h"
 #include "AST/Function.h"
+#include "AST/statements/ReturnStatement.h"
 
 namespace Parser {
 	class StatementParser : public Parser 
@@ -19,7 +20,8 @@ namespace Parser {
 		ArrayAlloc<AST::VariableDeclarator*> ParseDeclarators(AST::Identifier* ident);
 		AST::Statement* HandleKeywords();
 		AST::Statement* PottentialVariableOrFunctionDecl();
-
+		
+		AST::ReturnStatement* HandleReturnStatement();
 		AST::Statement* ParseFunctionBody(AST::Function* functionDecl);
 	};
 }
