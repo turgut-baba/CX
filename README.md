@@ -8,14 +8,34 @@ No drivers or installation needed! It even has the same syntax. Just add the GPU
 GPU just fine!
 
 The Typher Compiler has many features similar to C++ without the feature-bloating of it. However compared to regular C and C++,
-It's memory safe. Do you want to write an unsafe code? You can also do that! Just use the regular old malloc. The 'new' keyword
-on Typer works similarly to a std::smart_pointer in C++ (but not quite) so it prevents all the data leaks! No dangling pointers,
-no out-of-bounds accesses, no dangling references.
+It's built for robotics programming and graphics programming. No large binary size, it can include regular C libraries and 
+allows for custom types for unit programming like meters and seconds to avoid any unit miss-matches!
+
+The language also provides memory safety rules but just like any modern systems they can be toggeled on and off with a keyword
+for realtime and performance critical applications. Memory safety has layers so you can controll how much the compiler provides
+safety for your own drawbacks.
 
 The internal architecture uses an MLIR to seperate the GPU code from the CPU code after the parsing is completed. The
 CPU part goes on as normal, it goes through an assembler, a byte code generator and finally linker. However the GPU
 part is compiled seperately using PTX and the binary is stitched at the end of the binary code and everything
 comes together at the linker phase.
+
+Here is an example code:
+
+```C
+#include "some_clib.h"
+
+@gpu(compute)
+float calculate(float b, float n)
+{
+    return b * n; 
+}
+
+int main() {
+   float res = calculate(5, 4);
+   print("Hello everyone, here is the result: ", res);
+}
+```
 
 Here is the diagram for it:
 
