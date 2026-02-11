@@ -26,7 +26,7 @@ Here is an example code:
 #include "some_clib.h"
 
 @gpu(compute)
-float calculate(float b, float n)
+float calculate<int N>(float b, float n)
 {
     return b * n; 
 }
