@@ -21,7 +21,6 @@
 #include "AST/statements/ReturnStatement.h"
 #include "AST/Literals/IntegerLiteral.h"
 
-
 #include <fstream>
 
 namespace MLIR {
@@ -31,8 +30,7 @@ namespace MLIR {
 		Generator();
 		~Generator();
 
-		void Generate(ArrayAlloc<AST::Statement*>& ASTTree);
-	
+		void Generate(ArrayAlloc<AST::Statement*>& ASTTree);	
 	private:
 		mlir::OwningOpRef<mlir::ModuleOp> GenTree();
 
@@ -52,7 +50,7 @@ namespace MLIR {
 		}
 
 		llvm::LogicalResult declare(llvm::StringRef var, mlir::Value value) {
-			auto persistentName = mlir::StringAttr::get(&context, var).getValue();
+			auto persistentName = mlir::StringAttr::get(context.get(), var).getValue();
 			if (symbolTable.count(persistentName))
 				return mlir::failure();
 			
@@ -65,7 +63,8 @@ namespace MLIR {
 		llvm::ScopedHashTable<llvm::StringRef, mlir::Value> symbolTable;
 
 		mlir::Value retValue;
-		mlir::MLIRContext context;
+		mlir::DialectRegistry registry;
+		std::shared_ptr<mlir::MLIRContext> context;
 		void GenFunctionBody(AST::Function* node);
 	};
 }

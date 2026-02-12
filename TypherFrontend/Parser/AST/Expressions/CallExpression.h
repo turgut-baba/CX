@@ -10,7 +10,7 @@ namespace AST {
 		CallExpression() = default;
 
 		CallExpression(std::string callee, ArrayAlloc<Expression*> args) 
-			: Arguments_(args) {}
+			: Arguments_(args), callee_(callee) {}
 
 		virtual ~CallExpression() = default;
 

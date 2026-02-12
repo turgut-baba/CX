@@ -24,4 +24,15 @@ public:
 	}
 };
 
+class Arena {
+    unsigned char* buffer;
+    size_t size;
+    size_t offset;
+
+public:
+    // ... Constructor and single object 'Alloc' ...
+
+
+};
+
 #endif

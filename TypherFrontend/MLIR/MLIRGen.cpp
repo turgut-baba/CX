@@ -6,7 +6,7 @@ namespace MLIR {
 
 	Generator::Generator()
 	{
-
+		context = std::make_shared<mlir::MLIRContext>();
 	}
 
 	Generator::~Generator()
@@ -15,13 +15,15 @@ namespace MLIR {
 	}
 
 	void Generator::Generate(ArrayAlloc<AST::Statement*>& ASTTree) {
-		
+
+		mlir::func::registerAllExtensions(registry);
+		mlir::LLVM::registerInlinerInterface(registry);
 		mlir::registerAsmPrinterCLOptions();
         mlir::registerMLIRContextCLOptions();
 
-		builder = std::make_shared<mlir::OpBuilder>(&context);
+		builder = std::make_shared<mlir::OpBuilder>(context.get());
         // Load our Dialect in this MLIR Context.
-        context.getOrLoadDialect<mlir::typher::TypherDialect>();
+        context->getOrLoadDialect<mlir::typher::TypherDialect>();
 
 		theModule = mlir::ModuleOp::create(builder->getUnknownLoc());
 
@@ -46,6 +48,7 @@ namespace MLIR {
 			child->Accept(this);
 			// if (SOME ERROR HANDLING) { function.erase(); return; }
     	}
+
 	}
 
 	void Generator::Visit(AST::Function* node)
@@ -58,7 +61,7 @@ namespace MLIR {
 		llvm::SmallVector<mlir::Type, 4> argTypes(node->Params().size(),
 												  builder->getI32Type()); // TODO: change this to accept all types.
 
-		auto funcType = builder->getFunctionType(argTypes, {});
+		auto funcType = builder->getFunctionType(argTypes, {builder->getI32Type()});
 		mlir::typher::FuncOp function = mlir::typher::FuncOp::create(*builder, location, node->Name(),
 										funcType);
 
@@ -82,10 +85,12 @@ namespace MLIR {
 		
 		GenFunctionBody(node);
  		mlir::typher::ReturnOp returnOp;
-		if (!entryBlock.empty())
-      		returnOp = dyn_cast<mlir::typher::ReturnOp>(entryBlock.back());
+		if (!entryBlock.empty()) {
+			returnOp = dyn_cast<mlir::typher::ReturnOp>(entryBlock.back());
+		}
 
 		if (!returnOp) {
+			// TODO: this place causes a seg fault.
 			mlir::typher::ReturnOp::create(*builder, location);
 		} else {
 			function.setType(builder->getFunctionType(
@@ -95,7 +100,6 @@ namespace MLIR {
 
 	void Generator::Visit(AST::Statement* node)
 	{
-		std::cout << "Statin" << std::endl;
 	}
 
 	void Generator::Visit(AST::VariableDeclarator* node) 
@@ -113,7 +117,6 @@ namespace MLIR {
 	
 	void Generator::Visit(AST::VariableDeclaration* node) 
 	{
-		std::cout << "Declared" << std::endl;
 		auto decl_list = node->Declarators();
 		for(int i = 0; i < decl_list.size(); i++)
 		{
@@ -130,14 +133,12 @@ namespace MLIR {
 		} else if (AST::Operator* c2 = dynamic_cast<AST::Operator*>(node)) {
 			Visit((AST::Operator*)node);
 		} else if (AST::VariableDeclarator* c2 = dynamic_cast<AST::VariableDeclarator*>(node)) {
-			std::cout << "VariableDeclarator" << std::endl;
+			Visit((AST::VariableDeclarator*)node);
 		}
-		std::cout << "Expressin" << std::endl;
 	}
 
 	void Generator::Visit(AST::CallExpression* node) 
 	{
-		std::cout << "Startin call expr" << std::endl;
 		llvm::StringRef callee = node->Callee();
 		auto location = loc(node->Loc());
 
@@ -148,10 +149,9 @@ namespace MLIR {
 			operands.push_back(retValue);
 		}
 
-		// Otherwise this is a call to a user-defined function. Calls to
-		// user-defined functions are mapped to a custom call that takes the callee
-		// name as an attribute.
-		retValue = mlir::typher::GenericCallOp::create(*builder, location, callee, operands);
+		// TODO: do this better.
+		retValue = (mlir::Value)mlir::typher::GenericCallOp::create(*builder, 
+			location, callee, operands).getResult(0);
 	}
 
 	void Generator::Visit(AST::ReturnStatement* node) 
@@ -186,9 +186,7 @@ namespace MLIR {
 
 	void Generator::Visit(AST::Operator* node) 
 	{
-		std::cout << "Aight op" << std::endl;
 		node->GetLHS()->Accept(this);
-		std::cout << "Acceptin" << std::endl;
 		mlir::Value lhs = retValue;
 		if (!lhs)
 			return;
@@ -199,12 +197,10 @@ namespace MLIR {
 			return;
 
 		auto location = loc(node->Loc());
-
 		switch(node->OperatorType()) {
 			case AST::OperatorKind::ADD: {
 				retValue = mlir::typher::AddOp::create(*builder, location, lhs, rhs);
 			}
 		}
 	}
-
 }

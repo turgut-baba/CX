@@ -45,13 +45,14 @@ include(AddMLIR)
 include_directories(${LLVM_INCLUDE_DIRS})
 include_directories(${MLIR_INCLUDE_DIRS})
 include_directories(${MLIR_GENERATED_INCLUDE_DIRS})
+add_definitions(${LLVM_DEFINITIONS})
 
 add_subdirectory(MLIR/Dialect)
 
 set(LLVM_LINK_COMPONENTS
   Support
 )
-
+link_directories(${LLVM_LIBRARY_DIRS})
 add_executable (TypherCompiler "Core/TypherCompiler.cpp" 
 "Core/CompilerImpl.cpp" 
 "Lexer/Lexer.cpp" 
@@ -96,11 +97,42 @@ add_dependencies(TypherCompiler TypherDialect)
 
 # MLIR SETU END --------------------
 
+llvm_map_components_to_libnames(llvm_libs 
+    support 
+    core 
+    native 
+    codegen 
+    MC 
+    target
+)
+
 mlir_target_link_libraries(TypherCompiler
   PUBLIC
   TypherDialect
    ${LIBS}
   # ... other MLIR dependencies
+)
+
+target_link_libraries(TypherCompiler PRIVATE 
+    MLIRAnalysis
+    MLIRBuiltinToLLVMIRTranslation
+    MLIRCallInterfaces
+    MLIRCastInterfaces
+    MLIRExecutionEngine
+    MLIRFunctionInterfaces
+    MLIRIR
+    MLIRLLVMCommonConversion
+    MLIRLLVMToLLVMIRTranslation
+    MLIRMemRefDialect
+    MLIRParser
+    MLIRPass
+    MLIRRegisterAllDialects
+    MLIRRegisterAllExtensions
+    MLIRRegisterAllPasses
+    MLIRSideEffectInterfaces
+    MLIRTargetLLVMIRExport
+    MLIRTransforms
+    ${llvm_libs}
 )
 
 llvm_config(TypherCompiler support core irreader)

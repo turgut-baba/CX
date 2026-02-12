@@ -175,7 +175,7 @@ def GenericCallOp : Typher_Op<"generic_call"> {
   let arguments = (ins FlatSymbolRefAttr:$callee, Variadic<I32>:$inputs);
 
   // The generic call operation returns a single value of TensorType.
-  let results = (outs I32);
+  let results = (outs Variadic<I32>);
 
   // Specialize assembly printing and parsing using a declarative format.
   let assemblyFormat = [{
