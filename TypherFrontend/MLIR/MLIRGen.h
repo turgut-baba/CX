@@ -30,7 +30,7 @@ namespace MLIR {
 		Generator();
 		~Generator();
 
-		void Generate(ArrayAlloc<AST::Statement*>& ASTTree);	
+		void Generate(SlabVector<AST::Statement*>& ASTTree);	
 	private:
 		mlir::OwningOpRef<mlir::ModuleOp> GenTree();
 

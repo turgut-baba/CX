@@ -37,13 +37,13 @@ namespace Parser {
 
 	// TODO: move this to expression parser. Declaration should be a statement but declarator should be 
 	// an expression.
-	ArrayAlloc<AST::VariableDeclarator*> StatementParser::ParseDeclarators(AST::Identifier* ident) 
+	SlabVector<AST::VariableDeclarator*> StatementParser::ParseDeclarators(AST::Identifier* ident) 
 	{
 		// This handles int a, b = 5;. The 'a, b = 5;' part.
 		Lexer()->NextToken(); // Skip '='
 		auto token = Lexer()->GetToken();
 
-		ArrayAlloc<AST::VariableDeclarator*> declarators = Allocator()->ArrayAllocate<AST::VariableDeclarator*>();
+		SlabVector<AST::VariableDeclarator*> declarators = Allocator()->ArrayAllocate<AST::VariableDeclarator*>();
 		while (true) {
 			auto expr = state_->expression_parser->parse_expression();
 			AST::VariableDeclarator* decl = Allocator()->Allocate<AST::VariableDeclarator>(expr, ident);

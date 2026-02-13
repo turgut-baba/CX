@@ -1,7 +1,6 @@
 #include "Parser.h"
 #include "Tokens/TokenTypes.h"
 #include "AST/Statement.h"
-#include "ParserState.h"
 #include "StatementParser.h"
 
 namespace Parser {
@@ -24,11 +23,6 @@ namespace Parser {
 	Lex::Lexer* Parser::Lexer() const
 	{
 		return state_->lexer_.get();
-	}
-
-	MemoryAllocator* Parser::Allocator() const
-	{
-		return &state_->allocator;
 	}
 
 	bool Parser::IsStatementEnd()

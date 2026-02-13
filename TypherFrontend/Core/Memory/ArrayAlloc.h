@@ -1,6 +1,10 @@
 #ifndef ARRAY_ALLOC_H
 #define ARRAY_ALLOC_H
 
+#include "Memory/SlabAlloc.h"
+#include "Memory/BumpPtrAlloc.h"
+
+
 template<typename Type>
 class ArrayAlloc {
 public:
@@ -24,15 +28,7 @@ public:
 	}
 };
 
-class Arena {
-    unsigned char* buffer;
-    size_t size;
-    size_t offset;
-
-public:
-    // ... Constructor and single object 'Alloc' ...
 
 
-};
 
 #endif

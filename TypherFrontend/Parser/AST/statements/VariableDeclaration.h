@@ -6,9 +6,10 @@
 namespace AST {
 	class VariableDeclaration : public Statement {
 	public:
-		VariableDeclaration(ArrayAlloc<VariableDeclarator*> decls);
+		VariableDeclaration(SlabVector<VariableDeclarator*> decls);
 
-		VariableDeclaration(VariableDeclarator* declarator) 
+		VariableDeclaration(VariableDeclarator* declarator)
+			:declarators_()
 		{
 			declarator->SetParent(this);
 			declarators_.push_back(declarator);
@@ -22,14 +23,14 @@ namespace AST {
 			return "DECLARATION node";
 		}
 
-		ArrayAlloc<VariableDeclarator*> Declarators()
+		SlabVector<VariableDeclarator*> Declarators()
 		{
 			return declarators_;
 		}
 
 		void Accept(NodeVisitor* v) override { v->Visit(this); }
 	private:
-		ArrayAlloc<VariableDeclarator*> declarators_;
+		SlabVector<VariableDeclarator*> declarators_;
 		bool is_definition = true;
 	};
 }

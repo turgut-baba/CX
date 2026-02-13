@@ -2,8 +2,15 @@
 #define MEM_ALLOC_H
 
 #include "Memory/ArrayAlloc.h"
+#include "Memory/SlabAlloc.h"
+#include "Memory/BumpPtrAlloc.h"
+#include <memory>
 
-class MemoryAllocator {
+/*
+    This should be used when there is a destructor.
+    It's not reccomended unless absolutely needed.
+*/
+class DtorMemAllocator {
 public:
     using Dtor = void (*)(void*);
 
@@ -42,39 +49,30 @@ public:
 		return ArrayAlloc<Type>();
 	};
 
-    template<typename T>
-    T* AllocArray(size_t count) {
-        if (count == 0) return nullptr;
-
-        size_t bytes = sizeof(T) * count;
-        
-        // 1. Calculate Alignment Padding
-        uintptr_t current_ptr = (uintptr_t)buffer + offset;
-        uintptr_t alignment = alignof(T);
-        uintptr_t padding = (alignment - (current_ptr % alignment)) % alignment;
-
-        if (offset + padding + bytes > size) {
-            return nullptr; // Out of memory
-        }
-
-        // 2. Move offset and return pointer
-        T* result = (T*)(buffer + offset + padding);
-        offset += (padding + bytes);
-
-        // 3. Optional: Initialize objects (Placement New)
-        for (size_t i = 0; i < count; ++i) {
-            new (&result[i]) T(); 
-        }
-
-        return result;
-    }
-
-    ~MemoryAllocator()
+    ~DtorMemAllocator()
     {
         for (auto& e : entries) {
             e.dtor(e.ptr);
         }
     }
+};
+
+enum AllocatorType {
+    DTOR,
+    SLAB,
+    BUMP
+};
+
+template <AllocatorType K> struct AllocTypeMap;
+
+template <> struct AllocTypeMap<AllocatorType::DTOR> { using type = DtorMemAllocator; };
+template <> struct AllocTypeMap<AllocatorType::SLAB> { using type = SlabAllocator; };
+template <> struct AllocTypeMap<AllocatorType::BUMP> { using type = BumpPtrAllocator; };
+
+struct MemoryAllocator {
+    std::unique_ptr<DtorMemAllocator> dtorAlloc; // Includes Dtors
+    std::unique_ptr<SlabAllocator> slabAlloc; // Versatile
+    std::unique_ptr<BumpPtrAllocator> bumpAlloc; // Faster
 };
 
 #endif

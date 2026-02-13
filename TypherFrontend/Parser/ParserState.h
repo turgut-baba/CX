@@ -1,6 +1,7 @@
 #ifndef PARSER_STATE_H
 #define PARSER_STATE_H
 
+#include <memory>
 #include "Memory/MemAlloc.h"
 
 namespace Parser {
@@ -16,7 +17,13 @@ namespace Parser {
 		StatementParser* statement_parser;
 		ExpressionParser* expression_parser;
 
-		MemoryAllocator allocator;
+		MemoryAllocator allocator {};
+
+		ParserState() {
+			allocator.dtorAlloc = std::make_unique<DtorMemAllocator>();
+			allocator.slabAlloc = std::make_unique<SlabAllocator>(1024 * 1024);
+			allocator.bumpAlloc = std::make_unique<BumpPtrAllocator>(1024 * 1024);
+		}
 	};
 }
 

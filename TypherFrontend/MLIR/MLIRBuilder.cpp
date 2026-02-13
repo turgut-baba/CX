@@ -3,9 +3,8 @@
 
 namespace MLIR {
 
-    void Builder::BuildModule(ArrayAlloc<AST::Statement*>& ASTTree)
+    void Builder::BuildModule(SlabVector<AST::Statement*>& ASTTree)
     {
         gen_.Generate(ASTTree);
-        gen_.GenExe();
     }
 }

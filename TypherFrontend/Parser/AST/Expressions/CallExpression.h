@@ -9,7 +9,7 @@ namespace AST {
 	public:
 		CallExpression() = default;
 
-		CallExpression(std::string callee, ArrayAlloc<Expression*> args) 
+		CallExpression(std::string callee, SlabVector<Expression*> args) 
 			: Arguments_(args), callee_(callee) {}
 
 		virtual ~CallExpression() = default;
@@ -19,7 +19,7 @@ namespace AST {
 			return callee_;
 		}
 
-		ArrayAlloc<Expression*> Args()
+		SlabVector<Expression*> Args()
 		{
 			return Arguments_;
 		}
@@ -29,7 +29,7 @@ namespace AST {
 			return "Call Expression";
 		}
 	private:
-		ArrayAlloc<Expression*> Arguments_;
+		SlabVector<Expression*> Arguments_;
 		std::string callee_;
 	};
 }

@@ -1,7 +1,7 @@
 #include "VariableDeclaration.h"
 
 namespace AST {
-	VariableDeclaration::VariableDeclaration(ArrayAlloc<VariableDeclarator*> declarators)
+	VariableDeclaration::VariableDeclaration(SlabVector<VariableDeclarator*> declarators)
 		:declarators_(declarators)
 	{
 		if (!declarators.empty()) {

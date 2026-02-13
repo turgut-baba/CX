@@ -3,7 +3,7 @@
 namespace Parser {
 	AST::CallExpression* ExpressionParser::ParseFunctionCall(AST::Identifier* ident)
 	{
-		ArrayAlloc<AST::Expression*> params;
+		SlabVector<AST::Expression*> params;
 		Lexer()->NextToken();
 		while (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::RIGHT_PARENTHESES)) {
 			params.push_back(parse_expression());

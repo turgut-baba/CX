@@ -14,10 +14,10 @@ namespace MLIR {
 
 	}
 
-	void Generator::Generate(ArrayAlloc<AST::Statement*>& ASTTree) {
+	void Generator::Generate(SlabVector<AST::Statement*>& ASTTree) {
 
-		mlir::func::registerAllExtensions(registry);
-		mlir::LLVM::registerInlinerInterface(registry);
+		//mlir::func::registerAllExtensions(registry);
+		//mlir::LLVM::registerInlinerInterface(registry);
 		mlir::registerAsmPrinterCLOptions();
         mlir::registerMLIRContextCLOptions();
 

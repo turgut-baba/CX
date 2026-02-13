@@ -7,7 +7,7 @@ namespace Checker {
 	class Checker {
 	public:
 		Checker();
-		void check_module(ArrayAlloc<AST::Statement*> ASTTree);
+		void check_module(SlabVector<AST::Statement*> ASTTree);
 
 	};
 }

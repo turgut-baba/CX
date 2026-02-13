@@ -10,7 +10,7 @@ namespace MLIR {
 	public:
 		Builder() {}
 
-		void BuildModule(ArrayAlloc<AST::Statement*>& ASTTree);
+		void BuildModule(SlabVector<AST::Statement*>& ASTTree);
 	private:
 		Generator gen_;
 	};

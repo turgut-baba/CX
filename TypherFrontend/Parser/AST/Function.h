@@ -28,7 +28,7 @@ namespace AST {
 			return "Function node ";
 		}
 
-		ArrayAlloc<VariableDeclarator*> Params()
+		SlabVector<VariableDeclarator*> Params()
 		{
 			return param_list_;
 		}
@@ -41,8 +41,8 @@ namespace AST {
 		void Accept(NodeVisitor* v) override { v->Visit(this); }
 	private:
 		Lex::TokenKeyword ReturnType_; // TODO: turn this into a type class.
-		ArrayAlloc<VariableDeclarator*> param_list_;
-		ArrayAlloc<Statement*> statement_list_;
+		SlabVector<VariableDeclarator*> param_list_;
+		SlabVector<Statement*> statement_list_;
 		AST::Identifier* ident_;
 	};
 }
