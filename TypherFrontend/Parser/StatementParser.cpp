@@ -88,7 +88,7 @@ namespace Parser {
 					return ParseFunction(Ident);
 				} else if (token.IsTokenType(Lex::TokenPunctuator::SEMICOLON)) {
 					auto declarator = Allocator()->Allocate<AST::VariableDeclarator>(Ident);
-					auto declaration = Allocator()->Allocate<AST::VariableDeclaration>(declarator);
+					auto declaration = Allocator()->Allocate<AST::VariableDeclaration>(declarator, Allocator());
 					Lexer()->NextToken();
 					return declaration;
 				}
@@ -170,9 +170,7 @@ namespace Parser {
 		case Lex::TokenKeyword::IF:
 			break;
 		case Lex::TokenKeyword::RETURN:
-			std::cout << "Handling return:" << std::endl;
 			statement = HandleReturnStatement();
-			std::cout << "Done." << std::endl;
 			break;
 		};
 

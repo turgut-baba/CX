@@ -2,14 +2,15 @@
 #define VARIABLE_DECLARATION_H
 
 #include "VariableDeclarator.h"
+#include "ParserState.h"
 
 namespace AST {
 	class VariableDeclaration : public Statement {
 	public:
 		VariableDeclaration(SlabVector<VariableDeclarator*> decls);
 
-		VariableDeclaration(VariableDeclarator* declarator)
-			:declarators_()
+		VariableDeclaration(VariableDeclarator* declarator, SlabAllocator* alloc)
+			:declarators_(alloc)
 		{
 			declarator->SetParent(this);
 			declarators_.push_back(declarator);

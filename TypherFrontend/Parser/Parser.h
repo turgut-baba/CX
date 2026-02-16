@@ -17,7 +17,11 @@ struct ParserState;
 
 class Parser {
 public:
-	Parser() = default;
+	Parser() { 
+		std::cout << "Def ctor" << std::endl;
+	    state_ = std::make_shared<ParserState>() ;
+		statements_ = SlabVector<AST::Statement*> (Allocator());
+	};
 
 	Parser(std::string& file_buffer);
 
@@ -35,11 +39,11 @@ protected:
 	template <AllocatorType Type = AllocatorType::SLAB>
 	auto Allocator() -> typename AllocTypeMap<Type>::type*
 	{
-		if constexpr (Type == AllocatorType::DTOR) 
+		if constexpr (Type == AllocatorType::DTOR)
 			return state_->allocator.dtorAlloc.get();
-		if constexpr (Type == AllocatorType::SLAB) 
+		if constexpr (Type == AllocatorType::SLAB)
 			return state_->allocator.slabAlloc.get();
-		if constexpr (Type == AllocatorType::BUMP) 
+		if constexpr (Type == AllocatorType::BUMP)
 			return state_->allocator.bumpAlloc.get();
 	}
 

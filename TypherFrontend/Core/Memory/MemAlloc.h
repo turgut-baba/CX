@@ -70,9 +70,9 @@ template <> struct AllocTypeMap<AllocatorType::SLAB> { using type = SlabAllocato
 template <> struct AllocTypeMap<AllocatorType::BUMP> { using type = BumpPtrAllocator; };
 
 struct MemoryAllocator {
-    std::unique_ptr<DtorMemAllocator> dtorAlloc; // Includes Dtors
-    std::unique_ptr<SlabAllocator> slabAlloc; // Versatile
-    std::unique_ptr<BumpPtrAllocator> bumpAlloc; // Faster
+    std::shared_ptr<DtorMemAllocator> dtorAlloc; // Includes Dtors
+    std::shared_ptr<SlabAllocator> slabAlloc; // Versatile
+    std::shared_ptr<BumpPtrAllocator> bumpAlloc; // Faster
 };
 
 #endif

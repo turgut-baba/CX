@@ -30,7 +30,7 @@ namespace MLIR {
 		// TODO: Add global(modular) context.
     	//llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> varScope(symbolTable);
 
-		for (AST::ASTNode* node : ASTTree.vec_)
+		for (AST::ASTNode* node : ASTTree)
       		node->Accept(this);
 
 		if (failed(mlir::verify(theModule))) {
@@ -144,7 +144,7 @@ namespace MLIR {
 
 		// Codegen the operands first.
 		SmallVector<mlir::Value, 4> operands;
-		for (auto &expr : node->Args().vec_) {
+		for (auto &expr : node->Args()) {
 			expr->Accept(this);
 			operands.push_back(retValue);
 		}

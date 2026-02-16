@@ -55,7 +55,7 @@ public:
     Type* Allocate(Args&&... args)
     {
         void* rawMem = Allocate(sizeof(Type), alignof(Type));
-        Type* op = new (rawMem) Type(std::forward<Args>(args)...);
+        return new (rawMem) Type(std::forward<Args>(args)...);
     }
 
     void* Allocate(size_t size, size_t alignment = 8) {
@@ -95,7 +95,7 @@ public:
     template<typename Type>
 	SlabVector<Type> ArrayAllocate()
 	{
-		return SlabVector<Type>(*this);
+		return SlabVector<Type>(this);
 	};
 };
 
@@ -104,30 +104,32 @@ public:
 template <typename Type>
 class SlabVector {
 private:
-    SlabAllocator& alloc;
+    SlabAllocator* alloc;
     Type* data;
-    size_t size;
+    size_t size_;
     size_t capacity;
-
+    bool init;
 public:
-    SlabVector(SlabAllocator& a) 
-        : alloc(a), data(nullptr), size(0), capacity(0) {}
+    SlabVector() { init = false; } 
+    SlabVector(SlabAllocator* a) 
+        : alloc(a), data(nullptr), size_(0), capacity(0) { init = true;}
 
     void push_back(const Type& value) {
-        if (size == capacity) {
+        if(init == false); // TODO: static assert and throw error.
+        if (size_ == capacity) {
             size_t oldCapBytes = capacity * sizeof(Type);
             size_t newCapacity = (capacity == 0) ? 4 : capacity * 2;
             size_t newCapBytes = newCapacity * sizeof(Type);
 
-            if (data && alloc.isAtTip(data, oldCapBytes)) {
+            if (data && alloc->isAtTip(data, oldCapBytes)) {
                 // Optimized: Grow in place!
-                alloc.Allocate((newCapacity - capacity) * sizeof(Type), alignof(Type));
+                alloc->Allocate((newCapacity - capacity) * sizeof(Type), alignof(Type));
                 capacity = newCapacity;
             } else {
                 // Fallback: Allocate new and copy
-                Type* newData = (Type*)alloc.Allocate(newCapBytes, alignof(Type));
+                Type* newData = (Type*)alloc->Allocate(newCapBytes, alignof(Type));
                 if (data) {
-                    for (size_t i = 0; i < size; ++i) newData[i] = data[i];
+                    for (size_t i = 0; i < size_; ++i) newData[i] = data[i];
                     // We can't easily "free" the old data if not at tip, 
                     // but the slab chain manages the overhead.
                 }
@@ -135,32 +137,35 @@ public:
                 capacity = newCapacity;
             }
         }
-        data[size++] = value;
+        data[size_++] = value;
     }
 
     Type& operator[](size_t index) 
     { 
+        if(init == false); // TODO: static assert and throw error.
         return data[index];
     }
 
-    size_t Size() const
+    size_t size() const
     { 
-        return size;
+        return size_;
     }
     
     Type* begin()
     { 
+        if(init == false); // TODO: static assert and throw error.
         return data;
     }
     
     Type* end()
     { 
-        return data + size;
+        if(init == false); // TODO: static assert and throw error.
+        return data + size_;
     }
 
     bool empty() 
     {
-		return size == 0;
+		return size_ == 0;
 	}
 };
 

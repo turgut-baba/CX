@@ -5,10 +5,12 @@
 
 namespace Parser {
 
-	Parser::Parser(std::string& file_buffer) {
-		state_ = std::make_shared<ParserState>(); // TODO: TURN THIS INTO CUSTOM ALLOCATOR
+	Parser::Parser(std::string& file_buffer) 
+	 {
+		state_ = std::make_shared<ParserState>() ;
+		statements_ = SlabVector<AST::Statement*> (Allocator());
 		state_->lexer_ = std::make_unique<Lex::Lexer>(file_buffer);
-		state_->statement_parser = Allocator()->Allocate<StatementParser>(state_); // TODO: TURN THIS INTO CUSTOM ALLOCATOR
+		state_->statement_parser = Allocator()->Allocate<StatementParser>(state_);
 	}
 
 	void Parser::parse()
@@ -65,7 +67,7 @@ namespace Parser {
 
 	void Parser::PrintAST()
 	{
-		for (auto& node : statements_.vec_)
+		for (auto& node : statements_)
 		{
 			if (node != nullptr) {
 				print_statement(node, 0);

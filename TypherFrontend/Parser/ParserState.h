@@ -3,6 +3,7 @@
 
 #include <memory>
 #include "Memory/MemAlloc.h"
+#include "Lexer.h"
 
 namespace Parser {
 
@@ -20,9 +21,9 @@ namespace Parser {
 		MemoryAllocator allocator {};
 
 		ParserState() {
-			allocator.dtorAlloc = std::make_unique<DtorMemAllocator>();
-			allocator.slabAlloc = std::make_unique<SlabAllocator>(1024 * 1024);
-			allocator.bumpAlloc = std::make_unique<BumpPtrAllocator>(1024 * 1024);
+			allocator.dtorAlloc = std::make_shared<DtorMemAllocator>();
+			allocator.slabAlloc = std::make_shared<SlabAllocator>(1024 * 1024);
+			allocator.bumpAlloc = std::make_shared<BumpPtrAllocator>(1024 * 1024);
 		}
 	};
 }
