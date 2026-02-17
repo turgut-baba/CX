@@ -28,7 +28,7 @@ namespace Lex {
 			SetType(TokenType::Literal);
 			this->literal_type = type;
 		} else {
-			// TODO: Handle unreachable	
+			UNREACHABLE("Cannot set token: Token type unknown.");
 		}
 	}
 
@@ -61,7 +61,7 @@ namespace Lex {
 			return this->literal_type;
 		}
 		else {
-			// TODO: Handle unreachable	
+			UNREACHABLE("Cannot get token: Token type unknown.");
 		}
 	}
 
@@ -81,7 +81,7 @@ namespace Lex {
 			actual_type = this->literal_type;
 		}
 		else {
-			// TODO: Handle unreachable	
+			UNREACHABLE("Cannot check token: Token type unknown.");
 		}
 
 		return actual_type == type;

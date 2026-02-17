@@ -1,8 +1,10 @@
 #ifndef TOKEN_H
 #define TOKEN_H
+
 #include "TokenTypes.h"
 #include <iostream>
 #include <string>
+#include "Log/Debug.h"
 
 namespace Lex {
 	class Token { // TODO: turn this into a template class and replace individual token types with a single template one.

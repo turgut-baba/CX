@@ -4,6 +4,7 @@
 #include <memory>
 #include "Memory/MemAlloc.h"
 #include "Lexer.h"
+#include "Log/Diagnostics.h"
 
 namespace Parser {
 
@@ -19,6 +20,8 @@ namespace Parser {
 		ExpressionParser* expression_parser;
 
 		MemoryAllocator allocator {};
+
+		DiagnosticEngine diags;
 
 		ParserState() {
 			allocator.dtorAlloc = std::make_shared<DtorMemAllocator>();

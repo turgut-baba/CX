@@ -69,7 +69,8 @@ namespace Parser {
 		}
 
 		if (Lexer()->GetToken().Type() != Lex::TokenType::Operator) {
-			//TODO:: raise error
+			state_->diags.report<DiagLevel::Error>({}) 
+            	<< "Unexpected token. Expected ';' or an operator.";
 		}
 
 		const auto tokenType = Lexer()->GetToken().GetTokenType<Lex::TokenOperator>();

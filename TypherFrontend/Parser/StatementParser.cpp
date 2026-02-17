@@ -25,9 +25,8 @@ namespace Parser {
 			//break;
 		*/
 		default:
+			UNREACHABLE("Unknown statement start.");
 			return nullptr;
-			
-			// TODO: handle unreachable
 		};
 
 		

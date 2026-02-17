@@ -9,6 +9,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <cstring>
+#include "Log/Diagnostics.h"
 
 std::string read_file(const std::filesystem::path& path) {
     if (!std::filesystem::exists(path))
@@ -61,6 +62,29 @@ int main(int argc, char** argv)
         MLIR::Builder mlir = MLIR::Builder();
         auto ast = parse.AST();
         mlir.BuildModule(ast);
+
+        Location loc = Location("main.ty", 10, 12);
+        DiagnosticEngine diags;
+
+        // Semantic Error
+        diags.report<DiagLevel::Error>(loc) 
+            << "Incompatible types: cannot assign 'ASD' to 'Int'";
+        diags.report<DiagLevel::Error>(loc) 
+            << "Incompatible types: cannot assign 'String' to 'Int'";
+        // Follow-up Note
+        diags.report<DiagLevel::Warning>(loc) 
+            << "Variable 'x' was declared here as 'Int'";
+
+        // Follow-up Note
+        diags.report<DiagLevel::Message>() 
+            << "Variable 'x' was declared here as 'Int'";
+
+        diags.report<DiagLevel::Success>()
+             << "Successfully compiled 'main.fy' in 42ms.";
+
+        diags.report<DiagLevel::Fatal>(loc) 
+            << "Variable 'x' was declared here as 'Int'";
+
     }
     catch (std::exception& e) {
         std::cout << "Err: " << e.what() << std::endl;
