@@ -60,6 +60,11 @@ namespace AST {
 			return type == node_type_;
 		}
 
+		void SetLocation(Location loc)
+		{
+			loc_ = loc;
+		}
+
 		Location Loc() const
 		{
 			return loc_;

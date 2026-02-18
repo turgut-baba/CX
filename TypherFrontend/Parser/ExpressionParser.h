@@ -142,7 +142,5 @@ sum(1, 2, 3);
  19. Co_await expression (C++20 coroutines) 
 // co_await some_awaitable;
 
- 20. Throw expression 
-throw a;
 
 */

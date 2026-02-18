@@ -20,6 +20,10 @@ namespace Parser {
 	AST::ASTNode* ExpressionParser::CheckIdentifier()
 	{
 		AST::Identifier* ident = Allocator()->Allocate<AST::Identifier>(Lexer()->GetToken().Ident());
+		state_->diags.report<DiagLevel::Message>({}) 
+            	<< "Log: l:" << Lexer()->GetToken().GetLocation().line << " c: " << Lexer()->GetToken().GetLocation().col
+				<< " Ident: "<< Lexer()->GetToken().Ident();
+		ident->SetLocation(Lexer()->GetToken().GetLocation());
 		Lexer()->NextToken();
 
 		if (Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::LEFT_PARENTHESES)) {
@@ -39,6 +43,7 @@ namespace Parser {
 		case Lex::TokenLiteral::DECIMAL: {
 			int number = stoi(Lexer()->GetToken().Ident());
 			AST::IntegerLiteral* ident = Allocator()->Allocate<AST::IntegerLiteral>(number);
+			ident->SetLocation(Lexer()->GetToken().GetLocation());
 			return ident;
 		}
 
@@ -68,7 +73,7 @@ namespace Parser {
 			return (AST::Expression*)lhs;
 		}
 
-		if (Lexer()->GetToken().Type() != Lex::TokenType::Operator) {
+		if (Lexer()->GetToken().Type() != Lex::TokenType::Operator) {	
 			state_->diags.report<DiagLevel::Error>({}) 
             	<< "Unexpected token. Expected ';' or an operator.";
 		}
@@ -81,7 +86,6 @@ namespace Parser {
 		Lexer()->NextToken();
 
 		AST::ASTNode* rhs;
-		
 		if (Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::LEFT_PARENTHESES)) {
 			Lexer()->NextToken();// Skip '('
 			rhs = parse_expression();

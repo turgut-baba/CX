@@ -1,10 +1,10 @@
 int caller(){
-	int b = 5 + 5;
+	int b = 4 + 3;
 	return b;
 }
 
 
 int main() {
-	int c = caller() + 5;
-	return 0;
+	int c = caller() + 6;
+	return c;
 }

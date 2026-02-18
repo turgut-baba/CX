@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include "Log/Debug.h"
+#include "Location.h"
 
 namespace Lex {
 	class Token { // TODO: turn this into a template class and replace individual token types with a single template one.
@@ -54,7 +55,13 @@ namespace Lex {
 		}
 
 		void RestTokenTypes();
+
+		Location GetLocation() const
+		{
+			return loc_;
+		}
 	private:
+		Location loc_;
 		TokenType type_;
 		TokenPunctuator punctuator_type;
 		TokenOperator operator_type;

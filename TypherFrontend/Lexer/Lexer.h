@@ -33,6 +33,7 @@ public:
 		if (dist > 0 && static_cast<size_t>(dist) >= fwd)
 		{
 			this->iterator_ += fwd;
+			column_ += fwd;
 		}
 	}
 
@@ -43,6 +44,7 @@ public:
 		if (dist > 0 && static_cast<size_t>(dist) >= bck)
 		{
 			this->iterator_ -= bck;
+			column_ -= bck;
 		}
 	}
 
@@ -68,8 +70,10 @@ private:
 	void ScanEqualSign();
 
 	std::string file_buffer;
+	std::string file_name;
 	std::string::iterator iterator_;
-	size_t line_;
+	size_t line_ = 1; // We start at the first line.
+	size_t column_ = 0; // We start by doing an IterForward so we start at one.
 	Token current_token;
 };
 

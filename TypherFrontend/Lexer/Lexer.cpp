@@ -19,20 +19,23 @@ namespace Lex {
 				if (Peek() != LexicalChar::LINE_FEED) {
 					IterBack();
 				}
+			case LexicalChar::LINE_FEED:
+			case LexicalChar::NEXT_LINE:
+				line_ += 1; column_ = 0;
 				[[fallthrough]];
 			case LexicalChar::VT:
-			case LexicalChar::TAB:
 			case LexicalChar::FORM_FEED:
-			case LexicalChar::SPACE:
-
+			
 			case LexicalChar::NARROW_NO_BREAK_SP:
-			case LexicalChar::NEXT_LINE:
 			case LexicalChar::IDEOGRAPHIC_SP:
 			case LexicalChar::ZERO_WIDTH_SP:
-
-			case LexicalChar::LINE_FEED:
+			
+			case LexicalChar::SPACE:
 				IterForward();
-				// Increment line for line feed
+				continue;
+			case LexicalChar::TAB:
+				column_ += 2;
+				IterForward();
 				continue;
 			default:
 				return;
@@ -73,6 +76,7 @@ namespace Lex {
 
 		current_token.SetType(TokenType::EOS); // TODO: add this as a case.
 		current_token.RestTokenTypes();
+		current_token.loc_ = Location(file_name, line_, column_);
 
 		switch (cp) {
 		case LexicalChar::LEFT_PAREN:
@@ -107,6 +111,11 @@ namespace Lex {
 		case LexicalChar::COMMA:
 			current_token.SetIdent(","); // TEMP
 			current_token.SetType(TokenType::Punctuator);
+			break;
+		case LexicalChar::PLUS:
+			current_token.SetIdent("+"); // TEMP
+			current_token.SetTokenType<TokenOperator>(
+								TokenOperator::ADD);
 			break;
 		case LexicalChar::DOUBLE_QUOTE:
 			keyword_parser.ScanStringLiteral();
