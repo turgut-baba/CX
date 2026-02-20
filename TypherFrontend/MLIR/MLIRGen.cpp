@@ -6,7 +6,10 @@ namespace MLIR {
 
 	Generator::Generator()
 	{
-		context = std::make_shared<mlir::MLIRContext>();
+		mlir::func::registerAllExtensions(registry);
+		mlir::LLVM::registerInlinerInterface(registry);
+
+		context = std::make_shared<mlir::MLIRContext>(registry);
 	}
 
 	Generator::~Generator()
@@ -16,19 +19,18 @@ namespace MLIR {
 
 	void Generator::Generate(SlabVector<AST::Statement*>& ASTTree) {
 
-		//mlir::func::registerAllExtensions(registry);
-		//mlir::LLVM::registerInlinerInterface(registry);
-		mlir::registerAsmPrinterCLOptions();
-        mlir::registerMLIRContextCLOptions();
-
-		builder = std::make_shared<mlir::OpBuilder>(context.get());
-        // Load our Dialect in this MLIR Context.
+		
+/* 		mlir::registerAsmPrinterCLOptions();
+        mlir::registerMLIRContextCLOptions(); */
         context->getOrLoadDialect<mlir::typher::TypherDialect>();
 
+		builder = std::make_shared<mlir::OpBuilder>(context.get());
+		
 		theModule = mlir::ModuleOp::create(builder->getUnknownLoc());
 
+
 		// TODO: Add global(modular) context.
-    	//llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> varScope(symbolTable);
+    	llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> varScope(symbolTable);
 
 		for (AST::ASTNode* node : ASTTree)
       		node->Accept(this);
@@ -92,10 +94,12 @@ namespace MLIR {
 		if (!returnOp) {
 			// TODO: this place causes a seg fault.
 			mlir::typher::ReturnOp::create(*builder, location);
-		} else {
+		} else if(returnOp.hasOperand()){
 			function.setType(builder->getFunctionType(
           		function.getFunctionType().getInputs(), builder->getI32Type()));
 		}
+
+		// retType = function;
 	}
 
 	void Generator::Visit(AST::Statement* node)
@@ -128,13 +132,8 @@ namespace MLIR {
 	
 	void Generator::Visit(AST::Expression* node) 
 	{
-		if (AST::CallExpression* c1 = dynamic_cast<AST::CallExpression*>(node)) {
-			Visit((AST::CallExpression*)node);
-		} else if (AST::Operator* c2 = dynamic_cast<AST::Operator*>(node)) {
-			Visit((AST::Operator*)node);
-		} else if (AST::VariableDeclarator* c2 = dynamic_cast<AST::VariableDeclarator*>(node)) {
-			Visit((AST::VariableDeclarator*)node);
-		}
+		node->Accept(this);
+
 	}
 
 	void Generator::Visit(AST::CallExpression* node) 

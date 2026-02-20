@@ -8,12 +8,17 @@
 #include "AST/Visitor.h"
 #include "Location.h"
 
-namespace AST {
 
-	enum NodeType { // TODO: move this to a seperate file
-		NODE = 0,
-		FUNCTION,
-	};
+enum class AstNodeType { // TODO: move this to a seperate file
+	NODE = 0,
+	FUNCTION,
+	IDENTIFIER,
+	VARIABLE_DECLARATOR,
+	CALL_EXPR,
+	OPERATOR
+};
+
+namespace AST {
 
 	class ASTNode;
 
@@ -22,6 +27,9 @@ namespace AST {
 
 	class ASTNode {
 	public:
+		ASTNode() = default;
+		ASTNode(AstNodeType type)
+		: node_type_(type) {}
 		virtual ~ASTNode() = default;
 
 		std::vector<ASTNode*> Chlidren() 
@@ -55,9 +63,14 @@ namespace AST {
 		ASTNode* HasChild(const ConditionalNodeFunction& cb) const;
 		virtual void Accept(NodeVisitor* visitor) = 0;
 
-		bool IsNodeType(NodeType type)
+		bool IsNodeType(AstNodeType type)
 		{
 			return type == node_type_;
+		}
+
+		AstNodeType NodeType() const
+		{
+			return node_type_;
 		}
 
 		void SetLocation(Location loc)
@@ -72,7 +85,7 @@ namespace AST {
 	protected:
 		std::vector<ASTNode*> children_; // TODO: convert to custom allocator
 		ASTNode* parent_;
-		NodeType node_type_;
+		AstNodeType node_type_;
 		Location loc_; // debug
 		//Flags flags_{};
 		// Scope* current_scope

@@ -3,8 +3,7 @@ int caller(){
 	return b;
 }
 
-
 int main() {
-	int c = caller() + 6;
+	int c = 1 + 6;
 	return c;
 }

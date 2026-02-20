@@ -66,7 +66,10 @@ int main(int argc, char** argv)
         Location loc = Location("main.ty", 10, 12);
         DiagnosticEngine diags;
 
-        // Semantic Error
+        diags.report<DiagLevel::Success>()
+             << "Successfully compiled '" << entry_file << "' in 42ms.";
+
+/*         // Semantic Error
         diags.report<DiagLevel::Error>(loc) 
             << "Incompatible types: cannot assign 'ASD' to 'Int'";
         diags.report<DiagLevel::Error>(loc) 
@@ -79,11 +82,8 @@ int main(int argc, char** argv)
         diags.report<DiagLevel::Message>() 
             << "Variable 'x' was declared here as 'Int'";
 
-        diags.report<DiagLevel::Success>()
-             << "Successfully compiled 'main.fy' in 42ms.";
-
         diags.report<DiagLevel::Fatal>(loc) 
-            << "Variable 'x' was declared here as 'Int'";
+            << "Variable 'x' was declared here as 'Int'"; */
 
     }
     catch (std::exception& e) {

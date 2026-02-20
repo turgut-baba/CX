@@ -20,9 +20,6 @@ namespace Parser {
 	AST::ASTNode* ExpressionParser::CheckIdentifier()
 	{
 		AST::Identifier* ident = Allocator()->Allocate<AST::Identifier>(Lexer()->GetToken().Ident());
-		state_->diags.report<DiagLevel::Message>({}) 
-            	<< "Log: l:" << Lexer()->GetToken().GetLocation().line << " c: " << Lexer()->GetToken().GetLocation().col
-				<< " Ident: "<< Lexer()->GetToken().Ident();
 		ident->SetLocation(Lexer()->GetToken().GetLocation());
 		Lexer()->NextToken();
 
@@ -111,8 +108,6 @@ namespace Parser {
 	{
 		return ParseAdditiveExpression();
 	}
-
-
 
 	AST::Expression* ExpressionParser::parse_assignment()
 	{

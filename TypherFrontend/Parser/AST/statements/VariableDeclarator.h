@@ -9,6 +9,9 @@
 namespace AST {
 	class VariableDeclarator : public Expression {
 	public:
+		VariableDeclarator()
+			: Expression(AstNodeType::VARIABLE_DECLARATOR) {}
+
 		VariableDeclarator(Expression* expr, Identifier* ident);
 
 		VariableDeclarator(Identifier* ident);

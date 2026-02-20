@@ -222,6 +222,10 @@ def ReturnOp : Typher_Op<"return", [Pure, HasParent<"FuncOp">,
     OpBuilder<(ins), [{ build($_builder, $_state, {}); }]>
   ];
 
+  let extraClassDeclaration = [{
+    bool hasOperand() { return getOperation()->getNumOperands() > 0; }
+  }];
+
   // Invoke a static verify method to verify this return operation.
   let hasVerifier = 1;
 }

@@ -7,10 +7,11 @@
 namespace AST {
 	class CallExpression : public Expression {
 	public:
-		CallExpression() = default;
+		CallExpression()
+			: Expression(AstNodeType::CALL_EXPR) {}
 
 		CallExpression(std::string callee, SlabVector<Expression*> args) 
-			: Arguments_(args), callee_(callee) {}
+			: Expression(AstNodeType::CALL_EXPR), Arguments_(args), callee_(callee) {}
 
 		virtual ~CallExpression() = default;
 
@@ -28,6 +29,8 @@ namespace AST {
 		{
 			return "Call Expression";
 		}
+
+		void Accept(NodeVisitor* v) override { v->Visit(this); }
 	private:
 		SlabVector<Expression*> Arguments_;
 		std::string callee_;

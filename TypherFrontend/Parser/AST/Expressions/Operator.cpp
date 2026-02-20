@@ -2,6 +2,7 @@
 
 namespace AST {
 	Operator::Operator(Lex::TokenOperator op)
+		: Expression(AstNodeType::OPERATOR)
 	{
 		operator_ = op;
 		switch(operator_) {

@@ -1,30 +1,64 @@
 #include "MLIREmitter.h"
 
-#include "mlir/Dialect/Func/Extensions/AllExtensions.h"
+#include "mlir/Dialect/LLVMIR/LLVMAttrs.h"
+#include "mlir/Dialect/LLVMIR/LLVMTypes.h"
+#include "mlir/IR/BuiltinAttributes.h"
+#include "mlir/IR/BuiltinOps.h"
+#include "mlir/IR/BuiltinTypes.h"
+#include "mlir/Support/LLVM.h"
+#include "mlir/Support/TypeID.h"
+#include "mlir/IR/BuiltinDialect.h" 
+/* #include "toy/Dialect.h"
+#include "toy/Passes.h" */
+#include "mlir/Dialect/Affine/IR/AffineOps.h"
+
+#include "mlir/Conversion/AffineToStandard/AffineToStandard.h"
+#include "mlir/Conversion/ArithToLLVM/ArithToLLVM.h"
+#include "mlir/Conversion/ControlFlowToLLVM/ControlFlowToLLVM.h"
+#include "mlir/Conversion/FuncToLLVM/ConvertFuncToLLVM.h"
+#include "mlir/Conversion/FuncToLLVM/ConvertFuncToLLVMPass.h"
+#include "mlir/Conversion/LLVMCommon/ConversionTarget.h"
+#include "mlir/Conversion/LLVMCommon/TypeConverter.h"
+#include "mlir/Conversion/MemRefToLLVM/MemRefToLLVM.h"
+#include "mlir/Conversion/SCFToControlFlow/SCFToControlFlow.h"
+#include "mlir/Dialect/Arith/IR/Arith.h"
+#include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
-#include "mlir/Dialect/LLVMIR/Transforms/InlinerInterfaceImpl.h"
-#include "mlir/Dialect/Affine/Transforms/Passes.h"
-#include "mlir/Dialect/LLVMIR/Transforms/Passes.h"
-#include "mlir/Pass/PassManager.h"
-#include "mlir/Transforms/Passes.h"
+#include "mlir/Dialect/MemRef/IR/MemRef.h"
+#include "mlir/Dialect/SCF/IR/SCF.h"
+#include "mlir/Pass/Pass.h"
+#include "mlir/Transforms/DialectConversion.h"
+#include "llvm/Support/Casting.h"
+
+#include "Dialect/DialectLowering.h"
 
 namespace MLIR{
 
-    void Emitter::Emit()
+    std::unique_ptr<mlir::Pass> createShapeInferencePass();
+
+    std::unique_ptr<mlir::Pass> createLowerToAffinePass();
+
+    std::unique_ptr<mlir::Pass> createLowerToLLVMPass();
+
+    using namespace mlir;
+
+    void Emitter::Emit(mlir::MLIRContext &context, mlir::ModuleOp& module)
     {
-        mlir::PassManager pm(theModule->getName());
+/*         mlir::registerBuiltinDialectTranslation(*module->getContext());
+		mlir::registerLLVMDialectTranslation(*module->getContext());
+
+		llvm::LLVMContext llvmContext;
+		auto llvmModule = mlir::translateModuleToLLVMIR(module, llvmContext);
+         */
+        mlir::PassManager pm(module->getContext());
+
+        mlir::applyPassManagerCLOptions(pm);
 
 		//Lower to affine
-		{		
-			pm.addPass(mlir::createInlinerPass());
-			mlir::OpPassManager &optPM = pm.nest<mlir::typher::FuncOp>();
-			//optPM.addPass(mlir::toy::createShapeInferencePass());
-			optPM.addPass(mlir::createCanonicalizerPass());
-			optPM.addPass(mlir::createCSEPass());	
-		}
+
 
 		{
-			//pm.addPass(mlir::toy::createLowerToAffinePass());
+			pm.addPass(createLowerToAffinePass());
 			mlir::OpPassManager &optPM = pm.nest<mlir::func::FuncOp>();
 			optPM.addPass(mlir::createCanonicalizerPass());
 			optPM.addPass(mlir::createCSEPass());	
@@ -32,9 +66,13 @@ namespace MLIR{
 
 		// Lower to llvm
 		{
-			//pm.addPass(mlir::toy::createLowerToLLVMPass());
+			pm.addPass(createLowerToLLVMPass());
 	    	pm.addPass(mlir::LLVM::createDIScopeForLLVMFuncOpPass());
 		}
+        std::cout << "Runnin module" << std::endl;
+        pm.run(module);
+        module->dump();
+        std::cout << "Done." << std::endl;
     }
 
     struct TypherToLLVMLoweringPass
@@ -46,7 +84,7 @@ namespace MLIR{
             registry.insert<LLVM::LLVMDialect, scf::SCFDialect>();
         }
         void runOnOperation() {
-
+            std::cout << "Run on op" << std::endl;
             LLVMConversionTarget target(getContext());
             target.addLegalOp<ModuleOp>();
 
@@ -81,95 +119,40 @@ namespace MLIR{
         }
         void runOnOperation() 
         {
+            std::cout << "Run on op affine" << std::endl;
+            LLVMTypeConverter typeConverter(&getContext());
+            
             ConversionTarget target(getContext());
-            target.addLegalDialect<affine::AffineDialect, BuiltinDialect,
-                                    arith::ArithDialect, func::FuncDialect,
-                                    memref::MemRefDialect>();
 
-            target.addIllegalDialect<typher::TypherDialect>();
-            target.addDynamicallyLegalOp<typher::PrintOp>([](typher::PrintOp op) {
+            target.addLegalDialect<affine::AffineDialect, BuiltinDialect,
+                         arith::ArithDialect, func::FuncDialect,
+                         memref::MemRefDialect>();
+
+            target.addIllegalDialect<mlir::typher::TypherDialect>();
+/*             target.addDynamicallyLegalOp<toy::PrintOp>([](toy::PrintOp op) {
                 return llvm::none_of(op->getOperandTypes(),
                                     [](Type type) { return llvm::isa<TensorType>(type); });
-            });
+            }); */
 
+            
             RewritePatternSet patterns(&getContext());
-            patterns.add<AddOpLowering, ConstantOpLowering, FuncOpLowering, MulOpLowering,
-                        PrintOpLowering, ReturnOpLowering, TransposeOpLowering>(
+            patterns.add<AddOpLowering, ConstantOpLowering, FuncOpLowering, ReturnOpLowering>(
                 &getContext());
 
+            std::cout << "Finished affine" << std::endl;
             if (failed(
                     applyPartialConversion(getOperation(), target, std::move(patterns))))
                 signalPassFailure();
         }
     };
-    
-    struct ShapeInferencePass
-    : public mlir::PassWrapper<ShapeInferencePass, OperationPass<typher::FuncOp>> {
-        MLIR_DEFINE_EXPLICIT_INTERNAL_INLINE_TYPE_ID(ShapeInferencePass)
-        StringRef getArgument() const override { return "typher-shape-inference"; }
 
-        void runOnOperation() override {
-            auto f = getOperation();
-            llvm::SmallPtrSet<mlir::Operation *, 16> opWorklist;
-            f.walk([&](mlir::Operation *op) {
-            if (returnsDynamicShape(op))
-                opWorklist.insert(op);
-            });
-
-
-            while (!opWorklist.empty()) {
-                auto nextop = llvm::find_if(opWorklist, allOperandsInferred);
-                if (nextop == opWorklist.end())
-                    break;
-
-                Operation *op = *nextop;
-                opWorklist.erase(op);
-
-                // Ask the operation to infer its output shapes.
-                LDBG() << "Inferring shape for: " << *op;
-                if (auto shapeOp = dyn_cast<ShapeInference>(op)) {
-                    shapeOp.inferShapes();
-                } else {
-                    op->emitError("unable to infer shape of operation without shape "
-                                "inference interface");
-                    return signalPassFailure();
-                }
-            }
-
-            // If the operation worklist isn't empty, this indicates a failure.
-            if (!opWorklist.empty()) {
-                f.emitError("Shape inference failed, ")
-                    << opWorklist.size() << " operations couldn't be inferred\n";
-                signalPassFailure();
-            }
-        }
-
-        /// A utility method that returns if the given operation has all of its
-        /// operands inferred.
-        static bool allOperandsInferred(Operation *op) {
-            return llvm::all_of(op->getOperandTypes(), [](Type operandType) {
-            return llvm::isa<RankedTensorType>(operandType);
-            });
-        }
-
-        /// A utility method that returns if the given operation has a dynamically
-        /// shaped result.
-        static bool returnsDynamicShape(Operation *op) {
-            return llvm::any_of(op->getResultTypes(), [](Type resultType) {
-            return !llvm::isa<RankedTensorType>(resultType);
-            });
-        }
-        };
-
-    std::unique_ptr<mlir::Pass> Emitter::createShapeInferencePass() {
-        return std::make_unique<ShapeInferencePass>();
-    }
-
-    std::unique_ptr<mlir::Pass> Emitter::createLowerToLLVMPass() {
+    std::unique_ptr<mlir::Pass> createLowerToLLVMPass() 
+    {
         return std::make_unique<TypherToLLVMLoweringPass>();
     }
 
-    std::unique_ptr<Pass> Emitter::createLowerToAffinePass() {
+    std::unique_ptr<mlir::Pass> createLowerToAffinePass() 
+    {
         return std::make_unique<TypherToAffineLoweringPass>();
     }
 

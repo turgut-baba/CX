@@ -17,7 +17,8 @@ namespace AST {
 
 	class Operator : public Expression {
 	public:
-		Operator() = default;
+		Operator() 
+			:Expression(AstNodeType::OPERATOR) {}
 		 
 		Operator(Lex::TokenOperator op);
 

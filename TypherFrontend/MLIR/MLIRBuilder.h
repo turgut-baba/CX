@@ -2,6 +2,7 @@
 #define MLIR_BUILDER_H
 
 #include "MLIRGen.h"
+#include "MLIREmitter.h"
 
 #include <iostream>
 
@@ -13,6 +14,7 @@ namespace MLIR {
 		void BuildModule(SlabVector<AST::Statement*>& ASTTree);
 	private:
 		Generator gen_;
+		Emitter emit_;
 	};
 }
 

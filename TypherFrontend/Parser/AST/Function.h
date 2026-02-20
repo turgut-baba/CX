@@ -14,13 +14,13 @@ namespace AST {
 
 		Function() 
 		{
-			node_type_ = NodeType::FUNCTION;
+			node_type_ = AstNodeType::FUNCTION;
 		}
 
 		Function(AST::Identifier* ident)
 			:ident_(ident)
 		{
-			node_type_ = NodeType::FUNCTION;
+			node_type_ = AstNodeType::FUNCTION;
 		}
 
 		virtual std::string String() override

@@ -8,6 +8,7 @@
 # MLIR SETUP --------------------
 
 set(LLVM_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/llvm-project" CACHE INTERNAL "")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
 
 set(LIBS
     MLIRAnalysis
@@ -18,9 +19,9 @@ set(LIBS
     MLIRTransforms
     MLIRSupport              
     LLVMSupport    
-    MLIRControlFlowInterfaces # ADD THIS
-    MLIRCallInterfaces        # ADD THIS
-    MLIRCastInterfaces        # ADD THIS            
+    MLIRControlFlowInterfaces
+    MLIRCallInterfaces       
+    MLIRCastInterfaces                   
 )
 
 set(LLVM_BUILD_DIR "${LLVM_ROOT}/build") 
@@ -73,6 +74,7 @@ add_executable (TypherCompiler "Core/TypherCompiler.cpp"
 "Parser/AST/Literals/Literal.h"
 "MLIR/MLIRGen.cpp"
 "MLIR/MLIRBuilder.cpp"
+"MLIR/MLIREmitter.cpp"
  )
 
 target_include_directories(TypherCompiler

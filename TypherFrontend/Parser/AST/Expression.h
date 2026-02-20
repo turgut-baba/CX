@@ -7,6 +7,9 @@
 namespace AST {
 	class Expression: public ASTNode {
 	public:
+		Expression(AstNodeType node_type) 
+			: ASTNode(node_type) {}
+
 		virtual ~Expression() = default;
 
 		virtual std::string String() override
