@@ -52,11 +52,11 @@ namespace Parser {
 	{
 		const auto tokenType = Lexer()->GetToken().GetTokenType<Lex::TokenOperator>();
 		AST::Operator* operator_ = Allocator()->Allocate<AST::Operator>(tokenType);
-
+		
 		lhs->SetParent(operator_);
-
+		
 		Lexer()->NextToken(); // Skip the operator (don't need expected token here)
-
+		
 		AST::ASTNode* rhs = parse_expression();
 		
 		rhs->SetParent(operator_);
@@ -106,7 +106,7 @@ namespace Parser {
 		}
 
 		state_->diags.report<DiagLevel::Error>({}) 
-            << "Unexpected token. Expected an operator.";
+            << "Expected ';' at the end of expression.";
 
 		return nullptr;
 	}

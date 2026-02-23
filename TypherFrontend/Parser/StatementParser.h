@@ -6,6 +6,7 @@
 #include "ParserState.h"
 #include "AST/Function.h"
 #include "AST/statements/ReturnStatement.h"
+#include "AST/statements/IfStatement.h"
 
 namespace Parser {
 	class StatementParser : public Parser 

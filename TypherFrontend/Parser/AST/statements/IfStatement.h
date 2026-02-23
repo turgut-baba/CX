@@ -1,20 +1,32 @@
 #ifndef IF_STATEMENT_H
 #define IF_STATEMENT_H
 
-#include "ASTNode.h"
-#include "Expression.h"
+#include "AST/ASTNode.h"
+#include "AST/Expression.h"
+#include "AST/Statement.h"
 
-class IfStatement: public ASTNode {
-public:
-    IfStatement(Expression* expr)
-    {
-        // TODO: check if the expr is compatible with the if statement
-    }
+namespace AST {
+    class IfStatement: public Statement {
+    public:
+        IfStatement(Expression* expr)
+        {
+            // TODO: check if the expr is compatible with the if statement
+            expr->SetParent(this);
+        }
 
-    
-private:
-    Expression* expr_;
-    SlabVector<Statement*> body_;
-};
+        virtual std::string String() override
+		{
+			return "If statement ";
+		}
 
+        Expression* ConditionExpr()
+        {
+            return condition_;
+        }
+    private:
+        Expression* condition_;
+        SlabVector<Statement*> body_;
+    };
+
+}
 #endif

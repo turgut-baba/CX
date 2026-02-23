@@ -34,12 +34,13 @@ namespace Parser {
 
 	AST::Statement* StatementParser::HandleIfKeyword()
 	{
-		Lexer()->NextToken(); // Skip '(';
-		std::cout << "skipped paren" << std::endl;
+		Lexer()->NextToken(); // Skip 'if';
+		Lexer()->NextToken(); // Skip '('
 		auto expr = state_->expression_parser->parse_expression();
+		AST::IfStatement* if_statement = Allocator()->Allocate<AST::IfStatement>(expr);
 		Lexer()->NextToken(); // Skip ')';
 
-		std::cout << "Yay" << std::endl;
+		return ParseBody(if_statement);
 	}
 
 	// TODO: move this to expression parser. Declaration should be a statement but declarator should be 
@@ -73,7 +74,8 @@ namespace Parser {
 
 		if (declarators.empty())
 		{
-			// this means int a = ; throw error.
+			state_->diags.report<DiagLevel::Error>({}) 
+				<< "Expected expression.";
 		}
 
 		return declarators;
