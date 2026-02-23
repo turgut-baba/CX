@@ -15,4 +15,5 @@ out/
 *.cpp.inc
 *.gen
 *.a
+*.o
 tablegen_compile_commands.yml

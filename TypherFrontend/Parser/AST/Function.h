@@ -40,6 +40,7 @@ namespace AST {
 
 		void Accept(NodeVisitor* v) override { v->Visit(this); }
 	private:
+		// TODO: give better name to these variables
 		Lex::TokenKeyword ReturnType_; // TODO: turn this into a type class.
 		SlabVector<VariableDeclarator*> param_list_;
 		SlabVector<Statement*> statement_list_;

@@ -7,7 +7,6 @@ struct BinaryOpLowering : public OpConversionPattern<BinaryOp> {
 
     LogicalResult matchAndRewrite(BinaryOp op, OpAdaptor adaptor,
                   ConversionPatternRewriter &rewriter) const {
-        std::cout << "Lowerin bin" << std::endl;
         auto loc = op->getLoc();
         Value lhs = adaptor.getLhs();
         Value rhs = adaptor.getRhs();
@@ -19,14 +18,12 @@ struct BinaryOpLowering : public OpConversionPattern<BinaryOp> {
         auto scalarResult = rewriter.create<arith::AddIOp>(loc, lhs, rhs);
 
         rewriter.replaceOp(op, scalarResult.getResult());
-        std::cout << "Finished bin" << std::endl;
         return success();
     }
 };
+
 using AddOpLowering = BinaryOpLowering<mlir::typher::AddOp, arith::AddFOp>;
 // using MulOpLowering = BinaryOpLowering<mlir::typher::::MulOp, arith::MulFOp>;
-
-
 
 struct ConstantOpLowering : public OpConversionPattern<mlir::typher::ConstantOp> {
     using OpConversionPattern<mlir::typher::ConstantOp>::OpConversionPattern;
@@ -43,7 +40,6 @@ struct ConstantOpLowering : public OpConversionPattern<mlir::typher::ConstantOp>
             op.getType(), 
             llvm::cast<TypedAttr>(valueAttr)
         );
-        std::cout << "Finished const" << std::endl;
         return success();
     }
 };
@@ -65,11 +61,34 @@ struct FuncOpLowering : public OpConversionPattern<mlir::typher::FuncOp> {
 
 
 struct ReturnOpLowering : public OpConversionPattern<mlir::typher::ReturnOp> {
-  using OpConversionPattern<mlir::typher::ReturnOp>::OpConversionPattern;
+    using OpConversionPattern<mlir::typher::ReturnOp>::OpConversionPattern;
 
-  LogicalResult matchAndRewrite(mlir::typher::ReturnOp op, OpAdaptor adaptor,
-                  ConversionPatternRewriter &rewriter) const {
-    rewriter.replaceOpWithNewOp<func::ReturnOp>(op, adaptor.getOperands());
-    return success();
-  }
+    LogicalResult matchAndRewrite(mlir::typher::ReturnOp op, OpAdaptor adaptor,
+                  ConversionPatternRewriter &rewriter) const
+    {
+        rewriter.replaceOpWithNewOp<func::ReturnOp>(op, adaptor.getOperands());
+        return success();
+    }
+};
+
+
+struct CallOpLowering : public OpConversionPattern<mlir::typher::GenericCallOp> {
+    using OpConversionPattern<mlir::typher::GenericCallOp>::OpConversionPattern;
+
+    LogicalResult
+    matchAndRewrite(mlir::typher::GenericCallOp op, OpAdaptor adaptor,
+                    ConversionPatternRewriter &rewriter) const override
+    {
+        // Use adaptor.getOperands() - these are the already lowered scalar integers
+        auto callOp = rewriter.create<func::CallOp>(
+            op.getLoc(),
+            op.getCallee(),      // The SymbolRef (function name)
+            op.getResultTypes(),    // The new standard result types
+            adaptor.getOperands() // The new standard argument values
+        );
+
+        // 3. Replace the old op with the new call's results
+        rewriter.replaceOp(op, callOp.getResults());
+        return success();
+    }
 };

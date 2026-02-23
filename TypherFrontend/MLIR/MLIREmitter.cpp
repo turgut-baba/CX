@@ -32,6 +32,14 @@
 
 #include "Dialect/DialectLowering.h"
 
+// For compilation
+#include "llvm/MC/TargetRegistry.h"
+#include "llvm/Support/TargetSelect.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOptions.h"
+
+#include "llvm/IR/LegacyPassManager.h"
+
 namespace MLIR{
 
     std::unique_ptr<mlir::Pass> createShapeInferencePass();
@@ -40,23 +48,17 @@ namespace MLIR{
 
     std::unique_ptr<mlir::Pass> createLowerToLLVMPass();
 
+    void LowerToLLVMIR(mlir::ModuleOp module);
+
     using namespace mlir;
 
     void Emitter::Emit(mlir::MLIRContext &context, mlir::ModuleOp& module)
     {
-/*         mlir::registerBuiltinDialectTranslation(*module->getContext());
-		mlir::registerLLVMDialectTranslation(*module->getContext());
-
-		llvm::LLVMContext llvmContext;
-		auto llvmModule = mlir::translateModuleToLLVMIR(module, llvmContext);
-         */
         mlir::PassManager pm(module->getContext());
 
         mlir::applyPassManagerCLOptions(pm);
 
 		//Lower to affine
-
-
 		{
 			pm.addPass(createLowerToAffinePass());
 			mlir::OpPassManager &optPM = pm.nest<mlir::func::FuncOp>();
@@ -69,10 +71,8 @@ namespace MLIR{
 			pm.addPass(createLowerToLLVMPass());
 	    	pm.addPass(mlir::LLVM::createDIScopeForLLVMFuncOpPass());
 		}
-        std::cout << "Runnin module" << std::endl;
         pm.run(module);
-        module->dump();
-        std::cout << "Done." << std::endl;
+        LowerToLLVMIR(module);
     }
 
     struct TypherToLLVMLoweringPass
@@ -84,7 +84,6 @@ namespace MLIR{
             registry.insert<LLVM::LLVMDialect, scf::SCFDialect>();
         }
         void runOnOperation() {
-            std::cout << "Run on op" << std::endl;
             LLVMConversionTarget target(getContext());
             target.addLegalOp<ModuleOp>();
 
@@ -119,9 +118,6 @@ namespace MLIR{
         }
         void runOnOperation() 
         {
-            std::cout << "Run on op affine" << std::endl;
-            LLVMTypeConverter typeConverter(&getContext());
-            
             ConversionTarget target(getContext());
 
             target.addLegalDialect<affine::AffineDialect, BuiltinDialect,
@@ -136,15 +132,130 @@ namespace MLIR{
 
             
             RewritePatternSet patterns(&getContext());
-            patterns.add<AddOpLowering, ConstantOpLowering, FuncOpLowering, ReturnOpLowering>(
+            patterns.add<AddOpLowering, CallOpLowering, ConstantOpLowering, FuncOpLowering, ReturnOpLowering>(
                 &getContext());
 
-            std::cout << "Finished affine" << std::endl;
             if (failed(
                     applyPartialConversion(getOperation(), target, std::move(patterns))))
                 signalPassFailure();
         }
     };
+
+    void emitObjectFile(llvm::Module* llvmModule, llvm::TargetMachine* tm); // TEMP
+
+    void LowerToLLVMIR(mlir::ModuleOp module)
+    {
+        // TRANSFORM TO LLVM IR
+        mlir::registerBuiltinDialectTranslation(*module->getContext());
+        mlir::registerLLVMDialectTranslation(*module->getContext());
+
+        // Convert the module to LLVM IR in a new LLVM IR context.
+        llvm::LLVMContext llvmContext;
+        auto llvmModule = mlir::translateModuleToLLVMIR(module, llvmContext);
+        if (!llvmModule) {
+            llvm::errs() << "Failed to emit LLVM IR\n";
+            return ;
+        }
+
+        // Initialize LLVM targets.
+        llvm::InitializeNativeTarget();
+        llvm::InitializeNativeTargetAsmPrinter();
+
+        // Create target machine and configure the LLVM Module
+        auto tmBuilderOrError = llvm::orc::JITTargetMachineBuilder::detectHost();
+        if (!tmBuilderOrError) {
+            llvm::errs() << "Could not create JITTargetMachineBuilder\n";
+            return ;
+        }
+
+        auto tmOrError = tmBuilderOrError->createTargetMachine();
+        if (!tmOrError) {
+            llvm::errs() << "Could not create TargetMachine\n";
+            return ;
+        }
+
+        mlir::ExecutionEngine::setupTargetTripleAndDataLayout(llvmModule.get(),
+                                                                tmOrError.get().get());
+        
+        // GEN EXE
+        llvm::InitializeAllTargetInfos();
+        llvm::InitializeAllTargets();
+        llvm::InitializeAllTargetMCs();
+        llvm::InitializeAllAsmPrinters();
+
+        std::string TargetTripleStr = LLVMGetDefaultTargetTriple();
+        llvm::Triple TargetTriple(TargetTripleStr);
+        llvmModule->setTargetTriple(TargetTriple);
+
+        std::string Error;
+        auto Target = llvm::TargetRegistry::lookupTarget(TargetTriple, Error);
+
+        if (!Target) {
+            llvm::errs() << "Error: " << Error;
+            return ;
+        }
+        
+        auto cpu = "generic";
+        auto features = "";
+        llvm::TargetOptions opt;
+        auto rm = llvm::Reloc::Model::PIC_;
+
+        // Pass the Triple object here
+        llvm::TargetMachine* targetMachine = Target->createTargetMachine(
+            TargetTriple, // This returns the string the API expects
+            cpu, 
+            features, 
+            opt, 
+            rm
+        );
+
+        llvmModule->setDataLayout(targetMachine->createDataLayout());
+        emitObjectFile(llvmModule.get(), targetMachine);
+    }
+
+    int linkWithLLD(const std::string& objectFile, const std::string& outputFile);
+
+    void emitObjectFile(llvm::Module* llvmModule, llvm::TargetMachine* tm)
+    {
+        std::string filename = "typher_output.o";
+        std::error_code ec;
+        llvm::raw_fd_ostream dest(filename, ec, llvm::sys::fs::OF_None);
+
+        if (ec) {
+            llvm::errs() << "Could not open file: " << ec.message();
+            return;
+        }
+
+        llvm::legacy::PassManager pass;
+        auto fileType = llvm::CodeGenFileType::ObjectFile; // Use .AssemblyFile for .s
+        
+        if (tm->addPassesToEmitFile(pass, dest, nullptr, fileType)) {
+            llvm::errs() << "The TargetMachine can't emit a file of this type";
+            return;
+        }
+        
+        pass.run(*llvmModule);
+        dest.flush();
+        
+        int res = linkWithLLD(filename, "Sanity");
+        if(res) 
+        {
+            llvm::outs() << "Successfully compiled to " << filename << "\n";
+        }
+    }
+
+    int linkWithLLD(const std::string& objectFile, const std::string& outputFile) {
+        std::string command = "clang " + objectFile + " -o " + outputFile + " -lm"; 
+    
+        std::cout << "Linking with command: " << command << "..." << std::endl;
+        
+        int exitCode = std::system(command.c_str());
+        
+        if (exitCode != 0) {
+            std::cerr << "Linking failed with exit code: " << exitCode << std::endl;
+        }
+        return exitCode;
+    }
 
     std::unique_ptr<mlir::Pass> createLowerToLLVMPass() 
     {

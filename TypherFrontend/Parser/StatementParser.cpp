@@ -29,9 +29,17 @@ namespace Parser {
 			return nullptr;
 		};
 
-		
-
 		return statement;
+	}
+
+	AST::Statement* StatementParser::HandleIfKeyword()
+	{
+		Lexer()->NextToken(); // Skip '(';
+		std::cout << "skipped paren" << std::endl;
+		auto expr = state_->expression_parser->parse_expression();
+		Lexer()->NextToken(); // Skip ')';
+
+		std::cout << "Yay" << std::endl;
 	}
 
 	// TODO: move this to expression parser. Declaration should be a statement but declarator should be 
@@ -108,15 +116,15 @@ namespace Parser {
 		return nullptr;
 	}
 
-	AST::Statement* StatementParser::ParseFunctionBody(AST::Function* functionDecl)
+	AST::Statement* StatementParser::ParseBody(AST::Statement* body)
 	{
 		Lexer()->NextToken(); // Skip '{'
 		while (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::RIGHT_CURLY_BRACE)) {
 			auto statement = parse_statement();
-			statement->SetParent(functionDecl);
+			statement->SetParent(body);
 		}
 		Lexer()->NextToken(); // Skip '}'
-		return functionDecl;
+		return body;
 	}
 
 	AST::Statement* StatementParser::ParseFunction(AST::Identifier* ident)
@@ -135,7 +143,7 @@ namespace Parser {
 			// return;
 		}
 
-		return ParseFunctionBody(functionDecl);
+		return ParseBody(functionDecl);
 	}
 
 	AST::ReturnStatement* StatementParser::HandleReturnStatement()
@@ -156,7 +164,7 @@ namespace Parser {
 	{
 		auto token = Lexer()->GetToken();
 		AST::Statement* statement;
-		switch (token.GetKeywordType())
+		switch (token.GetTokenType<Lex::TokenKeyword>())
 		{
 		case Lex::TokenKeyword::BOOL:
 		case Lex::TokenKeyword::CHAR:
@@ -167,6 +175,7 @@ namespace Parser {
 			statement = PottentialVariableOrFunctionDecl();
 			break;
 		case Lex::TokenKeyword::IF:
+			statement = HandleIfKeyword();
 			break;
 		case Lex::TokenKeyword::RETURN:
 			statement = HandleReturnStatement();

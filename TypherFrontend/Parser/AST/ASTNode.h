@@ -15,7 +15,8 @@ enum class AstNodeType { // TODO: move this to a seperate file
 	IDENTIFIER,
 	VARIABLE_DECLARATOR,
 	CALL_EXPR,
-	OPERATOR
+	OPERATOR,
+	LITERAL
 };
 
 namespace AST {

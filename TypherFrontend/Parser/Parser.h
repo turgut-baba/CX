@@ -66,14 +66,15 @@ protected:
 		Lexer()->NextToken();
 		if (!Lexer()->GetToken().IsTokenType(expected))
 		{
-			// TODO: Log error
+			state_->diags.report<DiagLevel::Error>({}) 
+            	<< "Unexpected token, expected: " << (char)expected;
 		}
 	}
 protected:
 	AST::Identifier* ExpectIdentifier();
 	SlabVector<AST::Statement*> statements_;
 
-	std::shared_ptr<ParserState> state_; // TODO: write a proper allocator instead of raw ptr
+	std::shared_ptr<ParserState> state_;
 	MemoryAllocator allocator_;
 };
 

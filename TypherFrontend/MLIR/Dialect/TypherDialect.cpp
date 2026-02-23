@@ -36,48 +36,48 @@ void TypherDialect::initialize() {
 
 static mlir::ParseResult parseBinaryOp(mlir::OpAsmParser &parser,
                                        mlir::OperationState &result) {
-  SmallVector<mlir::OpAsmParser::UnresolvedOperand, 2> operands;
-  SMLoc operandsLoc = parser.getCurrentLocation();
-  Type type;
-  if (parser.parseOperandList(operands, /*requiredOperandCount=*/2) ||
-      parser.parseOptionalAttrDict(result.attributes) ||
-      parser.parseColonType(type))
-    return mlir::failure();
-
-  // If the type is a function type, it contains the input and result types of
-  // this operation.
-  if (FunctionType funcType = llvm::dyn_cast<FunctionType>(type)) {
-    if (parser.resolveOperands(operands, funcType.getInputs(), operandsLoc,
-                               result.operands))
+    SmallVector<mlir::OpAsmParser::UnresolvedOperand, 2> operands;
+    SMLoc operandsLoc = parser.getCurrentLocation();
+    Type type;
+    if (parser.parseOperandList(operands, /*requiredOperandCount=*/2) ||
+        parser.parseOptionalAttrDict(result.attributes) ||
+        parser.parseColonType(type))
       return mlir::failure();
-    result.addTypes(funcType.getResults());
-    return mlir::success();
-  }
 
-  // Otherwise, the parsed type is the type of both operands and results.
-  if (parser.resolveOperands(operands, type, result.operands))
-    return mlir::failure();
-  result.addTypes(type);
-  return mlir::success();
+    // If the type is a function type, it contains the input and result types of
+    // this operation.
+    if (FunctionType funcType = llvm::dyn_cast<FunctionType>(type)) {
+      if (parser.resolveOperands(operands, funcType.getInputs(), operandsLoc,
+                                result.operands))
+        return mlir::failure();
+      result.addTypes(funcType.getResults());
+      return mlir::success();
+    }
+
+    // Otherwise, the parsed type is the type of both operands and results.
+    if (parser.resolveOperands(operands, type, result.operands))
+      return mlir::failure();
+    result.addTypes(type);
+    return mlir::success();
 }
 
 /// A generalized printer for binary operations. It prints in two different
 /// forms depending on if all of the types match.
 static void printBinaryOp(mlir::OpAsmPrinter &printer, mlir::Operation *op) {
-  printer << " " << op->getOperands();
-  printer.printOptionalAttrDict(op->getAttrs());
-  printer << " : ";
+    printer << " " << op->getOperands();
+    printer.printOptionalAttrDict(op->getAttrs());
+    printer << " : ";
 
-  // If all of the types are the same, print the type directly.
-  Type resultType = *op->result_type_begin();
-  if (llvm::all_of(op->getOperandTypes(),
-                   [=](Type type) { return type == resultType; })) {
-    printer << resultType;
-    return;
-  }
+    // If all of the types are the same, print the type directly.
+    Type resultType = *op->result_type_begin();
+    if (llvm::all_of(op->getOperandTypes(),
+                    [=](Type type) { return type == resultType; })) {
+      printer << resultType;
+      return;
+    }
 
-  // Otherwise, print a functional type.
-  printer.printFunctionalType(op->getOperandTypes(), op->getResultTypes());
+    // Otherwise, print a functional type.
+    printer.printFunctionalType(op->getOperandTypes(), op->getResultTypes());
 }
 
 //===----------------------------------------------------------------------===//
@@ -88,31 +88,31 @@ static void printBinaryOp(mlir::OpAsmPrinter &printer, mlir::Operation *op) {
 void AddOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
                   mlir::Value lhs, mlir::Value rhs) {
   // Use the type of the left-hand side as the result type (C-style)
-  state.addTypes(lhs.getType()); 
-  state.addOperands({lhs, rhs});
+    state.addTypes(lhs.getType()); 
+    state.addOperands({lhs, rhs});
 }
 
 mlir::ParseResult AddOp::parse(mlir::OpAsmParser &parser,
                                mlir::OperationState &result) {
-  mlir::OpAsmParser::UnresolvedOperand lhs, rhs;
-  mlir::Type type;
+    mlir::OpAsmParser::UnresolvedOperand lhs, rhs;
+    mlir::Type type;
 
-  // Parse: %lhs, %rhs : type
-  if (parser.parseOperand(lhs) || parser.parseComma() || 
-      parser.parseOperand(rhs) || parser.parseColonType(type))
-    return mlir::failure();
+    // Parse: %lhs, %rhs : type
+    if (parser.parseOperand(lhs) || parser.parseComma() || 
+        parser.parseOperand(rhs) || parser.parseColonType(type))
+      return mlir::failure();
 
-  // Resolve the operands against the parsed type
-  if (parser.resolveOperands({lhs, rhs}, type, result.operands))
-    return mlir::failure();
+    // Resolve the operands against the parsed type
+    if (parser.resolveOperands({lhs, rhs}, type, result.operands))
+      return mlir::failure();
 
-  // Set the result type
-  result.addTypes(type);
-  return mlir::success();
+    // Set the result type
+    result.addTypes(type);
+    return mlir::success();
 }
 
 void AddOp::print(mlir::OpAsmPrinter &p) {
-  p << " " << getLhs() << ", " << getRhs() << " : " << getResult().getType();
+    p << " " << getLhs() << ", " << getRhs() << " : " << getResult().getType();
 }
 
 //===----------------------------------------------------------------------===//
@@ -126,46 +126,46 @@ void AddOp::print(mlir::OpAsmPrinter &p) {
 void ConstantOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
                        int value) {
   // 1. Create the scalar type (C-style i32)
-  mlir::Type type = builder.getI32Type();
+    mlir::Type type = builder.getI32Type();
 
-  // 2. Create the Attribute (the actual data)
-  mlir::IntegerAttr attr = builder.getIntegerAttr(type, value);
+    // 2. Create the Attribute (the actual data)
+    mlir::IntegerAttr attr = builder.getIntegerAttr(type, value);
 
-  // 3. Call the GENERATED builder from TableGen.
-  // This version expects: (builder, state, resultType, attribute)
-  // This breaks the recursion because the arguments are different types!
-  ConstantOp::build(builder, state, type, attr);
+    // 3. Call the GENERATED builder from TableGen.
+    // This version expects: (builder, state, resultType, attribute)
+    // This breaks the recursion because the arguments are different types!
+    ConstantOp::build(builder, state, type, attr);
 }
 
 // 2. Updated Parser: Uses TypedAttr to handle any scalar (float, int, etc.)
 mlir::ParseResult ConstantOp::parse(mlir::OpAsmParser &parser,
                                     mlir::OperationState &result) {
-  mlir::TypedAttr value;
-  if (parser.parseOptionalAttrDict(result.attributes) ||
-      parser.parseAttribute(value, "value", result.attributes))
-    return failure();
+    mlir::TypedAttr value;
+    if (parser.parseOptionalAttrDict(result.attributes) ||
+        parser.parseAttribute(value, "value", result.attributes))
+      return failure();
 
-  result.addTypes(value.getType());
-  return success();
+    result.addTypes(value.getType());
+    return success();
 }
 
 // 3. Updated Printer: Simpler output for scalar values
 void ConstantOp::print(mlir::OpAsmPrinter &printer) {
-  printer << " ";
-  printer.printOptionalAttrDict((*this)->getAttrs(), /*elidedAttrs=*/{"value"});
-  printer << getValue(); // getValue() now returns a scalar attribute
+    printer << " ";
+    printer.printOptionalAttrDict((*this)->getAttrs(), /*elidedAttrs=*/{"value"});
+    printer << getValue(); // getValue() now returns a scalar attribute
 }
 
 // 4. Updated Verifier: Much simpler, just ensures the type matches the value
 llvm::LogicalResult ConstantOp::verify() {
-  auto resultType = getResult().getType();
+    auto resultType = getResult().getType();
 /*   auto attrType = getValue().getType();
 
   if (attrType != resultType) {
     return emitOpError("result type (") << resultType 
            << ") must match attribute type (" << attrType << ")";
   } */
-  return mlir::success();
+    return mlir::success();
 }
 
 //===----------------------------------------------------------------------===//
@@ -177,20 +177,20 @@ void FuncOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
                    llvm::ArrayRef<mlir::NamedAttribute> attrs) {
   // FunctionOpInterface provides a convenient `build` method that will populate
   // the state of our FuncOp, and create an entry block.
-  buildWithEntryBlock(builder, state, name, type, attrs, type.getInputs());
+    buildWithEntryBlock(builder, state, name, type, attrs, type.getInputs());
 }
 
 mlir::ParseResult FuncOp::parse(mlir::OpAsmParser &parser,
                                 mlir::OperationState &result) {
   // Dispatch to the FunctionOpInterface provided utility method that parses the
   // function operation.
-  auto buildFuncType =
+    auto buildFuncType =
       [](mlir::Builder &builder, llvm::ArrayRef<mlir::Type> argTypes,
          llvm::ArrayRef<mlir::Type> results,
          mlir::function_interface_impl::VariadicFlag,
          std::string &) { return builder.getFunctionType(argTypes, results); };
 
-  return mlir::function_interface_impl::parseFunctionOp(
+    return mlir::function_interface_impl::parseFunctionOp(
       parser, result, /*allowVariadic=*/false,
       getFunctionTypeAttrName(result.name), buildFuncType,
       getArgAttrsAttrName(result.name), getResAttrsAttrName(result.name));
@@ -199,7 +199,7 @@ mlir::ParseResult FuncOp::parse(mlir::OpAsmParser &parser,
 void FuncOp::print(mlir::OpAsmPrinter &p) {
   // Dispatch to the FunctionOpInterface provided utility method that prints the
   // function operation.
-  mlir::function_interface_impl::printFunctionOp(
+    mlir::function_interface_impl::printFunctionOp(
       p, *this, /*isVariadic=*/false, getFunctionTypeAttrName(),
       getArgAttrsAttrName(), getResAttrsAttrName());
 }
@@ -211,10 +211,10 @@ void FuncOp::print(mlir::OpAsmPrinter &p) {
 void GenericCallOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
                           StringRef callee, ArrayRef<mlir::Value> arguments) {
   // Generic call always returns an unranked Tensor initially.
-  state.addTypes(builder.getI32Type());
-  state.addOperands(arguments);
-  state.addAttribute("callee",
-                     mlir::SymbolRefAttr::get(builder.getContext(), callee));
+    state.addTypes(builder.getI32Type());
+    state.addOperands(arguments);
+    state.addAttribute("callee",
+                      mlir::SymbolRefAttr::get(builder.getContext(), callee));
 }
 
 
@@ -223,14 +223,14 @@ void GenericCallOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
 //===----------------------------------------------------------------------===//
 
 llvm::LogicalResult ReturnOp::verify() {
-  // We know that the parent operation is a function, because of the 'HasParent'
-  // trait attached to the operation definition.
-  auto function = cast<FuncOp>((*this)->getParentOp());
+    // We know that the parent operation is a function, because of the 'HasParent'
+    // trait attached to the operation definition.
+    auto function = cast<FuncOp>((*this)->getParentOp());
 
-  /// TODO: Check if type is the same as function type.
-  /// TODO: Make sure the returning variable is the same as return type.
+    /// TODO: Check if type is the same as function type.
+    /// TODO: Make sure the returning variable is the same as return type.
 
-  return mlir::success();
+    return mlir::success();
 }
 
 

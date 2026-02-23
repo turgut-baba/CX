@@ -45,8 +45,8 @@ namespace Lex {
 
 	void Lexer::ScanEqualSign()
 	{
-		IterForward();
 		LexicalChar cp = Peek();
+		IterForward();
 		current_token.SetType(TokenType::Operator);
 		switch (cp)
 		{

@@ -3,12 +3,13 @@
 
 #include "ASTNode.h"
 #include "Tokens/TokenTypes.h"
+#include "Memory/SlabAlloc.h"
 
 namespace AST {
 	class Expression: public ASTNode {
 	public:
 		Expression(AstNodeType node_type) 
-			: ASTNode(node_type) {}
+			: ASTNode(node_type){}
 
 		virtual ~Expression() = default;
 
@@ -19,6 +20,7 @@ namespace AST {
 
 		void Accept(NodeVisitor* v) override { v->Visit(this); }
 
+	private:
 		Lex::TokenKeyword type_; // TODO: turn this into a type class.
 	};
 }

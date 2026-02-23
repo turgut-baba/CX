@@ -4,7 +4,7 @@ namespace Parser {
 	AST::CallExpression* ExpressionParser::ParseFunctionCall(AST::Identifier* ident)
 	{
 		SlabVector<AST::Expression*> params(Allocator());
-		Lexer()->NextToken();
+		Lexer()->NextToken(); // Skip '('
 		while (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::RIGHT_PARENTHESES)) {
 			params.push_back(parse_expression());
 			if (Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::COMMA)) {
@@ -17,7 +17,7 @@ namespace Parser {
 	}
 
 
-	AST::ASTNode* ExpressionParser::CheckIdentifier()
+	AST::Expression* ExpressionParser::CheckIdentifier()
 	{
 		AST::Identifier* ident = Allocator()->Allocate<AST::Identifier>(Lexer()->GetToken().Ident());
 		ident->SetLocation(Lexer()->GetToken().GetLocation());
@@ -37,64 +37,27 @@ namespace Parser {
 	AST::Literal* ExpressionParser::CheckLiteral()
 	{
 		switch (Lexer()->GetToken().GetTokenType<Lex::TokenLiteral>()) {
-		case Lex::TokenLiteral::DECIMAL: {
-			int number = stoi(Lexer()->GetToken().Ident());
-			AST::IntegerLiteral* ident = Allocator()->Allocate<AST::IntegerLiteral>(number);
-			ident->SetLocation(Lexer()->GetToken().GetLocation());
-			return ident;
-		}
-
+			case Lex::TokenLiteral::DECIMAL: {
+				int number = stoi(Lexer()->GetToken().Ident());
+				AST::IntegerLiteral* ident = Allocator()->Allocate<AST::IntegerLiteral>(number);
+				ident->SetLocation(Lexer()->GetToken().GetLocation());
+				Lexer()->NextToken();
+				return ident;
+			}
 		}
 		return nullptr;
 	}
 
-	AST::Expression* ExpressionParser::ParseAdditiveExpression()
+	AST::Expression* ExpressionParser::ParseOperator(AST::ASTNode* lhs)
 	{
-		AST::ASTNode* lhs;
-
-		if (Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::LEFT_PARENTHESES)) {
-			// Check if the lhs is an expression itself with () for example: (a + 5) + b
-			Lexer()->NextToken();// Skip '('
-			lhs = parse_expression();
-			Lexer()->NextToken(); // Skip ')'
-		} else if (Lexer()->GetToken().Type() == Lex::TokenType::Literal) {
-			// Check individual literals for example: 5 + b
-			lhs = CheckLiteral();
-			Lexer()->NextToken();
-		} else {		
-			// Check individual identifiers for example: a + b
-			lhs = CheckIdentifier();
-		}
-
-		if (IsStatementEnd()) {
-			return (AST::Expression*)lhs;
-		}
-
-		if (Lexer()->GetToken().Type() != Lex::TokenType::Operator) {	
-			state_->diags.report<DiagLevel::Error>({}) 
-            	<< "Unexpected token. Expected ';' or an operator.";
-		}
-
 		const auto tokenType = Lexer()->GetToken().GetTokenType<Lex::TokenOperator>();
 		AST::Operator* operator_ = Allocator()->Allocate<AST::Operator>(tokenType);
 
 		lhs->SetParent(operator_);
 
-		Lexer()->NextToken();
+		Lexer()->NextToken(); // Skip the operator (don't need expected token here)
 
-		AST::ASTNode* rhs;
-		if (Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::LEFT_PARENTHESES)) {
-			Lexer()->NextToken();// Skip '('
-			rhs = parse_expression();
-			Lexer()->NextToken(); // Skip ')'		
-		} else if (Lexer()->GetToken().Type() == Lex::TokenType::Literal) {
-			
-			rhs = CheckLiteral();
-			Lexer()->NextToken();
-
-		} else {
-			rhs = CheckIdentifier();
-		}
+		AST::ASTNode* rhs = parse_expression();
 		
 		rhs->SetParent(operator_);
 
@@ -104,9 +67,48 @@ namespace Parser {
 		return operator_;
 	}
 
+	AST::Expression* ExpressionParser::ParseSingleExpression()
+	{
+		AST::Expression* expr;
+		if (Lexer()->GetToken().Type() == Lex::TokenType::Literal) {
+			expr = CheckLiteral();
+		} else if (Lexer()->GetToken().Type() == Lex::TokenType::Identifier) {	
+			expr = CheckIdentifier();
+		} else {
+			// TODO: also look for operators for Unary expressions. And some keywords
+			// like true or nullptr.
+			state_->diags.report<DiagLevel::Error>({}) 
+				<< "Unexpected token '" << Lexer()->GetToken().Ident() << "'. Expected an operator.";
+		}
+		return expr;
+	}
+
 	AST::Expression* ExpressionParser::parse_expression() 
 	{
-		return ParseAdditiveExpression();
+		AST::Expression* expr;
+		if (Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::LEFT_PARENTHESES)) {
+			// Check if the lhs is an expression itself with () for example: (a + 5) + b
+			Lexer()->NextToken();// Skip '('
+			expr = parse_expression();
+			Lexer()->NextToken(); // Skip ')'
+		} else {
+			expr = ParseSingleExpression();
+		}
+
+		if (IsStatementEnd() ||
+			Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::RIGHT_PARENTHESES) 
+		 ) {
+			return expr;
+		}
+
+		if(Lexer()->GetToken().Type() == Lex::TokenType::Operator) {
+			return ParseOperator(expr);
+		}
+
+		state_->diags.report<DiagLevel::Error>({}) 
+            << "Unexpected token. Expected an operator.";
+
+		return nullptr;
 	}
 
 	AST::Expression* ExpressionParser::parse_assignment()

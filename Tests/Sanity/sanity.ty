@@ -1,9 +1,15 @@
-int caller(){
-	int b = 4 + 3;
+int caller() {
+	int a = 4;
+	int b = ((a + 6) + 3);
+
 	return b;
 }
 
 int main() {
-	int c = 1 + 6;
+	int z = 3;
+	int c = (caller() + z) + 6;
+	if(c == 22) {
+		c = 3;
+	}
 	return c;
 }

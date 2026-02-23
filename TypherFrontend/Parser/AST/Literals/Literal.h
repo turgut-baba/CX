@@ -4,8 +4,9 @@
 #include "AST/ASTNode.h"
 
 namespace AST {
-	class Literal: public ASTNode {
-
+	class Literal: public Expression {
+	public:
+		Literal() : Expression(AstNodeType::LITERAL) { }
 	};
 }
 

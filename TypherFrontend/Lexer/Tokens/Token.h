@@ -49,11 +49,6 @@ namespace Lex {
 		template<typename TokenElavType>
 		bool IsTokenType(TokenElavType type);
 
-		TokenKeyword GetKeywordType()
-		{
-			return keyword_type;
-		}
-
 		void RestTokenTypes();
 
 		Location GetLocation() const

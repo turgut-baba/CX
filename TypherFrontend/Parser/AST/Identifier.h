@@ -3,11 +3,13 @@
 
 #include <iostream>
 #include "AST/ASTNode.h"
+#include "AST/Expression.h"
 
 namespace AST {
-	class Identifier: public ASTNode {
+	class Identifier: public Expression {
 	public:
-		Identifier(std::string value) : value_(value) { }
+		Identifier(std::string value) 
+			: Expression(AstNodeType::IDENTIFIER), value_(value) { }
 
 		std::string Value() const
 		{
