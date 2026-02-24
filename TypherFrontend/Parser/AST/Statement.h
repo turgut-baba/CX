@@ -15,6 +15,10 @@ namespace AST {
 			}
             return body_;
         }
+		void SetBody(Body* body)
+        {
+            body_ = body;
+        }
 		void Accept(NodeVisitor* v) override { v->Visit(this); }
 	protected:
 		virtual ~Statement() = default;

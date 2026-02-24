@@ -17,6 +17,7 @@ namespace Lex {
 	enum class TokenKeyword : uint32_t {
 		NOT_A_KEYWORD = 0, // If it's not a keyword
 		IF,
+		ELSE,
 		FOR,
 		WHILE,
 		ENUM,

@@ -63,12 +63,12 @@ protected:
 	template<typename TokenType>
 	void SkipToken(TokenType expected)
 	{
-		Lexer()->NextToken();
 		if (!Lexer()->GetToken().IsTokenType(expected))
 		{
 			state_->diags.report<DiagLevel::Error>({}) 
             	<< "Unexpected token, expected: " << (char)expected;
 		}
+		Lexer()->NextToken();
 	}
 protected:
 	AST::Identifier* ExpectIdentifier();

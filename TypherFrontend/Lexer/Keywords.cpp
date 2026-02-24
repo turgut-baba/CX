@@ -59,6 +59,9 @@ namespace Lex {
 		case hash("return"):
 			token.SetTokenType<TokenKeyword>(TokenKeyword::RETURN);
 			break;
+		case hash("else"):
+			token.SetTokenType<TokenKeyword>(TokenKeyword::ELSE);
+			break;
 		default:
 			token.SetType(TokenType::Identifier);
 		}

@@ -32,7 +32,7 @@ namespace Parser {
 		return statement;
 	}
 
-	AST::Statement* StatementParser::HandleIfKeyword()
+	AST::IfStatement* StatementParser::HandleIfStatement()
 	{
 		Lexer()->NextToken(); // Skip 'if';
 		Lexer()->NextToken(); // Skip '('
@@ -40,7 +40,36 @@ namespace Parser {
 		AST::IfStatement* if_statement = Allocator()->Allocate<AST::IfStatement>(condition, Allocator());
 		Lexer()->NextToken(); // Skip ')';
 
-		return ParseBody(if_statement);
+		AST::Body* if_body = ParseBody(if_statement); // Make this function return type Body.
+
+		if_statement->SetBody(if_body); // Set if_statement as it's body.
+
+		return if_statement;
+	}
+
+	AST::IfStatement* StatementParser::HandleIfKeyword()
+	{
+		// TODO: on subsequent if-else blocks each block gets nested parents. We want the first
+		// if statement to be the parent of all.
+		AST::IfStatement* if_statement = HandleIfStatement();
+
+		while (Lexer()->GetToken().IsTokenType<Lex::TokenKeyword>(Lex::TokenKeyword::ELSE)) 
+		{		
+			Lexer()->NextToken(); // Skip 'else';
+			std::cout << "Token: " << Lexer()->GetToken().Ident() << std::endl;
+			if(Lexer()->GetToken().IsTokenType<Lex::TokenKeyword>(Lex::TokenKeyword::IF))
+			{
+				AST::IfStatement* elif_statement = HandleIfStatement();
+				if_statement->AddElif(elif_statement);
+				elif_statement->SetParent(if_statement);
+			} else {
+				AST::Body* else_body = ParseBody(if_statement);
+				if_statement->SetElse(else_body);
+				break;
+			}
+		}
+
+		return if_statement;
 	}
 
 	// TODO: move this to expression parser. Declaration should be a statement but declarator should be 
@@ -118,13 +147,14 @@ namespace Parser {
 		return nullptr;
 	}
 
-	AST::Statement* StatementParser::ParseBody(AST::Statement* body)
+	AST::Body* StatementParser::ParseBody(AST::Statement* owner)
 	{
 		Lexer()->NextToken(); // Skip '{'
+		AST::Body* body = Allocator()->Allocate<AST::Body>(Allocator());
 		while (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::RIGHT_CURLY_BRACE)) {
 			auto statement = parse_statement();
-			statement->SetParent(body);
-			body->GetBody()->AddStatement(statement);
+			statement->SetParent(owner);
+			body->AddStatement(statement);
 		}
 		Lexer()->NextToken(); // Skip '}'
 		return body;
@@ -146,7 +176,10 @@ namespace Parser {
 			// return;
 		}
 
-		return ParseBody(functionDecl);
+		AST::Body* function_body = ParseBody(functionDecl);
+		functionDecl->SetBody(function_body);
+
+		return functionDecl;
 	}
 
 	AST::ReturnStatement* StatementParser::HandleReturnStatement()
@@ -179,6 +212,10 @@ namespace Parser {
 			break;
 		case Lex::TokenKeyword::IF:
 			statement = HandleIfKeyword();
+			break;
+		case Lex::TokenKeyword::ELSE:
+			state_->diags.report<DiagLevel::Error>({}) 
+				<< "Expected parent if statement.";
 			break;
 		case Lex::TokenKeyword::RETURN:
 			statement = HandleReturnStatement();
