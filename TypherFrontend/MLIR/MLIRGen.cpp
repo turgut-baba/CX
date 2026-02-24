@@ -46,7 +46,8 @@ namespace MLIR {
 	void Generator::GenBody(AST::Statement* node) 
 	{
 		llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> varScope(symbolTable);
-		for (AST::ASTNode* child: node->Chlidren()) {
+		
+		for (AST::ASTNode* child: node->GetBody()->Statements()) {
 			child->Accept(this);
 			// if (SOME ERROR HANDLING) { function.erase(); return; }
     	}

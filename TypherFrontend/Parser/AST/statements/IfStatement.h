@@ -8,12 +8,7 @@
 namespace AST {
     class IfStatement: public Statement {
     public:
-        IfStatement(Expression* expr)
-        {
-            // TODO: check if the expr is compatible with the if statement
-            expr->SetParent(this);
-            condition_ = expr;
-        }
+        IfStatement(Expression* expr, SlabAllocator* alloc);
 
         virtual std::string String() override
 		{
@@ -28,7 +23,6 @@ namespace AST {
         void Accept(NodeVisitor* v) override { v->Visit(this); }
     private:
         Expression* condition_;
-        SlabVector<Statement*> body_;
     };
 
 }

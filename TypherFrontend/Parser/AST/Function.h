@@ -12,14 +12,18 @@ namespace AST {
 	public:
 		virtual ~Function() = default;
 
-		Function() 
+		Function(SlabAllocator* alloc) 
 		{
+			body_ = alloc->Allocate<Body>(alloc);
+        	body_->SetOwner(this);
 			node_type_ = AstNodeType::FUNCTION;
 		}
 
-		Function(AST::Identifier* ident)
+		Function(AST::Identifier* ident, SlabAllocator* alloc)
 			:ident_(ident)
 		{
+			body_ = alloc->Allocate<Body>(alloc);
+        	body_->SetOwner(this);
 			node_type_ = AstNodeType::FUNCTION;
 		}
 
@@ -43,7 +47,6 @@ namespace AST {
 		// TODO: give better name to these variables
 		Lex::TokenKeyword ReturnType_; // TODO: turn this into a type class.
 		SlabVector<VariableDeclarator*> param_list_;
-		SlabVector<Statement*> statement_list_;
 		AST::Identifier* ident_;
 	};
 }

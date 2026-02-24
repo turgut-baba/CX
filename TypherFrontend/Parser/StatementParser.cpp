@@ -37,7 +37,7 @@ namespace Parser {
 		Lexer()->NextToken(); // Skip 'if';
 		Lexer()->NextToken(); // Skip '('
 		auto condition = state_->expression_parser->parse_expression();
-		AST::IfStatement* if_statement = Allocator()->Allocate<AST::IfStatement>(condition);
+		AST::IfStatement* if_statement = Allocator()->Allocate<AST::IfStatement>(condition, Allocator());
 		Lexer()->NextToken(); // Skip ')';
 
 		return ParseBody(if_statement);
@@ -124,6 +124,7 @@ namespace Parser {
 		while (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::RIGHT_CURLY_BRACE)) {
 			auto statement = parse_statement();
 			statement->SetParent(body);
+			body->GetBody()->AddStatement(statement);
 		}
 		Lexer()->NextToken(); // Skip '}'
 		return body;
@@ -132,7 +133,7 @@ namespace Parser {
 	AST::Statement* StatementParser::ParseFunction(AST::Identifier* ident)
 	{
 		Lexer()->NextToken(); // Skip '('
-		AST::Function* functionDecl = Allocator()->Allocate<AST::Function>(ident);
+		AST::Function* functionDecl = Allocator()->Allocate<AST::Function>(ident, Allocator());
 		while (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::RIGHT_PARENTHESES)) {
 			// ParseParameter();
 			if (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::COMMA)) {
