@@ -11,7 +11,13 @@ namespace AST {
 				OpType = OperatorKind::ADD;
 				break;
 			}
-		}
+			case Lex::TokenOperator::EQUALS:
+			{
+				std::cout << "in eq " << std::endl;
+				OpType = OperatorKind::EQS;
+				break;
+			}
+		} 
 	}
 
 	void Operator::SetLHS(AST::ASTNode* lhs)

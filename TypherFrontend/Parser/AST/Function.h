@@ -4,7 +4,7 @@
 #include "ASTNode.h"
 #include "Tokens/TokenTypes.h"
 #include "AST/Statement.h"
-#include "AST/Identifier.h"
+#include "AST/Expressions/Identifier.h"
 #include "AST/statements/VariableDeclaration.h"
 
 namespace AST {

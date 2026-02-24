@@ -26,6 +26,7 @@
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
 #include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/Dialect/SCF/IR/SCF.h"
+#include "mlir/Dialect/ControlFlow/IR/ControlFlowOps.h"
 #include "mlir/Pass/Pass.h"
 #include "mlir/Transforms/DialectConversion.h"
 #include "llvm/Support/Casting.h"
@@ -121,7 +122,7 @@ namespace MLIR{
             ConversionTarget target(getContext());
 
             target.addLegalDialect<affine::AffineDialect, BuiltinDialect,
-                         arith::ArithDialect, func::FuncDialect,
+                         arith::ArithDialect, func::FuncDialect, cf::ControlFlowDialect,
                          memref::MemRefDialect>();
 
             target.addIllegalDialect<mlir::typher::TypherDialect>();
@@ -132,8 +133,15 @@ namespace MLIR{
 
             
             RewritePatternSet patterns(&getContext());
-            patterns.add<AddOpLowering, CallOpLowering, ConstantOpLowering, FuncOpLowering, ReturnOpLowering>(
-                &getContext());
+            patterns.add<
+                AddOpLowering, 
+                CallOpLowering, 
+                ConstantOpLowering, 
+                FuncOpLowering, 
+                ReturnOpLowering,
+                IfOpLowering,
+                EqualsOpLowering
+                >(&getContext());
 
             if (failed(
                     applyPartialConversion(getOperation(), target, std::move(patterns))))

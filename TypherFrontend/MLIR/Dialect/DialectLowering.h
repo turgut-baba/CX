@@ -45,6 +45,65 @@ struct ConstantOpLowering : public OpConversionPattern<mlir::typher::ConstantOp>
 };
 
 
+struct IfOpLowering : public OpConversionPattern<typher::IfOp> {
+    using OpConversionPattern<typher::IfOp>::OpConversionPattern;
+
+    LogicalResult matchAndRewrite(typher::IfOp op, OpAdaptor adaptor,
+                                  ConversionPatternRewriter &rewriter) const override
+    {
+        auto loc = op.getLoc();
+
+        // 1. Get the block where the 'if' currently lives
+        Block *currentBlock = rewriter.getInsertionBlock();
+        
+        // 2. Split it: Everything before the 'if' stays in currentBlock,
+        // everything after moves to continuationBlock.
+        Block *continuationBlock = rewriter.splitBlock(currentBlock, op->getIterator());
+
+        // 3. Take the blocks out of the 'if' regions
+        // We "steal" the blocks from the 'if' and put them in the function
+        Block *thenBlock = &op.getThenRegion().front();
+        rewriter.inlineRegionBefore(op.getThenRegion(), continuationBlock);
+
+        // 4. Create the branch in the original block
+        rewriter.setInsertionPointToEnd(currentBlock);
+        
+        // If you don't have an else, the 'false' path goes straight to continuation
+        Block *elseBlock = continuationBlock; 
+        if (!op.getElseRegion().empty()) {
+            elseBlock = &op.getElseRegion().front();
+            rewriter.inlineRegionBefore(op.getElseRegion(), continuationBlock);
+        }
+
+        rewriter.create<mlir::cf::CondBranchOp>(loc, adaptor.getCondition(), thenBlock, elseBlock);
+
+        // 5. Delete the now-empty IfOp
+        rewriter.eraseOp(op);
+        return success();
+    }
+};
+
+struct EqualsOpLowering : public mlir::OpConversionPattern<typher::EqualsOp> {
+    using OpConversionPattern<typher::EqualsOp>::OpConversionPattern;
+
+    mlir::LogicalResult
+    matchAndRewrite(typher::EqualsOp op, OpAdaptor adaptor,
+                    mlir::ConversionPatternRewriter &rewriter) const override {
+        
+        // We replace typher.eq with arith.cmpi
+        // adaptor.getLhs() and adaptor.getRhs() give us the 
+        // already-lowered operands.
+        rewriter.replaceOpWithNewOp<mlir::arith::CmpIOp>(
+            op, 
+            mlir::arith::CmpIPredicate::eq, // This makes it an "equals" check
+            adaptor.getLhs(), 
+            adaptor.getRhs()
+        );
+
+        return mlir::success();
+    }
+};
+
 struct FuncOpLowering : public OpConversionPattern<mlir::typher::FuncOp> {
   using OpConversionPattern<mlir::typher::FuncOp>::OpConversionPattern;
 

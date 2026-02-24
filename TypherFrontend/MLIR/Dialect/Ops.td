@@ -188,12 +188,43 @@ def GenericCallOp : Typher_Op<"generic_call"> {
   ];
 }
 
+//===----------------------------------------------------------------------===//
+// IfOp
+//===----------------------------------------------------------------------===//
+
+def IfOp : Typher_Op<"if", [
+    RecursiveMemoryEffects, // Allows optimizations to look inside the regions
+    NoRegionArguments       // Standard 'if' blocks usually don't take args
+]> {
+    let summary = "If-then-else conditional operation";
+    let description = [{
+        An operation that executes the 'then' region if the condition is true,
+        and the 'else' region if the condition is false.
+    }];
+
+    // The condition must be a 1-bit integer (i1)
+    let arguments = (ins I1:$condition);
+
+    // We define two regions: 'then' and 'else'
+    let regions = (region SizedRegion<1>:$thenRegion, 
+                          MaxSizedRegion<1>:$elseRegion);
+
+    let assemblyFormat = [{
+        $condition $thenRegion (`else` $elseRegion^)? attr-dict
+    }];
+
+	let builders = [
+		OpBuilder<(ins "Value":$condition, "bool":$withElseRegion)>
+	];
+
+	let hasVerifier = 1;
+}
 
 //===----------------------------------------------------------------------===//
 // ReturnOp
 //===----------------------------------------------------------------------===//
 
-def ReturnOp : Typher_Op<"return", [Pure, HasParent<"FuncOp">,
+def ReturnOp : Typher_Op<"return", [Pure, ParentOneOf<["FuncOp", "IfOp"]>,
                                  Terminator]> {
   let summary = "return operation";
   let description = [{
@@ -228,6 +259,42 @@ def ReturnOp : Typher_Op<"return", [Pure, HasParent<"FuncOp">,
 
   // Invoke a static verify method to verify this return operation.
   let hasVerifier = 1;
+}
+
+
+//===----------------------------------------------------------------------===//
+// EqualsOp
+//===----------------------------------------------------------------------===//
+
+def EqualsOp : Typher_Op<"eq"> {
+    let arguments = (ins I32:$lhs, I32:$rhs);
+    let results = (outs I1:$result);
+
+    let builders = [
+        // Custom builder: Only takes lhs and rhs
+        OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+    ];
+    
+    let assemblyFormat = "$lhs `,` $rhs attr-dict `:` type($lhs)";
+}
+
+//===----------------------------------------------------------------------===//
+// YieldOp
+//===----------------------------------------------------------------------===//
+
+// Yield Operator: The required terminator for IfOp regions
+def YieldOp : Typher_Op<"yield", [Terminator]> {
+    let summary = "Terminator for regions";
+    let description = [{
+        Ends a block within a region (like the then/else blocks of an IfOp).
+    }];
+    
+    // We make it variadic so it can return values if your IfOp eventually does
+    let arguments = (ins Variadic<AnyType>:$operands);
+    let assemblyFormat = "attr-dict ($operands^ `:` type($operands))?";
+	let builders = [
+        OpBuilder<(ins), [{ /* Empty builder just creates the op */ }]>
+    ];
 }
 
 

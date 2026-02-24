@@ -36,8 +36,8 @@ namespace Parser {
 	{
 		Lexer()->NextToken(); // Skip 'if';
 		Lexer()->NextToken(); // Skip '('
-		auto expr = state_->expression_parser->parse_expression();
-		AST::IfStatement* if_statement = Allocator()->Allocate<AST::IfStatement>(expr);
+		auto condition = state_->expression_parser->parse_expression();
+		AST::IfStatement* if_statement = Allocator()->Allocate<AST::IfStatement>(condition);
 		Lexer()->NextToken(); // Skip ')';
 
 		return ParseBody(if_statement);

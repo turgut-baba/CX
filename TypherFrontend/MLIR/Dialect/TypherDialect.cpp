@@ -72,8 +72,8 @@ static void printBinaryOp(mlir::OpAsmPrinter &printer, mlir::Operation *op) {
     Type resultType = *op->result_type_begin();
     if (llvm::all_of(op->getOperandTypes(),
                     [=](Type type) { return type == resultType; })) {
-      printer << resultType;
-      return;
+      	printer << resultType;
+      	return;
     }
 
     // Otherwise, print a functional type.
@@ -100,7 +100,7 @@ mlir::ParseResult AddOp::parse(mlir::OpAsmParser &parser,
     // Parse: %lhs, %rhs : type
     if (parser.parseOperand(lhs) || parser.parseComma() || 
         parser.parseOperand(rhs) || parser.parseColonType(type))
-      return mlir::failure();
+    	return mlir::failure();
 
     // Resolve the operands against the parsed type
     if (parser.resolveOperands({lhs, rhs}, type, result.operands))
@@ -225,14 +225,67 @@ void GenericCallOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
 llvm::LogicalResult ReturnOp::verify() {
     // We know that the parent operation is a function, because of the 'HasParent'
     // trait attached to the operation definition.
-    auto function = cast<FuncOp>((*this)->getParentOp());
-
+    auto func = (*this)->getParentOfType<FuncOp>();
+	if (!func) {
+		return (*this)->emitOpError("is not nested inside a function!");
+	}
     /// TODO: Check if type is the same as function type.
     /// TODO: Make sure the returning variable is the same as return type.
 
     return mlir::success();
 }
 
+
+//===----------------------------------------------------------------------===//
+// EqualsOp
+//===----------------------------------------------------------------------===//
+
+void EqualsOp::build(mlir::OpBuilder &builder, mlir::OperationState &result, 
+                     mlir::Value lhs, mlir::Value rhs) {
+    // 1. Add the operands (the two integers to compare)
+    result.addOperands({lhs, rhs});
+
+    // 2. Add the result type (the i1 boolean)
+    result.addTypes(builder.getI1Type());
+}
+
+//===----------------------------------------------------------------------===//
+// YieldOp
+//===----------------------------------------------------------------------===//
+
+
+
+//===----------------------------------------------------------------------===//
+// IfOp
+//===----------------------------------------------------------------------===//
+
+void IfOp::build(OpBuilder &builder, OperationState &result, 
+                 Value condition, bool withElseRegion) {
+	// Add the condition operand
+	result.addOperands(condition);
+
+	// Create the 'then' region and its entry block
+	Region *thenRegion = result.addRegion();
+	thenRegion->push_back(new Block());
+
+	// Create the 'else' region (if requested)
+	Region *elseRegion = result.addRegion();
+	if (withElseRegion) {
+		elseRegion->push_back(new Block());
+	}
+}
+
+LogicalResult IfOp::verify() {
+  // 1. Check if 'then' region is empty
+	if (getThenRegion().empty())
+		return emitOpError("then region must not be empty");
+
+	// 2. Check if the condition is an i1
+	if (!getCondition().getType().isInteger(1))
+		return emitOpError("condition must be a 1-bit integer");
+
+	return success();
+}
 
 #define GET_OP_CLASSES
 #include "Ops.cpp.inc"

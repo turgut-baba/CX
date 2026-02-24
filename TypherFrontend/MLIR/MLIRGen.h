@@ -33,12 +33,15 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetSelect.h"
 
+
+
 #include "Dialect/TypherDialect.h"
 #include "AST/Function.h"
 #include "AST/Visitor.h"
 #include "AST/Expressions/Operator.h"
 #include "AST/Expressions/CallExpression.h"
 #include "AST/statements/ReturnStatement.h"
+#include "AST/statements/IfStatement.h"
 #include "AST/Literals/IntegerLiteral.h"
 
 #include <fstream>
@@ -74,6 +77,7 @@ namespace MLIR {
 		void Visit(AST::Operator* node) override;
 		void Visit(AST::CallExpression* node) override;
 		void Visit(AST::ReturnStatement* node) override;
+		void Visit(AST::IfStatement* node) override;
 
 		mlir::Location loc(const Location &loc) {
 			return mlir::FileLineColLoc::get(builder->getStringAttr(loc.file), loc.line, loc.col);
@@ -93,9 +97,10 @@ namespace MLIR {
 		llvm::ScopedHashTable<llvm::StringRef, mlir::Value> symbolTable;
 
 		mlir::Value retValue;
+		
 		mlir::DialectRegistry registry;
 		std::shared_ptr<mlir::MLIRContext> context;
-		void GenFunctionBody(AST::Function* node);
+		void GenBody(AST::Statement* node);
 	};
 }
 

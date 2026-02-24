@@ -12,7 +12,8 @@ namespace AST {
 		SUB,
 		MUL,
 		DIV,
-		MOD
+		MOD,
+		EQS,
 	};
 
 	class Operator : public Expression {

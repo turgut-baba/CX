@@ -43,7 +43,7 @@ namespace MLIR {
         theModule->dump();
 	}
 
-	void Generator::GenFunctionBody(AST::Function* node) 
+	void Generator::GenBody(AST::Statement* node) 
 	{
 		llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> varScope(symbolTable);
 		for (AST::ASTNode* child: node->Chlidren()) {
@@ -85,7 +85,8 @@ namespace MLIR {
 
 		builder->setInsertionPointToStart(&entryBlock);
 		
-		GenFunctionBody(node);
+		GenBody(node);
+
  		mlir::typher::ReturnOp returnOp;
 		if (!entryBlock.empty()) {
 			returnOp = dyn_cast<mlir::typher::ReturnOp>(entryBlock.back());
@@ -158,10 +159,10 @@ namespace MLIR {
 		auto location = loc(node->Loc());
 
 		// 'return' takes an optional expression, handle that case here.
-		bool has_expr = false;
 		if (node->Expr() != nullptr) {
 			node->Expr()->Accept(this);
-			has_expr = true;
+		} else {
+			//retValue = NULL;
 		}
 
 		// Otherwise, this return operation has zero operands.
@@ -183,6 +184,37 @@ namespace MLIR {
 			 loc(node->Loc()), (int)node->Value());
 	}
 
+	void Generator::Visit(AST::IfStatement* node) 
+	{
+		auto location = loc(node->Loc()); 
+		node->ConditionExpr()->Accept(this);
+		mlir::Value condition = retValue;
+		if (!condition)
+			return ;
+
+		auto ifOp = mlir::typher::IfOp::create(*builder, location, condition, 
+			/*withElse=*/false);
+
+ 		builder->setInsertionPointToStart(&ifOp.getThenRegion().front());
+		GenBody(node);
+		
+		if (builder->getBlock()->empty() || 
+			!builder->getBlock()->back().hasTrait<mlir::OpTrait::IsTerminator>()) {
+			mlir::typher::YieldOp::create(*builder, location );
+		}	
+
+		// 4. Fill 'else' block (if it exists)
+/* 		if (node.elseBody) {
+			builder.setInsertionPointToStart(&ifOp.getElseRegion().front());
+			if (mlir::failed(mlirGen(*node.elseBody)))
+				return mlir::failure();
+			builder.create<my_dialect::YieldOp>(loc);
+		}
+ */
+		builder->setInsertionPointAfter(ifOp);
+		return ; 
+	}
+
 	void Generator::Visit(AST::Operator* node) 
 	{
 		node->GetLHS()->Accept(this);
@@ -194,11 +226,15 @@ namespace MLIR {
 		mlir::Value rhs = retValue;
 		if (!rhs)
 			return;
-
 		auto location = loc(node->Loc());
 		switch(node->OperatorType()) {
 			case AST::OperatorKind::ADD: {
 				retValue = mlir::typher::AddOp::create(*builder, location, lhs, rhs);
+				break;
+			}
+			case AST::OperatorKind::EQS: {
+				retValue = mlir::typher::EqualsOp::create(*builder, location, lhs, rhs);
+				break;
 			}
 		}
 	}

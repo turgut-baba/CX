@@ -1,4 +1,4 @@
-#include "VariableDeclarator.h"
+#include "AST/Expressions/VariableDeclarator.h"
 
 namespace AST{
 	VariableDeclarator::VariableDeclarator(Expression* expr, Identifier* ident)

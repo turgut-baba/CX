@@ -8,9 +8,8 @@ int caller() {
 int main() {
 	int z = 3;
 	int c = (caller() + z) + 6;
-	if(c == 2) {
-		int g = 3;
-		return g;
+	if(z == 3) {
+		return z;
 	}
 	return c;
 }
