@@ -15,18 +15,20 @@ namespace AST {
 			}
             return body_;
         }
+		
 		void SetBody(Body* body)
         {
             body_ = body;
         }
-		void Accept(NodeVisitor* v) override { v->Visit(this); }
-	protected:
-		virtual ~Statement() = default;
 
 		std::string String() override
 		{
 			return "Statement node ";
 		}
+
+		void Accept(NodeVisitor* v) override { v->Visit(this); }
+	protected:
+		virtual ~Statement() = default;
 
 		Body* body_ = nullptr;
 	};

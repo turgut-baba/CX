@@ -17,19 +17,15 @@ namespace MLIR {
 
 	}
 
-	void Generator::Generate(SlabVector<AST::Statement*>& ASTTree) {
-
-		
-/* 		mlir::registerAsmPrinterCLOptions();
-        mlir::registerMLIRContextCLOptions(); */
+	void Generator::Generate(SlabVector<AST::Statement*>& ASTTree)
+	{
         context->getOrLoadDialect<mlir::typher::TypherDialect>();
 
 		builder = std::make_shared<mlir::OpBuilder>(context.get());
 		
 		theModule = mlir::ModuleOp::create(builder->getUnknownLoc());
 
-
-		// TODO: Add global(modular) context.
+		// TODO: Add global (modular) context.
     	llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> varScope(symbolTable);
 
 		for (AST::ASTNode* node : ASTTree)
@@ -43,15 +39,20 @@ namespace MLIR {
         theModule->dump();
 	}
 
-	void Generator::GenBody(AST::Statement* node) 
+	void Generator::GenBody(AST::Body* body, mlir::Location& location) 
 	{
 		llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> varScope(symbolTable);
 		
-		for (AST::ASTNode* child: node->GetBody()->Statements()) {
+		for (AST::ASTNode* child: body->Statements()) {
+			std::cout << "Eyo Statement" << std::endl;
 			child->Accept(this);
 			// if (SOME ERROR HANDLING) { function.erase(); return; }
     	}
-
+		
+		if (builder->getBlock()->empty() || 
+			!builder->getBlock()->back().hasTrait<mlir::OpTrait::IsTerminator>()) {
+			mlir::typher::YieldOp::create(*builder, location);
+		}
 	}
 
 	void Generator::Visit(AST::Function* node)
@@ -86,7 +87,7 @@ namespace MLIR {
 
 		builder->setInsertionPointToStart(&entryBlock);
 		
-		GenBody(node);
+		GenBody(node->GetBody(), location);
 
  		mlir::typher::ReturnOp returnOp;
 		if (!entryBlock.empty()) {
@@ -157,6 +158,7 @@ namespace MLIR {
 
 	void Generator::Visit(AST::ReturnStatement* node) 
 	{
+		std::cout << "Returnin" << std::endl;
 		auto location = loc(node->Loc());
 
 		// 'return' takes an optional expression, handle that case here.
@@ -194,24 +196,23 @@ namespace MLIR {
 			return ;
 
 		auto ifOp = mlir::typher::IfOp::create(*builder, location, condition, 
-			/*withElse=*/false);
+			node->HasElse() || node->HasElif());
 
  		builder->setInsertionPointToStart(&ifOp.getThenRegion().front());
-		GenBody(node);
+		GenBody(node->GetBody(), location);
 		
-		if (builder->getBlock()->empty() || 
-			!builder->getBlock()->back().hasTrait<mlir::OpTrait::IsTerminator>()) {
-			mlir::typher::YieldOp::create(*builder, location );
-		}	
-
-		// 4. Fill 'else' block (if it exists)
-/* 		if (node.elseBody) {
-			builder.setInsertionPointToStart(&ifOp.getElseRegion().front());
-			if (mlir::failed(mlirGen(*node.elseBody)))
-				return mlir::failure();
-			builder.create<my_dialect::YieldOp>(loc);
+		if(node->HasElif() ) {
+	
+			builder->setInsertionPointToStart(&ifOp.getElseRegion().front());
+			llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> varScope(symbolTable);
+			node->Elif()->Accept(this);
+			builder->setInsertionPointToEnd(&ifOp.getElseRegion().front());
+			mlir::typher::YieldOp::create(*builder, location);
+		} else if (node->HasElse()) {
+			builder->setInsertionPointToStart(&ifOp.getElseRegion().front());
+			GenBody(node->ElseBody(), location);
 		}
- */
+
 		builder->setInsertionPointAfter(ifOp);
 		return ; 
 	}

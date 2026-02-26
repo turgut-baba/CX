@@ -20,9 +20,9 @@ namespace AST {
             return condition_;
         }
 
-        void AddElif(IfStatement* elif)
+        void SetElif(IfStatement* elif)
         {
-            else_if_statements_.push_back(elif);
+            elif_statement_ = elif;
         }
 
         void SetElse(Body* els)
@@ -30,11 +30,31 @@ namespace AST {
             else_body_ = els;
         }
 
+        bool HasElif()
+        {
+            return elif_statement_ != nullptr;
+        }
+
+        bool HasElse()
+        {
+            return else_body_ != nullptr;
+        }
+
+        Body* ElseBody()
+        {
+            return else_body_;
+        }
+
+        IfStatement* Elif()
+        {
+            return elif_statement_;
+        }
+
         void Accept(NodeVisitor* v) override { v->Visit(this); }
     private:
         Expression* condition_;
         Body* else_body_ = nullptr;
-        SlabVector<IfStatement*> else_if_statements_;
+        IfStatement* elif_statement_ = nullptr;
     };
 
 }

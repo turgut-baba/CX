@@ -100,7 +100,7 @@ namespace MLIR {
 		
 		mlir::DialectRegistry registry;
 		std::shared_ptr<mlir::MLIRContext> context;
-		void GenBody(AST::Statement* node);
+		void GenBody(AST::Body* node, mlir::Location& location);
 	};
 }
 

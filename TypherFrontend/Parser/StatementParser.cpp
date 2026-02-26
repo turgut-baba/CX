@@ -32,40 +32,31 @@ namespace Parser {
 		return statement;
 	}
 
-	AST::IfStatement* StatementParser::HandleIfStatement()
+	AST::IfStatement* StatementParser::HandleIfKeyword()
 	{
+		// TODO: on subsequent if-else blocks each block gets nested parents. We want the first
+		// if statement to be the parent of all.
 		Lexer()->NextToken(); // Skip 'if';
+		
 		Lexer()->NextToken(); // Skip '('
 		auto condition = state_->expression_parser->parse_expression();
 		AST::IfStatement* if_statement = Allocator()->Allocate<AST::IfStatement>(condition, Allocator());
 		Lexer()->NextToken(); // Skip ')';
 
-		AST::Body* if_body = ParseBody(if_statement); // Make this function return type Body.
+		AST::Body* if_body = ParseBody(if_statement);
+		if_statement->SetBody(if_body);
 
-		if_statement->SetBody(if_body); // Set if_statement as it's body.
-
-		return if_statement;
-	}
-
-	AST::IfStatement* StatementParser::HandleIfKeyword()
-	{
-		// TODO: on subsequent if-else blocks each block gets nested parents. We want the first
-		// if statement to be the parent of all.
-		AST::IfStatement* if_statement = HandleIfStatement();
-
-		while (Lexer()->GetToken().IsTokenType<Lex::TokenKeyword>(Lex::TokenKeyword::ELSE)) 
+		if (Lexer()->GetToken().IsTokenType<Lex::TokenKeyword>(Lex::TokenKeyword::ELSE)) 
 		{		
 			Lexer()->NextToken(); // Skip 'else';
-			std::cout << "Token: " << Lexer()->GetToken().Ident() << std::endl;
 			if(Lexer()->GetToken().IsTokenType<Lex::TokenKeyword>(Lex::TokenKeyword::IF))
 			{
-				AST::IfStatement* elif_statement = HandleIfStatement();
-				if_statement->AddElif(elif_statement);
+				AST::IfStatement* elif_statement = HandleIfKeyword();
+				if_statement->SetElif(elif_statement);
 				elif_statement->SetParent(if_statement);
 			} else {
 				AST::Body* else_body = ParseBody(if_statement);
 				if_statement->SetElse(else_body);
-				break;
 			}
 		}
 

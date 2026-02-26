@@ -194,7 +194,8 @@ def GenericCallOp : Typher_Op<"generic_call"> {
 
 def IfOp : Typher_Op<"if", [
     RecursiveMemoryEffects, // Allows optimizations to look inside the regions
-    NoRegionArguments       // Standard 'if' blocks usually don't take args
+    NoRegionArguments, // Standard 'if' blocks usually don't take args
+    SingleBlock       
 ]> {
     let summary = "If-then-else conditional operation";
     let description = [{

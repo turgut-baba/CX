@@ -74,6 +74,7 @@ namespace MLIR{
 		}
         pm.run(module);
         LowerToLLVMIR(module);
+        module->dump();
     }
 
     struct TypherToLLVMLoweringPass

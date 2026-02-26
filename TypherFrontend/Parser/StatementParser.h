@@ -20,7 +20,6 @@ namespace Parser {
 	private:
 		SlabVector<AST::VariableDeclarator*> ParseDeclarators(AST::Identifier* ident);
 		AST::Statement* HandleKeywords();
-		AST::IfStatement* HandleIfStatement();
 		AST::IfStatement* HandleIfKeyword();
 		AST::Statement* PottentialVariableOrFunctionDecl();
 		

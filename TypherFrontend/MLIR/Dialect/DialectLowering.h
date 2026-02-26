@@ -44,7 +44,6 @@ struct ConstantOpLowering : public OpConversionPattern<mlir::typher::ConstantOp>
     }
 };
 
-
 struct IfOpLowering : public OpConversionPattern<typher::IfOp> {
     using OpConversionPattern<typher::IfOp>::OpConversionPattern;
 
@@ -53,31 +52,35 @@ struct IfOpLowering : public OpConversionPattern<typher::IfOp> {
     {
         auto loc = op.getLoc();
 
-        // 1. Get the block where the 'if' currently lives
-        Block *currentBlock = rewriter.getInsertionBlock();
-        
-        // 2. Split it: Everything before the 'if' stays in currentBlock,
-        // everything after moves to continuationBlock.
-        Block *continuationBlock = rewriter.splitBlock(currentBlock, op->getIterator());
+        auto fixTerminator = [&](Block *block, Block *dest) {
+            if (block->empty()) return;
 
-        // 3. Take the blocks out of the 'if' regions
-        // We "steal" the blocks from the 'if' and put them in the function
+            Operation *terminator = block->getTerminator();
+
+            if (auto yieldOp = llvm::dyn_cast<typher::YieldOp>(terminator)) {
+                rewriter.setInsertionPoint(yieldOp);
+                rewriter.replaceOpWithNewOp<mlir::cf::BranchOp>(yieldOp, dest);
+            }
+        };
+
+        Block *currentBlock = rewriter.getInsertionBlock();
+        Block *continuationBlock = rewriter.splitBlock(currentBlock, op->getIterator());
         Block *thenBlock = &op.getThenRegion().front();
+        Block *elseBlock = op.getElseRegion().empty() 
+                            ? continuationBlock 
+                            : &op.getElseRegion().front();
+
+        rewriter.setInsertionPointToEnd(currentBlock);
+        rewriter.create<mlir::cf::CondBranchOp>(loc, adaptor.getCondition(), thenBlock, elseBlock);
+
         rewriter.inlineRegionBefore(op.getThenRegion(), continuationBlock);
 
-        // 4. Create the branch in the original block
-        rewriter.setInsertionPointToEnd(currentBlock);
-        
-        // If you don't have an else, the 'false' path goes straight to continuation
-        Block *elseBlock = continuationBlock; 
+        fixTerminator(thenBlock, continuationBlock);
         if (!op.getElseRegion().empty()) {
-            elseBlock = &op.getElseRegion().front();
+            fixTerminator(elseBlock, continuationBlock);
             rewriter.inlineRegionBefore(op.getElseRegion(), continuationBlock);
         }
 
-        rewriter.create<mlir::cf::CondBranchOp>(loc, adaptor.getCondition(), thenBlock, elseBlock);
-
-        // 5. Delete the now-empty IfOp
         rewriter.eraseOp(op);
         return success();
     }
