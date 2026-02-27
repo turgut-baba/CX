@@ -43,7 +43,7 @@
 #include "AST/statements/ReturnStatement.h"
 #include "AST/statements/IfStatement.h"
 #include "AST/Literals/IntegerLiteral.h"
-
+#include "AST/statements/ExpressionStatement.h"
 #include <fstream>
 
 namespace MLIR {
@@ -78,6 +78,8 @@ namespace MLIR {
 		void Visit(AST::CallExpression* node) override;
 		void Visit(AST::ReturnStatement* node) override;
 		void Visit(AST::IfStatement* node) override;
+		void Visit(AST::ExpressionStatement* node) override;
+
 
 		mlir::Location loc(const Location &loc) {
 			return mlir::FileLineColLoc::get(builder->getStringAttr(loc.file), loc.line, loc.col);

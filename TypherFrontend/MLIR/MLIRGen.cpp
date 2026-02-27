@@ -26,7 +26,8 @@ namespace MLIR {
 		theModule = mlir::ModuleOp::create(builder->getUnknownLoc());
 
 		// TODO: Add global (modular) context.
-    	llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> varScope(symbolTable);
+    	
+		//llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> varScope(symbolTable);
 
 		for (AST::ASTNode* node : ASTTree)
       		node->Accept(this);
@@ -44,7 +45,6 @@ namespace MLIR {
 		llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> varScope(symbolTable);
 		
 		for (AST::ASTNode* child: body->Statements()) {
-			std::cout << "Eyo Statement" << std::endl;
 			child->Accept(this);
 			// if (SOME ERROR HANDLING) { function.erase(); return; }
     	}
@@ -53,6 +53,11 @@ namespace MLIR {
 			!builder->getBlock()->back().hasTrait<mlir::OpTrait::IsTerminator>()) {
 			mlir::typher::YieldOp::create(*builder, location);
 		}
+	}
+
+	void Generator::Visit(AST::ExpressionStatement* node)
+	{
+		node->Expr()->Accept(this);
 	}
 
 	void Generator::Visit(AST::Function* node)
@@ -107,19 +112,35 @@ namespace MLIR {
 
 	void Generator::Visit(AST::Statement* node)
 	{
+		
 	}
 
 	void Generator::Visit(AST::VariableDeclarator* node) 
 	{
-		if(node->Expr() == nullptr) {
-			if (auto variable = symbolTable.lookup(node->Name())) {
-				retValue = variable;
-				return;
-			}
-			// TODO: Log error, unknown variable.
-		}
+		auto location = loc(node->Loc());
 
-		node->Expr()->Accept(this);
+		mlir::Type varType = builder->getI32Type();
+
+		auto memrefType = mlir::MemRefType::get({}, varType);
+
+		mlir::Value address = mlir::typher::AllocaOp::create(*builder, 
+			location, memrefType);
+
+		if (node->Expr()) {
+			node->Expr()->Accept(this); // result ends up in retValue
+			mlir::Value initialValue = retValue;
+			
+			// Use your AssignOp to store the value into the new address
+			mlir::typher::AssignOp::create(*builder, location, initialValue, address);
+
+		}
+		// 5. Store the ADDRESS in the symbol table
+		mlir::StringAttr persistentName = builder->getStringAttr(node->Name());
+
+		// 2. Insert using the persistent StringRef
+		symbolTable.insert(persistentName.getValue(), address);
+
+		retValue = address;
 	}
 	
 	void Generator::Visit(AST::VariableDeclaration* node) 
@@ -158,7 +179,6 @@ namespace MLIR {
 
 	void Generator::Visit(AST::ReturnStatement* node) 
 	{
-		std::cout << "Returnin" << std::endl;
 		auto location = loc(node->Loc());
 
 		// 'return' takes an optional expression, handle that case here.
@@ -202,7 +222,6 @@ namespace MLIR {
 		GenBody(node->GetBody(), location);
 		
 		if(node->HasElif() ) {
-	
 			builder->setInsertionPointToStart(&ifOp.getElseRegion().front());
 			llvm::ScopedHashTableScope<llvm::StringRef, mlir::Value> varScope(symbolTable);
 			node->Elif()->Accept(this);
@@ -236,6 +255,11 @@ namespace MLIR {
 			}
 			case AST::OperatorKind::EQS: {
 				retValue = mlir::typher::EqualsOp::create(*builder, location, lhs, rhs);
+				break;
+			}
+			case AST::OperatorKind::ASN: {
+				mlir::typher::AssignOp::create(*builder, location, rhs, lhs);
+
 				break;
 			}
 		}

@@ -14,6 +14,7 @@ namespace AST {
 		DIV,
 		MOD,
 		EQS,
+		ASN
 	};
 
 	class Operator : public Expression {

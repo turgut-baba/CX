@@ -226,9 +226,9 @@ llvm::LogicalResult ReturnOp::verify() {
     // We know that the parent operation is a function, because of the 'HasParent'
     // trait attached to the operation definition.
     auto func = (*this)->getParentOfType<FuncOp>();
-	if (!func) {
-		return (*this)->emitOpError("is not nested inside a function!");
-	}
+    if (!func) {
+      return (*this)->emitOpError("is not nested inside a function!");
+    }
     /// TODO: Check if type is the same as function type.
     /// TODO: Make sure the returning variable is the same as return type.
 
@@ -248,12 +248,6 @@ void EqualsOp::build(mlir::OpBuilder &builder, mlir::OperationState &result,
     // 2. Add the result type (the i1 boolean)
     result.addTypes(builder.getI1Type());
 }
-
-//===----------------------------------------------------------------------===//
-// YieldOp
-//===----------------------------------------------------------------------===//
-
-
 
 //===----------------------------------------------------------------------===//
 // IfOp

@@ -13,8 +13,12 @@ namespace AST {
 			}
 			case Lex::TokenOperator::EQUALS:
 			{
-				std::cout << "in eq " << std::endl;
 				OpType = OperatorKind::EQS;
+				break;
+			}
+			case Lex::TokenOperator::ASSIGNMENT:
+			{
+				OpType = OperatorKind::ASN;
 				break;
 			}
 		} 

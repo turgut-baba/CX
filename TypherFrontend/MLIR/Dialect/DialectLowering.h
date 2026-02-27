@@ -44,6 +44,39 @@ struct ConstantOpLowering : public OpConversionPattern<mlir::typher::ConstantOp>
     }
 };
 
+struct AllocaLowering : public OpRewritePattern<typher::AllocaOp> {
+    using OpRewritePattern<typher::AllocaOp>::OpRewritePattern;
+
+    LogicalResult matchAndRewrite(typher::AllocaOp op, 
+                                  PatternRewriter &rewriter) const override {
+        // Just replace typher.alloca with memref.alloca
+        // The result type (memref<i32>) remains the same.
+        rewriter.replaceOpWithNewOp<memref::AllocaOp>(
+            op, op.getType());
+        return success();
+    }
+};
+
+struct AssignLowering : public OpRewritePattern<typher::AssignOp> {
+    using OpRewritePattern<typher::AssignOp>::OpRewritePattern;
+
+    LogicalResult matchAndRewrite(typher::AssignOp op, 
+                                  PatternRewriter &rewriter) const override {
+        // 1. Create the store: memref.store %value, %addr
+        rewriter.create<memref::StoreOp>(
+            op.getLoc(), op.getValue(), op.getAddr());
+
+        // 2. If your AssignOp returns a value (like C does), 
+        // replace usage of the result with the input value itself.
+        if (op->getNumResults() > 0) {
+            rewriter.replaceOp(op, op.getValue());
+        } else {
+            rewriter.eraseOp(op);
+        }
+        return success();
+    }
+};
+
 struct IfOpLowering : public OpConversionPattern<typher::IfOp> {
     using OpConversionPattern<typher::IfOp>::OpConversionPattern;
 

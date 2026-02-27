@@ -13,7 +13,8 @@ namespace AST {
     class CallExpression;
     class ReturnStatement;
     class IfStatement;
-    
+    class ExpressionStatement;
+
     class NodeVisitor {
     public:
         virtual void Visit(Function* node) = 0;
@@ -27,6 +28,7 @@ namespace AST {
         virtual void Visit(CallExpression* node) = 0;
         virtual void Visit(ReturnStatement* node) = 0;
         virtual void Visit(IfStatement* node) = 0;
+        virtual void Visit(ExpressionStatement* node) = 0;
     };
 }
 

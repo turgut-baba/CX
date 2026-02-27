@@ -94,6 +94,54 @@ def AddOp : Typher_Op<"add"> {
   ];
 }
 
+
+//===----------------------------------------------------------------------===//
+// AssignOp
+//===----------------------------------------------------------------------===//
+
+def AssignOp : Typher_Op<"assign"> {
+    let summary = "C-style assignment (store) operation";
+    let description = [{
+        Assigns a value to a memory location.
+        Example: `mylang.assign %val, %ptr : i32, memref<i32>`
+    }];
+
+    // Arguments: The value to store and the destination address
+    let arguments = (ins 
+        AnyType:$value, 
+        Arg<AnyMemRef, "the address to write to", [MemWrite]>:$addr
+    );
+    // C assignments usually don't return a value in the IR, 
+    // though the C expression 'a = 5' technically returns 5.
+    let results = (outs);
+
+    // Custom assembly: mylang.assign %5, %addr : i32, memref<i32>
+    let assemblyFormat = "$value `,` $addr attr-dict `:` type($value) `,` type($addr)";
+}
+
+
+//===----------------------------------------------------------------------===//
+// AllocaOp
+//===----------------------------------------------------------------------===//
+
+
+def AllocaOp : Typher_Op<"alloca"> {
+    let summary = "Stack allocation for a local variable";
+    let description = [{
+        Allocates memory on the stack for a single scalar value.
+        Example: `%ptr = mylang.alloca : memref<i32>`
+    }];
+
+    // No input arguments needed for a simple scalar allocation
+    let arguments = (ins);
+
+    // Returns a memory reference (the address of the variable)
+    let results = (outs AnyMemRef:$addr);
+
+    // Custom assembly: mylang.alloca : memref<i32>
+    let assemblyFormat = "attr-dict `:` type($addr)";
+}
+
 //===----------------------------------------------------------------------===//
 // FuncOp
 //===----------------------------------------------------------------------===//

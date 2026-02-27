@@ -141,7 +141,9 @@ namespace MLIR{
                 FuncOpLowering, 
                 ReturnOpLowering,
                 IfOpLowering,
-                EqualsOpLowering
+                EqualsOpLowering,
+                AllocaLowering,
+                AssignLowering
                 >(&getContext());
 
             if (failed(

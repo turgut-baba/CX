@@ -7,6 +7,7 @@
 #include "AST/Function.h"
 #include "AST/statements/ReturnStatement.h"
 #include "AST/statements/IfStatement.h"
+#include "AST/statements/ExpressionStatement.h"
 
 namespace Parser {
 	class StatementParser : public Parser 
@@ -19,7 +20,10 @@ namespace Parser {
 		AST::Statement* ParseFunction(AST::Identifier* ident);
 	private:
 		SlabVector<AST::VariableDeclarator*> ParseDeclarators(AST::Identifier* ident);
+
 		AST::Statement* HandleKeywords();
+		AST::Statement* HandleIdentifier();
+
 		AST::IfStatement* HandleIfKeyword();
 		AST::Statement* PottentialVariableOrFunctionDecl();
 		

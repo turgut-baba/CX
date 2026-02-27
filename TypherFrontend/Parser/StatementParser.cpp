@@ -19,11 +19,11 @@ namespace Parser {
 			statement = HandleKeywords();
 			break;
 		}
-		/*
 		case Lex::TokenType::Identifier:
-			//HandleIdentifier();
-			//break;
-		*/
+		{
+			statement = HandleIdentifier();
+			break;
+		}
 		default:
 			UNREACHABLE("Unknown statement start.");
 			return nullptr;
@@ -214,5 +214,17 @@ namespace Parser {
 		};
 
 		return statement;
+	}
+
+	AST::Statement* StatementParser::HandleIdentifier() 
+	{
+		auto expr = state_->expression_parser->parse_expression();
+
+		AST::ExpressionStatement* expr_statement = 
+			Allocator()->Allocate<AST::ExpressionStatement>(expr);
+
+		Lexer()->NextToken(); // Skip ';'
+
+		return expr_statement;
 	}
 }
