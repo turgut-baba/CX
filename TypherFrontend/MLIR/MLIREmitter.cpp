@@ -124,7 +124,7 @@ namespace MLIR{
 
             target.addLegalDialect<affine::AffineDialect, BuiltinDialect,
                          arith::ArithDialect, func::FuncDialect, cf::ControlFlowDialect,
-                         memref::MemRefDialect>();
+                         memref::MemRefDialect, mlir::LLVM::LLVMDialect>();
 
             target.addIllegalDialect<mlir::typher::TypherDialect>();
 /*             target.addDynamicallyLegalOp<toy::PrintOp>([](toy::PrintOp op) {
@@ -134,6 +134,14 @@ namespace MLIR{
 
             
             RewritePatternSet patterns(&getContext());
+            
+            mlir::LowerToLLVMOptions options(&getContext());
+            mlir::LLVMTypeConverter typeConverter(&getContext(), options);
+            
+            typeConverter.addConversion([&](mlir::MemRefType type) {
+                return mlir::LLVM::LLVMPointerType::get(type.getContext());
+            });
+
             patterns.add<
                 AddOpLowering, 
                 CallOpLowering, 
@@ -142,9 +150,10 @@ namespace MLIR{
                 ReturnOpLowering,
                 IfOpLowering,
                 EqualsOpLowering,
+                AssignLowering,
                 AllocaLowering,
-                AssignLowering
-                >(&getContext());
+                LoadLowering
+                >(typeConverter, &getContext());
 
             if (failed(
                     applyPartialConversion(getOperation(), target, std::move(patterns))))

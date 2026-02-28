@@ -143,6 +143,25 @@ def AllocaOp : Typher_Op<"alloca"> {
 }
 
 //===----------------------------------------------------------------------===//
+// LoadOp
+//===----------------------------------------------------------------------===//
+
+
+def LoadOp : Typher_Op<"load"> {
+    let summary = "Read a value from memory (dereference)";
+    let description = [{
+        Loads a scalar value from a memory location (memref).
+        This is used to convert an L-value (address) into an R-value (data).
+        Example: `%val = typher.load %ptr : memref<i32> -> i32`
+    }];
+
+    let arguments = (ins Arg<AnyMemRef, "the address to read from", [MemRead]>:$addr);
+    let results = (outs AnyType:$value);
+
+    let assemblyFormat = "$addr attr-dict `:` type($addr) `->` type($value)";
+}
+
+//===----------------------------------------------------------------------===//
 // FuncOp
 //===----------------------------------------------------------------------===//
 
@@ -292,7 +311,7 @@ def ReturnOp : Typher_Op<"return", [Pure, ParentOneOf<["FuncOp", "IfOp"]>,
 
   // The return operation takes an optional input operand to return. This
   // value must match the return type of the enclosing function.
-  let arguments = (ins I32:$input);
+  let arguments = (ins AnyTypeOf<[I32, AnyMemRef]>:$input);
 
   // The return operation only emits the input in the format if it is present.
   let assemblyFormat = "$input attr-dict `:` type($input)";
@@ -316,15 +335,15 @@ def ReturnOp : Typher_Op<"return", [Pure, ParentOneOf<["FuncOp", "IfOp"]>,
 //===----------------------------------------------------------------------===//
 
 def EqualsOp : Typher_Op<"eq"> {
-    let arguments = (ins I32:$lhs, I32:$rhs);
+    let arguments = (ins AnyTypeOf<[I32, AnyMemRef]>:$lhs, AnyTypeOf<[I32, AnyMemRef]>:$rhs);
     let results = (outs I1:$result);
 
     let builders = [
         // Custom builder: Only takes lhs and rhs
         OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
     ];
-    
-    let assemblyFormat = "$lhs `,` $rhs attr-dict `:` type($lhs)";
+
+    let assemblyFormat = "$lhs `,` $rhs attr-dict `:` type($lhs) `,` type($rhs)";
 }
 
 //===----------------------------------------------------------------------===//

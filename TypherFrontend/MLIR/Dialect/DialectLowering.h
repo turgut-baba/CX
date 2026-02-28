@@ -44,36 +44,70 @@ struct ConstantOpLowering : public OpConversionPattern<mlir::typher::ConstantOp>
     }
 };
 
-struct AllocaLowering : public OpRewritePattern<typher::AllocaOp> {
-    using OpRewritePattern<typher::AllocaOp>::OpRewritePattern;
+struct AllocaLowering : public OpConversionPattern<typher::AllocaOp> {
+    using OpConversionPattern<typher::AllocaOp>::OpConversionPattern;
 
-    LogicalResult matchAndRewrite(typher::AllocaOp op, 
-                                  PatternRewriter &rewriter) const override {
-        // Just replace typher.alloca with memref.alloca
-        // The result type (memref<i32>) remains the same.
-        rewriter.replaceOpWithNewOp<memref::AllocaOp>(
-            op, op.getType());
-        return success();
+    mlir::LogicalResult
+    matchAndRewrite(typher::AllocaOp op, OpAdaptor adaptor,
+                    mlir::ConversionPatternRewriter &rewriter) const override {
+        auto allocaOp = mlir::cast<typher::AllocaOp>(op);
+        auto loc = op->getLoc();
+
+        // 1. Get the underlying element type (e.g., i32 from memref<i32>)
+        auto memrefType = mlir::cast<mlir::MemRefType>(allocaOp.getAddr().getType());
+        auto elementType = typeConverter->convertType(memrefType.getElementType());;
+
+        // 2. Create a constant '1' for the number of elements to allocate
+        auto one = rewriter.create<mlir::LLVM::ConstantOp>(
+            loc, rewriter.getI64Type(), rewriter.getI64IntegerAttr(1));
+
+        // 3. Create the LLVM Alloca (returns a !llvm.ptr)
+        auto llvmPtr = rewriter.create<mlir::LLVM::AllocaOp>(
+            loc, mlir::LLVM::LLVMPointerType::get(getContext()), elementType, one);
+
+        rewriter.replaceOp(op, llvmPtr);
+        return mlir::success();
     }
 };
 
-struct AssignLowering : public OpRewritePattern<typher::AssignOp> {
-    using OpRewritePattern<typher::AssignOp>::OpRewritePattern;
+struct LoadLowering : public OpConversionPattern<typher::LoadOp> {
+    using OpConversionPattern<typher::LoadOp>::OpConversionPattern;
 
-    LogicalResult matchAndRewrite(typher::AssignOp op, 
-                                  PatternRewriter &rewriter) const override {
-        // 1. Create the store: memref.store %value, %addr
-        rewriter.create<memref::StoreOp>(
-            op.getLoc(), op.getValue(), op.getAddr());
+    mlir::LogicalResult
+    matchAndRewrite(typher::LoadOp op, OpAdaptor adaptor,
+                    mlir::ConversionPatternRewriter &rewriter) const override {
+        
+        auto loc = op.getLoc();
 
-        // 2. If your AssignOp returns a value (like C does), 
-        // replace usage of the result with the input value itself.
-        if (op->getNumResults() > 0) {
-            rewriter.replaceOp(op, op.getValue());
-        } else {
-            rewriter.eraseOp(op);
-        }
-        return success();
+        // 1. Get the already-converted !llvm.ptr from the adaptor
+        // (This was produced by your AllocaLowering)
+        mlir::Value llvmPtr = adaptor.getAddr();
+
+        // 2. Determine the result type (e.g., i32)
+        // We ask the typeConverter to make sure i32 is valid for LLVM
+        mlir::Type resType = typeConverter->convertType(op.getValue().getType());
+
+        // 3. Replace typher.load with llvm.load
+        // Modern LLVM Load requires: (location, resultType, pointer)
+        rewriter.replaceOpWithNewOp<mlir::LLVM::LoadOp>(op, resType, llvmPtr);
+        
+        return mlir::success();
+    }
+};
+
+struct AssignLowering : public OpConversionPattern<typher::AssignOp> {
+    using OpConversionPattern<typher::AssignOp>::OpConversionPattern;
+
+    mlir::LogicalResult
+    matchAndRewrite(typher::AssignOp op, OpAdaptor adaptor,
+                    mlir::ConversionPatternRewriter &rewriter) const override {
+        mlir::Value targetAddr = adaptor.getAddr();
+        mlir::Value valueToStore = adaptor.getValue();
+        // Perform the LLVM store
+        rewriter.create<mlir::LLVM::StoreOp>(op.getLoc(), valueToStore, targetAddr);
+
+        rewriter.eraseOp(op);
+        return mlir::success();
     }
 };
 
@@ -125,15 +159,27 @@ struct EqualsOpLowering : public mlir::OpConversionPattern<typher::EqualsOp> {
     mlir::LogicalResult
     matchAndRewrite(typher::EqualsOp op, OpAdaptor adaptor,
                     mlir::ConversionPatternRewriter &rewriter) const override {
-        
-        // We replace typher.eq with arith.cmpi
-        // adaptor.getLhs() and adaptor.getRhs() give us the 
-        // already-lowered operands.
+        auto loc = op.getLoc();
+        mlir::Value lhs = adaptor.getLhs();
+        mlir::Value rhs = adaptor.getRhs();
+
+        // 1. Check if they are memrefs. If so, load the value.
+        // Assuming these are 0-dimensional memrefs (like a pointer to a single int)
+        if (mlir::isa<mlir::MemRefType>(lhs.getType())) {
+            // Note: If you're using 'mlir' namespace, you can just use 'isa'
+            lhs = rewriter.create<mlir::memref::LoadOp>(loc, lhs);
+        }
+        if (mlir::isa<mlir::MemRefType>(rhs.getType())) {
+            // Note: If you're using 'mlir' namespace, you can just use 'isa'
+            rhs = rewriter.create<mlir::memref::LoadOp>(loc, rhs);
+        }
+
+        // 2. Now both lhs and rhs are 'i32' (signless-integer-like)
         rewriter.replaceOpWithNewOp<mlir::arith::CmpIOp>(
             op, 
-            mlir::arith::CmpIPredicate::eq, // This makes it an "equals" check
-            adaptor.getLhs(), 
-            adaptor.getRhs()
+            mlir::arith::CmpIPredicate::eq, 
+            lhs, 
+            rhs
         );
 
         return mlir::success();
@@ -161,7 +207,18 @@ struct ReturnOpLowering : public OpConversionPattern<mlir::typher::ReturnOp> {
     LogicalResult matchAndRewrite(mlir::typher::ReturnOp op, OpAdaptor adaptor,
                   ConversionPatternRewriter &rewriter) const
     {
-        rewriter.replaceOpWithNewOp<func::ReturnOp>(op, adaptor.getOperands());
+        auto loc = op.getLoc();
+        mlir::Value returnValue = adaptor.getOperands()[0];
+
+        // If we are trying to return a memref to a function expecting an i32:
+        if (mlir::isa<mlir::MemRefType>(returnValue.getType())) {
+            // Dereference the memref to get the actual i32 value
+            std::cout << "asdfasdf" << std::endl;
+            auto i32Type = rewriter.getI32Type();
+            mlir::Value loadedVal = rewriter.create<mlir::LLVM::LoadOp>(loc, i32Type, returnValue);
+        }
+
+        rewriter.replaceOpWithNewOp<mlir::func::ReturnOp>(op, returnValue);
         return success();
     }
 };

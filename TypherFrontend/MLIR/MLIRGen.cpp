@@ -12,6 +12,15 @@ namespace MLIR {
 		context = std::make_shared<mlir::MLIRContext>(registry);
 	}
 
+	mlir::Value Generator::LvalueToRvalue(mlir::Value addr, mlir::Location location)
+	{
+		auto elementType = mlir::cast<mlir::MemRefType>(addr.getType()).getElementType();
+		mlir::Value val = mlir::typher::LoadOp::create(*builder, location,
+			elementType, addr);
+
+		return val; 
+	}
+
 	Generator::~Generator()
 	{
 
@@ -132,7 +141,6 @@ namespace MLIR {
 			
 			// Use your AssignOp to store the value into the new address
 			mlir::typher::AssignOp::create(*builder, location, initialValue, address);
-
 		}
 		// 5. Store the ADDRESS in the symbol table
 		mlir::StringAttr persistentName = builder->getStringAttr(node->Name());
@@ -184,6 +192,11 @@ namespace MLIR {
 		// 'return' takes an optional expression, handle that case here.
 		if (node->Expr() != nullptr) {
 			node->Expr()->Accept(this);
+			mlir::Value addr = retValue; // This is the memref<i32> from symbolTable
+
+			mlir::typher::ReturnOp::create(*builder, location,
+				addr);
+			return;
 		} else {
 			//retValue = NULL;
 		}
@@ -195,11 +208,18 @@ namespace MLIR {
 
 	void Generator::Visit(AST::Identifier* node) 
 	{
+		auto location = loc(node->Loc());
+
 		if (auto variable = symbolTable.lookup(node->Value()))
-      		retValue = variable;
+		{		
+			retValue = LvalueToRvalue(variable, location);
+      		//retValue = variable;
+		}
 		// TODO: log error
 		return;
 	}
+
+	
 
 	void Generator::Visit(AST::IntegerLiteral* node) 
 	{
@@ -238,16 +258,25 @@ namespace MLIR {
 
 	void Generator::Visit(AST::Operator* node) 
 	{
-		node->GetLHS()->Accept(this);
-		mlir::Value lhs = retValue;
-		if (!lhs)
-			return;
+		auto location = loc(node->Loc());
 
 		node->GetRHS()->Accept(this);
 		mlir::Value rhs = retValue;
 		if (!rhs)
 			return;
-		auto location = loc(node->Loc());
+
+		if(node->OperatorType() ==  AST::OperatorKind::ASN)
+		{
+			if (auto lvalue = symbolTable.lookup(((AST::Identifier*)node->GetLHS())->Value()))
+				mlir::typher::AssignOp::create(*builder, location, rhs, lvalue);
+			return;
+		}
+
+		node->GetLHS()->Accept(this);
+		mlir::Value lhs = retValue;
+		if (!lhs)
+			return;
+		
 		switch(node->OperatorType()) {
 			case AST::OperatorKind::ADD: {
 				retValue = mlir::typher::AddOp::create(*builder, location, lhs, rhs);
@@ -255,11 +284,6 @@ namespace MLIR {
 			}
 			case AST::OperatorKind::EQS: {
 				retValue = mlir::typher::EqualsOp::create(*builder, location, lhs, rhs);
-				break;
-			}
-			case AST::OperatorKind::ASN: {
-				mlir::typher::AssignOp::create(*builder, location, rhs, lhs);
-
 				break;
 			}
 		}
