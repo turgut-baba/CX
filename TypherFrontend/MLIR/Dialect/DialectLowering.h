@@ -213,7 +213,6 @@ struct ReturnOpLowering : public OpConversionPattern<mlir::typher::ReturnOp> {
         // If we are trying to return a memref to a function expecting an i32:
         if (mlir::isa<mlir::MemRefType>(returnValue.getType())) {
             // Dereference the memref to get the actual i32 value
-            std::cout << "asdfasdf" << std::endl;
             auto i32Type = rewriter.getI32Type();
             mlir::Value loadedVal = rewriter.create<mlir::LLVM::LoadOp>(loc, i32Type, returnValue);
         }

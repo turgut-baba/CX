@@ -19,6 +19,16 @@ enum class AstNodeType { // TODO: move this to a seperate file
 	LITERAL
 };
 
+enum class AstBuiltinTypes { // TODO: move this to a seperate file
+	NONE = 0,
+	VOID,
+	BOOL,
+	CHAR,
+	INT,
+	FLOAT,
+	DOUBLE
+};
+
 namespace AST {
 
 	class ASTNode;

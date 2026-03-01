@@ -7,6 +7,7 @@
 #include "AST/Visitor.h"
 
 namespace AST {
+
 	class VariableDeclarator : public Expression {
 	public:
 		VariableDeclarator()

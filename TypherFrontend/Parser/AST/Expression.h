@@ -6,6 +6,7 @@
 #include "Memory/SlabAlloc.h"
 
 namespace AST {
+	
 	class Expression: public ASTNode {
 	public:
 		Expression(AstNodeType node_type) 

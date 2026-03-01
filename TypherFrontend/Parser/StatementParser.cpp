@@ -1,5 +1,6 @@
 #include "StatementParser.h"
 #include "ExpressionParser.h"
+#include "Helpers.h"
 
 namespace Parser {
 	StatementParser::StatementParser(std::shared_ptr<ParserState> state)
@@ -105,7 +106,8 @@ namespace Parser {
 	{
 		// AST::Statement* statement = state_->assignment_parser->parse_assignment();
 
-		Lex::TokenKeyword type = Lexer()->GetToken().GetTokenType<Lex::TokenKeyword>(); // Turn this into a type class.
+		Lex::TokenKeyword token_style_type = Lexer()->GetToken().GetTokenType<Lex::TokenKeyword>(); // TODO: Turn this into a type class.
+		AstBuiltinTypes type = TokenTypeToAstType(token_style_type);
 		auto Ident = ExpectIdentifier();
 
 		Lexer()->NextToken();
@@ -117,7 +119,7 @@ namespace Parser {
 					return ParseFunction(Ident);
 				} else if (token.IsTokenType(Lex::TokenPunctuator::SEMICOLON)) {
 					auto declarator = Allocator()->Allocate<AST::VariableDeclarator>(Ident);
-					auto declaration = Allocator()->Allocate<AST::VariableDeclaration>(declarator, Allocator());
+					auto declaration = Allocator()->Allocate<AST::VariableDeclaration>(declarator, Allocator(), type);
 					Lexer()->NextToken();
 					return declaration;
 				}
@@ -130,7 +132,7 @@ namespace Parser {
 			{
 				if (token.IsTokenType(Lex::TokenOperator::ASSIGNMENT)) {
 					auto declarators = ParseDeclarators(Ident); // THIS CAUSES AN ERROR. 
-					return Allocator()->Allocate<AST::VariableDeclaration>(declarators);
+					return Allocator()->Allocate<AST::VariableDeclaration>(declarators, type);
 				}
 			}
 		}

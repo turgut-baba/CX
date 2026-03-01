@@ -66,10 +66,10 @@ add_executable (TypherCompiler "Core/TypherCompiler.cpp"
 "Parser/ExpressionParser.cpp" 
 "Parser/AST/Literals/Literal.h"
 "Parser/AST/Expressions/VariableDeclarator.cpp"
+"Parser/AST/statements/VariableDeclaration.cpp"
 "Parser/AST/Expressions/CallExpression.cpp"
 "Parser/AST/Expressions/Operator.cpp" 
 "Parser/AST/Statements.cpp"
-"Parser/AST/statements/VariableDeclaration.cpp"
 "Parser/AST/statements/IfStatement.cpp"
 "Parser/AST/statements/ReturnStatement.cpp"
 "Parser/AST/statements/ExpressionStatement.cpp"
@@ -140,7 +140,6 @@ target_link_libraries(TypherCompiler PRIVATE
 )
 
 llvm_config(TypherCompiler support core irreader)
-
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET TypherCompiler PROPERTY CXX_STANDARD 20)

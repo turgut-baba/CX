@@ -1,4 +1,5 @@
 #include "MLIRGen.h" // TODO: change this to checker/analyzer.
+#include "MLIRHelpers.h"
 
 namespace MLIR {
 	using llvm::dyn_cast;
@@ -128,7 +129,7 @@ namespace MLIR {
 	{
 		auto location = loc(node->Loc());
 
-		mlir::Type varType = builder->getI32Type();
+		mlir::Type varType = ASTTypeToMlirType(((AST::VariableDeclaration*)node->Parent())->Type(), builder);
 
 		auto memrefType = mlir::MemRefType::get({}, varType);
 
@@ -224,7 +225,7 @@ namespace MLIR {
 	void Generator::Visit(AST::IntegerLiteral* node) 
 	{
 		retValue = mlir::typher::ConstantOp::create(*builder,
-			 loc(node->Loc()), (int)node->Value());
+			 loc(node->Loc()), builder->getI32Type(), (int)node->Value());
 	}
 
 	void Generator::Visit(AST::IfStatement* node) 

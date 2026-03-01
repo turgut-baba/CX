@@ -15,6 +15,8 @@ def Typher_Dialect : Dialect {
   let summary = "A dialect for Typher langauge that uses C-language constructs.";
 }
 
+def C_Type : AnyTypeOf<[I1, I8, I16, I32, I64, F32, F64]>;
+
 // Base class for toy dialect operations. This operation inherits from the base
 // `Op` class in OpBase.td, and provides:
 //   * The parent dialect of the operation.
@@ -27,6 +29,11 @@ class Typher_Op<string mnemonic, list<Trait> traits = []> :
 // Typher Operations
 //===----------------------------------------------------------------------===//
 
+def CastOp : Typher_Op<"cast"> {
+    let summary = "Cast between C types";
+    let arguments = (ins C_Type:$input);
+    let results = (outs C_Type:$output);
+}
 
 //===----------------------------------------------------------------------===//
 // ConstantOp
@@ -53,12 +60,12 @@ def ConstantOp : Typher_Op<"constant", [Pure]> {
   let arguments = (ins AnyAttr:$value);
 
   // 2. Changed result to be a scalar integer or float
-  let results = (outs I32:$result);
+  let results = (outs C_Type:$result);
 
   let hasCustomAssemblyFormat = 1;
 
   let builders = [
-    OpBuilder<(ins "int":$value)>,
+    OpBuilder<(ins "mlir::Type":$type, "int":$value)>
   ];
 
   let hasVerifier = 1;
@@ -239,10 +246,10 @@ def GenericCallOp : Typher_Op<"generic_call"> {
 
   // The generic call operation takes a symbol reference attribute as the
   // callee, and inputs for the call.
-  let arguments = (ins FlatSymbolRefAttr:$callee, Variadic<I32>:$inputs);
+  let arguments = (ins FlatSymbolRefAttr:$callee, Variadic<C_Type>:$inputs);
 
   // The generic call operation returns a single value of TensorType.
-  let results = (outs Variadic<I32>);
+  let results = (outs Variadic<C_Type>);
 
   // Specialize assembly printing and parsing using a declarative format.
   let assemblyFormat = [{
@@ -311,7 +318,7 @@ def ReturnOp : Typher_Op<"return", [Pure, ParentOneOf<["FuncOp", "IfOp"]>,
 
   // The return operation takes an optional input operand to return. This
   // value must match the return type of the enclosing function.
-  let arguments = (ins AnyTypeOf<[I32, AnyMemRef]>:$input);
+  let arguments = (ins AnyTypeOf<[C_Type, AnyMemRef]>:$input);
 
   // The return operation only emits the input in the format if it is present.
   let assemblyFormat = "$input attr-dict `:` type($input)";
@@ -335,7 +342,7 @@ def ReturnOp : Typher_Op<"return", [Pure, ParentOneOf<["FuncOp", "IfOp"]>,
 //===----------------------------------------------------------------------===//
 
 def EqualsOp : Typher_Op<"eq"> {
-    let arguments = (ins AnyTypeOf<[I32, AnyMemRef]>:$lhs, AnyTypeOf<[I32, AnyMemRef]>:$rhs);
+    let arguments = (ins AnyTypeOf<[C_Type, AnyMemRef]>:$lhs, AnyTypeOf<[C_Type, AnyMemRef]>:$rhs);
     let results = (outs I1:$result);
 
     let builders = [

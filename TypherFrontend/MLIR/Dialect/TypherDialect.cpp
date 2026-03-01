@@ -14,6 +14,8 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Casting.h"
 
+#include <iostream>
+
 using namespace mlir;
 using namespace mlir::typher;
 
@@ -124,16 +126,9 @@ void AddOp::print(mlir::OpAsmPrinter &p) {
 /// expected to fill in order to build the operation.
 // 1. Updated Builder: Now creates a scalar F64 type and a FloatAttr
 void ConstantOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
-                       int value) {
-  // 1. Create the scalar type (C-style i32)
-    mlir::Type type = builder.getI32Type();
-
-    // 2. Create the Attribute (the actual data)
+                       mlir::Type type, int value) {
     mlir::IntegerAttr attr = builder.getIntegerAttr(type, value);
 
-    // 3. Call the GENERATED builder from TableGen.
-    // This version expects: (builder, state, resultType, attribute)
-    // This breaks the recursion because the arguments are different types!
     ConstantOp::build(builder, state, type, attr);
 }
 
