@@ -99,12 +99,11 @@ namespace Lex {
 		std::string number_str(1, static_cast<char>(start_letter_));
 		auto token = lexer_->Peek();
 
-		while (LexicalChar::NUM_0 < token && token < LexicalChar::NUM_9) {
+		while (LexicalChar::NUM_0 <= token && token <= LexicalChar::NUM_9) {
 			std::string letter(1, static_cast<char>(token));
 			number_str += letter;
 			lexer_->IterForward();
 			token = lexer_->Peek();
-			std::cout << "Gonna loop" << std::endl;
 		}
 
 		int value;

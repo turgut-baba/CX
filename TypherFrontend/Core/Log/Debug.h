@@ -33,16 +33,20 @@ enum class DEBUG_LEVEL {
     DEEP = 3
 };
 
-void log_err(std::string msg);
+// TODO: move this to logger.cpp
+template<typename... Args>
+void log_err(Args&&... args) {
+    (std::cerr << ... << args) << std::endl;
+}
 
 #if defined(__cplusplus) && __cplusplus >= 201103L
 
     #define COMPILER_STATIC_ASSERT_MSG(condition, msg) static_assert(condition, msg)
     #define COMPILER_STATIC_ASSERT(condition) static_assert(condition, "")
 
-    #define COMPILER_ASSERT(condition) if(!condition) { \
-        log_err("ASSERTION FAILED: " );                 \
-        quit();                                         \
+    #define COMPILER_ASSERT(condition, msg) if(!condition) { \
+        log_err("ASSERTION FAILED: ", msg );                 \
+        exit(0);                                         \
     }
 
 #else

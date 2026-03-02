@@ -115,8 +115,7 @@ namespace MLIR{
         StringRef getArgument() const override { return "typher-to-affine"; }
 
         void getDependentDialects(DialectRegistry &registry) const override {
-            registry.insert<affine::AffineDialect, func::FuncDialect,
-                            memref::MemRefDialect>();
+            registry.insert<affine::AffineDialect, func::FuncDialect, memref::MemRefDialect>();
         }
         void runOnOperation() 
         {
@@ -124,7 +123,7 @@ namespace MLIR{
 
             target.addLegalDialect<affine::AffineDialect, BuiltinDialect,
                          arith::ArithDialect, func::FuncDialect, cf::ControlFlowDialect,
-                         memref::MemRefDialect, mlir::LLVM::LLVMDialect>();
+                         scf::SCFDialect, memref::MemRefDialect, mlir::LLVM::LLVMDialect>();
 
             target.addIllegalDialect<mlir::typher::TypherDialect>();
 /*             target.addDynamicallyLegalOp<toy::PrintOp>([](toy::PrintOp op) {
@@ -152,7 +151,8 @@ namespace MLIR{
                 EqualsOpLowering,
                 AssignLowering,
                 AllocaLowering,
-                LoadLowering
+                LoadLowering,
+                WhileLowering
                 >(typeConverter, &getContext());
 
             if (failed(

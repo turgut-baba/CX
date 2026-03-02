@@ -7,13 +7,15 @@
 #include "AST/Function.h"
 #include "AST/statements/ReturnStatement.h"
 #include "AST/statements/IfStatement.h"
+#include "AST/statements/WhileStatement.h"
 #include "AST/statements/ExpressionStatement.h"
 
 namespace Parser {
 	class StatementParser : public Parser 
 	{
 	public:
-		StatementParser(std::shared_ptr<ParserState> state);
+		StatementParser(std::shared_ptr<ParserState> state, 
+			DiagnosticEngine& diags, MemoryAllocator *allocator);
 
 		AST::Statement* parse_statement();
 
@@ -25,6 +27,7 @@ namespace Parser {
 		AST::Statement* HandleIdentifier();
 
 		AST::IfStatement* HandleIfKeyword();
+		AST::WhileStatement* HandleWhileKeyword();
 		AST::Statement* PottentialVariableOrFunctionDecl();
 		
 		AST::ReturnStatement* HandleReturnStatement();

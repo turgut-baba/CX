@@ -5,12 +5,15 @@
 
 namespace Parser {
 
-	Parser::Parser(std::string& file_buffer) 
+	Parser::Parser(std::string& file_buffer, 
+		DiagnosticEngine& diags, MemoryAllocator *allocator) 
+		:diags_(diags), allocator_(allocator)
 	 {
 		state_ = std::make_shared<ParserState>() ;
-		statements_ = SlabVector<AST::Statement*> (Allocator());
+		AST_tree = SlabVector<AST::Statement*> (Allocator());
 		state_->lexer_ = std::make_unique<Lex::Lexer>(file_buffer);
-		state_->statement_parser = Allocator()->Allocate<StatementParser>(state_);
+		state_->statement_parser = Allocator()->Allocate<StatementParser>(state_, 
+			diags_, allocator_);
 	}
 
 	void Parser::parse()
@@ -18,7 +21,7 @@ namespace Parser {
 		Lexer()->NextToken(); // TODO: Move this out of the while.
 		while (Lexer()->GetToken().Type() != Lex::TokenType::EOS) {
 			AST::Statement* current_statement = state_->statement_parser->parse_statement();
-			statements_.push_back(current_statement);
+			AST_tree.push_back(current_statement);
 		}
 	}
 
@@ -67,7 +70,7 @@ namespace Parser {
 
 	void Parser::PrintAST()
 	{
-		for (auto& node : statements_)
+		for (auto& node : AST_tree)
 		{
 			if (node != nullptr) {
 				print_statement(node, 0);

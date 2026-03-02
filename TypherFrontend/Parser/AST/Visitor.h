@@ -14,6 +14,7 @@ namespace AST {
     class ReturnStatement;
     class IfStatement;
     class ExpressionStatement;
+    class WhileStatement;
 
     class NodeVisitor {
     public:
@@ -29,6 +30,7 @@ namespace AST {
         virtual void Visit(ReturnStatement* node) = 0;
         virtual void Visit(IfStatement* node) = 0;
         virtual void Visit(ExpressionStatement* node) = 0;
+        virtual void Visit(WhileStatement* node) = 0;
     };
 }
 

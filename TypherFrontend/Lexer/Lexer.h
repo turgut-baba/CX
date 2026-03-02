@@ -67,7 +67,7 @@ private:
 			current_token.SetTokenType<TokenElem>(type);
 	}
 	void SkipWhiteSpaces();
-	void ScanEqualSign();
+	void ScanForEquality(std::string ident, TokenOperator single, TokenOperator equal);
 
 	std::string file_buffer;
 	std::string file_name;

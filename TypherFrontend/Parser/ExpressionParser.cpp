@@ -77,7 +77,7 @@ namespace Parser {
 		} else {
 			// TODO: also look for operators for Unary expressions. And some keywords
 			// like true or nullptr.
-			state_->diags.report<DiagLevel::Error>({}) 
+			Diagnostic().report<DiagLevel::Error>({}) 
 				<< "Unexpected token '" << Lexer()->GetToken().Ident() << "'. Expected an operator.";
 		}
 		return expr;
@@ -105,7 +105,7 @@ namespace Parser {
 			return ParseOperator(expr);
 		}
 
-		state_->diags.report<DiagLevel::Error>({}) 
+		Diagnostic().report<DiagLevel::Error>({}) 
             << "Expected ';' at the end of expression.";
 
 		return nullptr;

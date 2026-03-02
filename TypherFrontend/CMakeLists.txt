@@ -71,9 +71,11 @@ add_executable (TypherCompiler "Core/TypherCompiler.cpp"
 "Parser/AST/Expressions/Operator.cpp" 
 "Parser/AST/Statements.cpp"
 "Parser/AST/statements/IfStatement.cpp"
+"Parser/AST/statements/WhileStatement.cpp"
 "Parser/AST/statements/ReturnStatement.cpp"
 "Parser/AST/statements/ExpressionStatement.cpp"
 "Checker/Checker.cpp" 
+"Checker/SemanticAnalyzer.cpp" 
 "MLIR/MLIRGen.cpp"
 "MLIR/MLIRBuilder.cpp"
 "MLIR/MLIREmitter.cpp"
@@ -85,6 +87,7 @@ target_include_directories(TypherCompiler
   ${CMAKE_SOURCE_DIR}/TypherFrontend/Parser
   ${CMAKE_SOURCE_DIR}/TypherFrontend/Core
   ${CMAKE_SOURCE_DIR}/TypherFrontend/MLIR
+  ${CMAKE_SOURCE_DIR}/TypherFrontend/Checker
 )
 
 target_include_directories(TypherCompiler SYSTEM PRIVATE 

@@ -296,6 +296,28 @@ def IfOp : Typher_Op<"if", [
 }
 
 //===----------------------------------------------------------------------===//
+// WhileOp
+//===----------------------------------------------------------------------===//
+
+
+def WhileOp : Typher_Op<"while", [RecursiveMemoryEffects]> {
+    let summary = "C-like while loop";
+    let description = [{
+        A high-level while loop. 
+        Region 0: The condition (must terminate with a custom ConditionYield).
+        Region 1: The loop body.
+    }];
+
+    let regions = (region SizedRegion<1>:$condRegion, 
+                         SizedRegion<1>:$bodyRegion);
+
+    let assemblyFormat = [{
+        attr-dict `cond` $condRegion `do` $bodyRegion
+    }];
+}
+
+
+//===----------------------------------------------------------------------===//
 // ReturnOp
 //===----------------------------------------------------------------------===//
 
@@ -367,7 +389,7 @@ def YieldOp : Typher_Op<"yield", [Terminator]> {
     // We make it variadic so it can return values if your IfOp eventually does
     let arguments = (ins Variadic<AnyType>:$operands);
     let assemblyFormat = "attr-dict ($operands^ `:` type($operands))?";
-	let builders = [
+	  let builders = [
         OpBuilder<(ins), [{ /* Empty builder just creates the op */ }]>
     ];
 }

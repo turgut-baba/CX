@@ -10,7 +10,11 @@ namespace MLIR {
 		mlir::func::registerAllExtensions(registry);
 		mlir::LLVM::registerInlinerInterface(registry);
 
+		registry.insert<mlir::arith::ArithDialect>();
+
 		context = std::make_shared<mlir::MLIRContext>(registry);
+
+		context->loadDialect<mlir::arith::ArithDialect>();
 	}
 
 	mlir::Value Generator::LvalueToRvalue(mlir::Value addr, mlir::Location location)
@@ -228,6 +232,32 @@ namespace MLIR {
 			 loc(node->Loc()), builder->getI32Type(), (int)node->Value());
 	}
 
+	void Generator::Visit(AST::WhileStatement* node) 
+	{
+		auto location = loc(node->Loc()); 
+
+		auto whileOp = mlir::typher::WhileOp::create(*builder, location);
+		mlir::Block* condBlock = builder->createBlock(&whileOp.getCondRegion());
+		
+		builder->setInsertionPointToStart(condBlock);
+		
+		node->ConditionExpr()->Accept(this);
+		mlir::Value condition = retValue;
+		if (!condition)
+			return ;
+
+		//builder->create<mlir::typher::ConditionYieldOp>(location, condVal);
+		mlir::typher::YieldOp::create(*builder, location, condition);
+
+		mlir::Block* bodyBlock = builder->createBlock(&whileOp.getBodyRegion());
+		builder->setInsertionPointToStart(bodyBlock);
+		
+		GenBody(node->GetBody(), location);
+
+		builder->setInsertionPointAfter(whileOp);
+		return ; 
+	}
+
 	void Generator::Visit(AST::IfStatement* node) 
 	{
 		auto location = loc(node->Loc()); 
@@ -277,16 +307,36 @@ namespace MLIR {
 		mlir::Value lhs = retValue;
 		if (!lhs)
 			return;
-		
+
+		mlir::arith::CmpIPredicate predicate;
 		switch(node->OperatorType()) {
 			case AST::OperatorKind::ADD: {
 				retValue = mlir::typher::AddOp::create(*builder, location, lhs, rhs);
-				break;
+				return;
 			}
-			case AST::OperatorKind::EQS: {
-				retValue = mlir::typher::EqualsOp::create(*builder, location, lhs, rhs);
+			case AST::OperatorKind::EQS: 
+				predicate = mlir::arith::CmpIPredicate::eq;
 				break;
-			}
+			case AST::OperatorKind::NEQ:
+				predicate = mlir::arith::CmpIPredicate::ne;
+				break;
+			case AST::OperatorKind::LES:
+				predicate = mlir::arith::CmpIPredicate::slt;
+				break;
+			case AST::OperatorKind::LEQ:
+				predicate = mlir::arith::CmpIPredicate::sle;
+				break;
+			case AST::OperatorKind::GEQ:
+				predicate = mlir::arith::CmpIPredicate::sge;
+				break;
+			case AST::OperatorKind::GRT:
+				predicate = mlir::arith::CmpIPredicate::sgt;
+				break;
+			default:
+				// TODO: error handle
+				break;
 		}
+
+		retValue =mlir::arith::CmpIOp::create(*builder, location, predicate, lhs, rhs);
 	}
 }

@@ -3,9 +3,9 @@
 
 namespace MLIR {
 
-    void Builder::BuildModule(SlabVector<AST::Statement*>& ASTTree)
+    void Builder::BuildModule(SlabVector<AST::Statement*>& AST_tree)
     {
-        gen_.Generate(ASTTree);
+        gen_.Generate(AST_tree);
         emit_.Emit(gen_.Context(), gen_.Module());
     }
     

@@ -3,10 +3,13 @@
 #include "Helpers.h"
 
 namespace Parser {
-	StatementParser::StatementParser(std::shared_ptr<ParserState> state)
+	StatementParser::StatementParser(std::shared_ptr<ParserState> state,
+		DiagnosticEngine& diags, MemoryAllocator *allocator)
+		: Parser(diags, allocator)
 	{
 		state_ = state;
-		state_->expression_parser = Allocator()->Allocate<ExpressionParser>(state_);
+		state_->expression_parser = Allocator()->Allocate<ExpressionParser>(state_, 
+			diags_, allocator_);
 	}
 
 	AST::Statement* StatementParser::parse_statement()
@@ -33,10 +36,26 @@ namespace Parser {
 		return statement;
 	}
 
+	AST::WhileStatement* StatementParser::HandleWhileKeyword()
+	{
+		Lexer()->NextToken(); // Skip 'while';
+		
+		Lexer()->NextToken(); // Skip '('
+		auto condition = state_->expression_parser->parse_expression();
+		AST::WhileStatement* while_statement = 
+			Allocator()->Allocate<AST::WhileStatement>(condition, Allocator());
+
+		Lexer()->NextToken(); // Skip ')';
+
+		AST::Body* while_body = ParseBody(while_statement);
+		while_statement->SetBody(while_body);
+
+		return while_statement;
+	}
+
+
 	AST::IfStatement* StatementParser::HandleIfKeyword()
 	{
-		// TODO: on subsequent if-else blocks each block gets nested parents. We want the first
-		// if statement to be the parent of all.
 		Lexer()->NextToken(); // Skip 'if';
 		
 		Lexer()->NextToken(); // Skip '('
@@ -95,7 +114,7 @@ namespace Parser {
 
 		if (declarators.empty())
 		{
-			state_->diags.report<DiagLevel::Error>({}) 
+			Diagnostic().report<DiagLevel::Error>({}) 
 				<< "Expected expression.";
 		}
 
@@ -206,8 +225,11 @@ namespace Parser {
 		case Lex::TokenKeyword::IF:
 			statement = HandleIfKeyword();
 			break;
+		case Lex::TokenKeyword::WHILE:
+			statement = HandleWhileKeyword();
+			break;
 		case Lex::TokenKeyword::ELSE:
-			state_->diags.report<DiagLevel::Error>({}) 
+			Diagnostic().report<DiagLevel::Error>({}) 
 				<< "Expected parent if statement.";
 			break;
 		case Lex::TokenKeyword::RETURN:

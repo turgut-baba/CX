@@ -43,24 +43,21 @@ namespace Lex {
 		}
 	}
 
-	void Lexer::ScanEqualSign()
+	void Lexer::ScanForEquality(std::string ident, TokenOperator single, TokenOperator equal)
 	{
 		LexicalChar cp = Peek();
 		IterForward();
 		current_token.SetType(TokenType::Operator);
+		std::string eq_ident = "=";
 		switch (cp)
 		{
-		case LexicalChar::GREATER_THAN:
-			break;
-		case LexicalChar::LESS_THAN:
-			break;
 		case LexicalChar::EQUALS:
-			current_token.SetTokenType<TokenOperator>(TokenOperator::EQUALS);
-			current_token.SetIdent("=="); // TEMP
+			current_token.SetTokenType<TokenOperator>(equal);
+			current_token.SetIdent(ident + eq_ident); // TEMP
 			break;
 		default:
-			current_token.SetIdent("="); // TEMP
-			current_token.SetTokenType<TokenOperator>(TokenOperator::ASSIGNMENT);
+			current_token.SetTokenType<TokenOperator>(single);
+			current_token.SetIdent(ident); // TEMP
 			IterBack();
 			break;
 		}
@@ -106,7 +103,20 @@ namespace Lex {
 								TokenPunctuator::RIGHT_CURLY_BRACE);
 			break;
 		case LexicalChar::EQUALS:
-			ScanEqualSign();
+			ScanForEquality(
+				"=", TokenOperator::ASSIGNMENT, TokenOperator::EQUALS);
+			break;
+		case LexicalChar::EXCLAMATION:
+			ScanForEquality(
+				"!", TokenOperator::LOGICAL_NOT, TokenOperator::NOT_EQUALS);
+			break;
+		case LexicalChar::GREATER_THAN:
+			ScanForEquality(
+				">", TokenOperator::GREATER, TokenOperator::GREAT_OR_EQUAL);
+			break;
+		case LexicalChar::LESS_THAN:
+			ScanForEquality(
+				"<", TokenOperator::LESSER, TokenOperator::LESS_OR_EQUAL);
 			break;
 		case LexicalChar::COMMA:
 			current_token.SetIdent(","); // TEMP

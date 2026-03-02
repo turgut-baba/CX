@@ -21,6 +21,8 @@
 #include "mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h"
 #include "mlir/Target/LLVMIR/Export.h"
 #include "mlir/Transforms/Passes.h"
+#include "mlir/Dialect/Arith/IR/Arith.h"
+#include "mlir/Dialect/SCF/IR/SCF.h"
 
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/ScopedHashTable.h"
@@ -33,8 +35,6 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetSelect.h"
 
-
-
 #include "Dialect/TypherDialect.h"
 #include "AST/Function.h"
 #include "AST/Visitor.h"
@@ -42,6 +42,7 @@
 #include "AST/Expressions/CallExpression.h"
 #include "AST/statements/ReturnStatement.h"
 #include "AST/statements/IfStatement.h"
+#include "AST/statements/WhileStatement.h"
 #include "AST/Literals/IntegerLiteral.h"
 #include "AST/statements/ExpressionStatement.h"
 #include <fstream>
@@ -81,7 +82,7 @@ namespace MLIR {
 		void Visit(AST::ReturnStatement* node) override;
 		void Visit(AST::IfStatement* node) override;
 		void Visit(AST::ExpressionStatement* node) override;
-
+		void Visit(AST::WhileStatement* node) override;
 
 		mlir::Location loc(const Location &loc) {
 			return mlir::FileLineColLoc::get(builder->getStringAttr(loc.file), loc.line, loc.col);

@@ -11,7 +11,7 @@ namespace MLIR {
 	public:
 		Builder() {}
 
-		void BuildModule(SlabVector<AST::Statement*>& ASTTree);
+		void BuildModule(SlabVector<AST::Statement*>& AST_tree);
 	private:
 		Generator gen_;
 		Emitter emit_;

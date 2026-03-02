@@ -12,7 +12,9 @@
 namespace Parser {
 	class ExpressionParser : public Parser {
 	public:
-		ExpressionParser(std::shared_ptr<ParserState> state)
+		ExpressionParser(std::shared_ptr<ParserState> state,
+			DiagnosticEngine& diags, MemoryAllocator *allocator)
+			: Parser(diags, allocator)
 		{
 			state_ = state;
 		}

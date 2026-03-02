@@ -8,13 +8,9 @@
 namespace AST {
 
 	enum OperatorKind {
-		ADD,
-		SUB,
-		MUL,
-		DIV,
-		MOD,
-		EQS,
-		ASN
+		ADD, SUB, MUL, DIV,MOD,
+		ASN,
+		EQS, LEQ, LES, NEQ, GEQ, GRT
 	};
 
 	class Operator : public Expression {
