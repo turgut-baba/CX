@@ -127,6 +127,26 @@ namespace Lex {
 			current_token.SetTokenType<TokenOperator>(
 								TokenOperator::ADD);
 			break;
+		case LexicalChar::MINUS:
+			current_token.SetIdent("-"); // TEMP
+			current_token.SetTokenType<TokenOperator>(
+								TokenOperator::SUBTRACT);
+			break;
+		case LexicalChar::ASTERISK:
+			current_token.SetIdent("*"); // TEMP
+			current_token.SetTokenType<TokenOperator>(
+								TokenOperator::MULTIPLY);
+			break;
+		case LexicalChar::SLASH:
+			current_token.SetIdent("/"); // TEMP
+			current_token.SetTokenType<TokenOperator>(
+								TokenOperator::DIVIDE);
+			break;
+		case LexicalChar::PERCENT:
+			current_token.SetIdent("%"); // TEMP
+			current_token.SetTokenType<TokenOperator>(
+								TokenOperator::MODULUS);
+			break;
 		case LexicalChar::DOUBLE_QUOTE:
 			keyword_parser.ScanStringLiteral();
 			break;

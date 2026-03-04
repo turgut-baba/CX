@@ -8,7 +8,7 @@
 namespace AST {
 
 	enum OperatorKind {
-		ADD, SUB, MUL, DIV,MOD,
+		ADD, SUB, MUL, DIV, MOD,
 		ASN,
 		EQS, LEQ, LES, NEQ, GEQ, GRT
 	};

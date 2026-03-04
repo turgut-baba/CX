@@ -9,6 +9,18 @@ namespace AST {
 			case Lex::TokenOperator::ADD:
 				OpType = OperatorKind::ADD;
 				break;
+			case Lex::TokenOperator::SUBTRACT:
+				OpType = OperatorKind::SUB;
+				break;
+			case Lex::TokenOperator::MULTIPLY:
+				OpType = OperatorKind::MUL;
+				break;
+			case Lex::TokenOperator::DIVIDE:
+				OpType = OperatorKind::DIV;
+				break;
+			case Lex::TokenOperator::MODULUS:
+				OpType = OperatorKind::MOD;
+				break;
 			case Lex::TokenOperator::EQUALS:
 				OpType = OperatorKind::EQS;
 				break;

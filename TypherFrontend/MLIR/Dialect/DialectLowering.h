@@ -160,37 +160,27 @@ struct WhileLowering : public OpConversionPattern<typher::WhileOp> {
                                  ConversionPatternRewriter &rewriter) const override {
         auto loc = op.getLoc();
 
-        // 1. Create the SCF While Op
-        // C-style loops usually don't have results, so we use empty TypeRange/ValueRange
         auto scfWhile = rewriter.create<scf::WhileOp>(loc, TypeRange{}, ValueRange{});
 
-        // 2. Move the Condition Region ("Before")
         rewriter.inlineRegionBefore(op.getCondRegion(), scfWhile.getBefore(), scfWhile.getBefore().end());
         
-        // 3. Move the Body Region ("After")
         rewriter.inlineRegionBefore(op.getBodyRegion(), scfWhile.getAfter(), scfWhile.getAfter().end());
 
-        // 4. Fix the "Before" Terminator (Your Condition Check)
         Block &beforeBlock = scfWhile.getBefore().front();
         auto condYield = llvm::cast<typher::YieldOp>(beforeBlock.getTerminator());
         
         rewriter.setInsertionPoint(condYield);
-        // Grab the first operand of your yield (the i1 condition)
         mlir::Value condition = condYield.getOperands()[0]; 
         
-        // Replace typher.yield with scf.condition
         rewriter.replaceOpWithNewOp<scf::ConditionOp>(
             condYield, condition, scfWhile.getBeforeArguments());
 
-        // 5. Fix the "After" Terminator (The Loop Back)
         Block &afterBlock = scfWhile.getAfter().front();
         auto bodyYield = llvm::cast<typher::YieldOp>(afterBlock.getTerminator());
         
         rewriter.setInsertionPoint(bodyYield);
-        // Replace typher.yield with scf.yield
         rewriter.replaceOpWithNewOp<scf::YieldOp>(bodyYield, ValueRange{});
 
-        // 6. Erase the original Op
         rewriter.eraseOp(op);
         return success();
     }

@@ -311,7 +311,23 @@ namespace MLIR {
 		mlir::arith::CmpIPredicate predicate;
 		switch(node->OperatorType()) {
 			case AST::OperatorKind::ADD: {
-				retValue = mlir::typher::AddOp::create(*builder, location, lhs, rhs);
+				retValue = mlir::arith::AddIOp::create(*builder, location, lhs, rhs);
+				return;
+			}
+			case AST::OperatorKind::SUB: {
+				retValue = mlir::arith::SubIOp::create(*builder, location, lhs, rhs);
+				return;
+			}
+			case AST::OperatorKind::MUL: {
+				retValue = mlir::arith::MulIOp::create(*builder, location, lhs, rhs);
+				return;
+			}
+			case AST::OperatorKind::DIV: {
+				retValue = mlir::arith::DivSIOp::create(*builder, location, lhs, rhs);
+				return;
+			}
+			case AST::OperatorKind::MOD: {
+				retValue = mlir::arith::RemSIOp::create(*builder, location, lhs, rhs);
 				return;
 			}
 			case AST::OperatorKind::EQS: 
