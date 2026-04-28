@@ -42,22 +42,22 @@ namespace AST {
 		} 
 	}
 
-	void Operator::SetLHS(AST::ASTNode* lhs)
+	void Operator::SetLHS(AST::Expression* lhs)
 	{
 		lhs_ = lhs;
 	}
 
-	void Operator::SetRHS(AST::ASTNode* rhs)
+	void Operator::SetRHS(AST::Expression* rhs)
 	{
 		rhs_ = rhs;
 	}
 
-	AST::ASTNode* Operator::GetLHS() 
+	AST::Expression* Operator::GetLHS() 
 	{
 		return lhs_;
 	}
 
-	AST::ASTNode* Operator::GetRHS()
+	AST::Expression* Operator::GetRHS()
 	{
 		return rhs_;
 	}

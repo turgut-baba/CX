@@ -19,7 +19,7 @@ namespace Lex {
 		Keywords(Lexer* lexer, char32_t start_letter) : lexer_(lexer), start_letter_(start_letter) { }
 		void PottentialKeyword();
 		void KeyIdentifier();
-		void ScanNumber();
+		void ScanNumber(bool isFloating = false);
 		void ScanStringLiteral();
 
 	private:

@@ -20,11 +20,11 @@ namespace AST {
 		 
 		Operator(Lex::TokenOperator op);
 
-		void SetLHS(AST::ASTNode* lhs);
-		void SetRHS(AST::ASTNode* rhs);
+		void SetLHS(AST::Expression* lhs);
+		void SetRHS(AST::Expression* rhs);
 
-		AST::ASTNode* GetLHS();
-		AST::ASTNode* GetRHS();
+		AST::Expression* GetLHS();
+		AST::Expression* GetRHS();
 
 		virtual ~Operator() = default;
 
@@ -42,8 +42,8 @@ namespace AST {
 	private:
 		OperatorKind OpType;
 		Lex::TokenOperator operator_; // TODO: Put this in an enum.
-		AST::ASTNode* lhs_;
-		AST::ASTNode* rhs_;
+		AST::Expression* lhs_;
+		AST::Expression* rhs_;
 	};
 }
 

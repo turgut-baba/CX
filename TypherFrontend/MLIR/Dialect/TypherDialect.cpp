@@ -132,6 +132,14 @@ void ConstantOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
     ConstantOp::build(builder, state, type, attr);
 }
 
+void ConstantOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
+                       mlir::Type type, double value) {
+    // Use getFloatAttr for F32/F64 types
+    mlir::FloatAttr attr = builder.getFloatAttr(type, value);
+    state.addAttribute("value", attr);
+    state.addTypes(type);
+}
+
 // 2. Updated Parser: Uses TypedAttr to handle any scalar (float, int, etc.)
 mlir::ParseResult ConstantOp::parse(mlir::OpAsmParser &parser,
                                     mlir::OperationState &result) {

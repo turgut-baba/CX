@@ -19,10 +19,20 @@ namespace AST {
 			return "Expression node ";
 		}
 
+		bool Type() // TODO: TEMP
+		{
+			return type_;
+		}
+
+		void SetType(bool type) // TODO: TEMP
+		{
+			type_ = type;
+		}
+
 		void Accept(NodeVisitor* v) override { v->Visit(this); }
 
 	private:
-		Lex::TokenKeyword type_; // TODO: turn this into a type class.
+		bool type_; // TODO: turn this into a type class.
 	};
 }
 

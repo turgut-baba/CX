@@ -25,7 +25,7 @@ namespace Parser {
 		AST::CallExpression* ParseFunctionCall(AST::Identifier* ident);
 		AST::Expression* CheckIdentifier();
 		AST::ASTNode* ParsePrimaryExpression();
-		AST::Expression* ParseOperator(AST::ASTNode* lhs);
+		AST::Expression* ParseOperator(AST::Expression* lhs);
 		AST::Literal* CheckLiteral();
 		AST::Expression* ParseSingleExpression();
 	};

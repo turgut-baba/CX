@@ -31,7 +31,7 @@ struct ConstantOpLowering : public OpConversionPattern<mlir::typher::ConstantOp>
     LogicalResult matchAndRewrite(mlir::typher::ConstantOp op, OpAdaptor adaptor,
                                   ConversionPatternRewriter &rewriter) const {
         Attribute valueAttr = op.getValueAttr();
-        if (!llvm::isa<IntegerAttr>(valueAttr)) {
+        if (!llvm::isa<IntegerAttr>(valueAttr) && !llvm::isa<FloatAttr>(valueAttr)) {
             return rewriter.notifyMatchFailure(op, "Expected integer attribute.");
         }
 
@@ -119,34 +119,44 @@ struct IfOpLowering : public OpConversionPattern<typher::IfOp> {
     {
         auto loc = op.getLoc();
 
-        auto fixTerminator = [&](Block *block, Block *dest) {
+        auto fixTerminator = [&](Block *block) {
             if (block->empty()) return;
 
             Operation *terminator = block->getTerminator();
 
+            // If it's our custom YieldOp, replace it with scf.yield
             if (auto yieldOp = llvm::dyn_cast<typher::YieldOp>(terminator)) {
                 rewriter.setInsertionPoint(yieldOp);
-                rewriter.replaceOpWithNewOp<mlir::cf::BranchOp>(yieldOp, dest);
+                
+                // scf::YieldOp takes the results of the region (if any)
+                // If your IfOp doesn't return values, ValueRange{} is fine.
+                rewriter.replaceOpWithNewOp<mlir::scf::YieldOp>(yieldOp, yieldOp.getOperands());
             }
         };
 
-        Block *currentBlock = rewriter.getInsertionBlock();
-        Block *continuationBlock = rewriter.splitBlock(currentBlock, op->getIterator());
-        Block *thenBlock = &op.getThenRegion().front();
-        Block *elseBlock = op.getElseRegion().empty() 
-                            ? continuationBlock 
-                            : &op.getElseRegion().front();
+        auto scfIf = rewriter.create<scf::IfOp>(op.getLoc(), 
+                                                adaptor.getCondition(), 
+                                                /*hasElse=*/!op.getElseRegion().empty());
 
-        rewriter.setInsertionPointToEnd(currentBlock);
-        rewriter.create<mlir::cf::CondBranchOp>(loc, adaptor.getCondition(), thenBlock, elseBlock);
 
+        Block *continuationBlock = &scfIf.getThenRegion().back();
+        
+        // Inline the 'then' region
         rewriter.inlineRegionBefore(op.getThenRegion(), continuationBlock);
+        rewriter.eraseBlock(continuationBlock); // Remove the default empty block
 
-        fixTerminator(thenBlock, continuationBlock);
+        // Handle the 'else' region if it exists
         if (!op.getElseRegion().empty()) {
-            fixTerminator(elseBlock, continuationBlock);
+            rewriter.inlineRegionBefore(op.getElseRegion(), &scfIf.getElseRegion().back());
+            rewriter.eraseBlock(&scfIf.getElseRegion().back());
+        }
+
+        fixTerminator(&scfIf.getThenRegion().front());
+        if (!scfIf.getElseRegion().empty()) {
+            fixTerminator( &scfIf.getElseRegion().front());
             rewriter.inlineRegionBefore(op.getElseRegion(), continuationBlock);
         }
+
 
         rewriter.eraseOp(op);
         return success();

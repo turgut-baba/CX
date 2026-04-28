@@ -65,7 +65,8 @@ def ConstantOp : Typher_Op<"constant", [Pure]> {
   let hasCustomAssemblyFormat = 1;
 
   let builders = [
-    OpBuilder<(ins "mlir::Type":$type, "int":$value)>
+    OpBuilder<(ins "mlir::Type":$type, "int":$value)>,
+    OpBuilder<(ins "mlir::Type":$type, "double":$value)>
   ];
 
   let hasVerifier = 1;

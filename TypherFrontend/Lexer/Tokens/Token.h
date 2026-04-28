@@ -55,6 +55,16 @@ namespace Lex {
 		{
 			return loc_;
 		}
+
+		long double FloatingValue()
+		{
+			return floating;
+		}
+
+		unsigned long long DecimalValue()
+		{
+			return decimal;
+		}
 	private:
 		Location loc_;
 		TokenType type_;
@@ -62,8 +72,14 @@ namespace Lex {
 		TokenOperator operator_type;
 		TokenKeyword keyword_type;
 		TokenLiteral literal_type;
+
 		std::string str_;
-		int numeric_value; // Support other numeric types
+
+		unsigned long long decimal;
+		long double floating;
+
+		bool isNegative;
+		bool isFloating;
 	};
 }
 

@@ -93,26 +93,57 @@ namespace Lex {
 
 	};
 
-	void Keywords::ScanNumber() {
+	void Keywords::ScanNumber(bool isFloating) {
 		lexer_->GetToken().SetType(TokenType::Literal);
-		// TODO: Handle decimal and other numeric literals
+		// TODO: Handle other numeric literals
+
 		std::string number_str(1, static_cast<char>(start_letter_));
 		auto token = lexer_->Peek();
-
 		while (LexicalChar::NUM_0 <= token && token <= LexicalChar::NUM_9) {
 			std::string letter(1, static_cast<char>(token));
 			number_str += letter;
 			lexer_->IterForward();
 			token = lexer_->Peek();
 		}
-
+		
 		int value;
 		auto [ptr, ec] = std::from_chars(number_str.data(), number_str.data() + number_str.size(), value);
+		
 
-		if (ec == std::errc{}) {
-			lexer_->GetToken().numeric_value = value;
+		if (ec != std::errc{}) {
+			// TODO: Error handling
 		}
 
-		// TODO: Do error handling
+		if(!isFloating) {
+			lexer_->GetToken().decimal = value;
+			lexer_->GetToken().isFloating = false;
+			lexer_->GetToken().SetIdent(number_str);
+		} else {
+			double float_value;
+			std::string float_str = lexer_->GetToken().Ident() + "." + number_str;
+
+			auto [ptr, ec] = std::from_chars(float_str.data(), float_str.data() + float_str.size(), float_value);
+
+			lexer_->GetToken().floating = float_value;
+			lexer_->GetToken().isFloating = true;
+			lexer_->GetToken().SetIdent(float_str);
+		}
+
+		if(token == LexicalChar::DOT) {
+			if(isFloating) {
+				// TODO: Error handling
+			}
+
+			lexer_->IterForward(); // Finish the decimal
+			token = lexer_->Peek();
+			lexer_->IterForward(); // Skip over '.'
+
+			if(!(LexicalChar::NUM_0 <= token && token <= LexicalChar::NUM_9)) {
+				// TODO: Error handling
+			}
+
+			start_letter_ = (char32_t)token;
+			ScanNumber(true);
+		}
 	}
 }

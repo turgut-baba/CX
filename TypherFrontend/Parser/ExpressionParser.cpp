@@ -38,9 +38,18 @@ namespace Parser {
 	{
 		switch (Lexer()->GetToken().GetTokenType<Lex::TokenLiteral>()) {
 			case Lex::TokenLiteral::DECIMAL: {
-				int number = stoi(Lexer()->GetToken().Ident());
+				int number = Lexer()->GetToken().DecimalValue();
 				AST::IntegerLiteral* ident = Allocator()->Allocate<AST::IntegerLiteral>(number);
 				ident->SetLocation(Lexer()->GetToken().GetLocation());
+				ident->SetType(false); // TODO: temp
+				Lexer()->NextToken();
+				return ident;
+			}
+			case Lex::TokenLiteral::FLOATING_PONINT: {
+				float number = Lexer()->GetToken().FloatingValue();
+				AST::IntegerLiteral* ident = Allocator()->Allocate<AST::IntegerLiteral>(number);
+				ident->SetLocation(Lexer()->GetToken().GetLocation());
+				ident->SetType(true); // TODO: temp
 				Lexer()->NextToken();
 				return ident;
 			}
@@ -48,7 +57,7 @@ namespace Parser {
 		return nullptr;
 	}
 
-	AST::Expression* ExpressionParser::ParseOperator(AST::ASTNode* lhs)
+	AST::Expression* ExpressionParser::ParseOperator(AST::Expression* lhs)
 	{
 		const auto tokenType = Lexer()->GetToken().GetTokenType<Lex::TokenOperator>();
 		AST::Operator* operator_ = Allocator()->Allocate<AST::Operator>(tokenType);
@@ -57,7 +66,7 @@ namespace Parser {
 		
 		Lexer()->NextToken(); // Skip the operator (don't need expected token here)
 		
-		AST::ASTNode* rhs = parse_expression();
+		AST::Expression* rhs = parse_expression();
 		
 		rhs->SetParent(operator_);
 

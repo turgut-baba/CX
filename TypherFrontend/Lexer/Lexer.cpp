@@ -160,10 +160,16 @@ namespace Lex {
 		case LexicalChar::NUM_7:
 		case LexicalChar::NUM_8:
 		case LexicalChar::NUM_9: {
+
 			keyword_parser.ScanNumber();
-			current_token.SetTokenType<TokenLiteral>(
-				TokenLiteral::DECIMAL);
-			current_token.SetIdent(std::to_string(current_token.numeric_value)); // TEMP
+
+			if(current_token.isFloating) {
+				current_token.SetTokenType<TokenLiteral>(
+					TokenLiteral::FLOATING_PONINT);
+			} else {
+				current_token.SetTokenType<TokenLiteral>(
+					TokenLiteral::DECIMAL);
+			}
 			break;
 		}
 		case LexicalChar::LOWERCASE_A:

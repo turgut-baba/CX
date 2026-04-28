@@ -228,8 +228,13 @@ namespace MLIR {
 
 	void Generator::Visit(AST::IntegerLiteral* node) 
 	{
-		retValue = mlir::typher::ConstantOp::create(*builder,
-			 loc(node->Loc()), builder->getI32Type(), (int)node->Value());
+		if(node->IsFloating()) {
+			retValue = mlir::typher::ConstantOp::create(*builder,
+			 loc(node->Loc()), builder->getF32Type(), node->Value<double>());
+		} else {
+			retValue = mlir::typher::ConstantOp::create(*builder,
+			 loc(node->Loc()), builder->getI32Type(), node->Value<int>());
+		}
 	}
 
 	void Generator::Visit(AST::WhileStatement* node) 
@@ -308,7 +313,6 @@ namespace MLIR {
 		if (!lhs)
 			return;
 
-		mlir::arith::CmpIPredicate predicate;
 		switch(node->OperatorType()) {
 			case AST::OperatorKind::ADD: {
 				retValue = mlir::arith::AddIOp::create(*builder, location, lhs, rhs);
@@ -330,29 +334,37 @@ namespace MLIR {
 				retValue = mlir::arith::RemSIOp::create(*builder, location, lhs, rhs);
 				return;
 			}
-			case AST::OperatorKind::EQS: 
-				predicate = mlir::arith::CmpIPredicate::eq;
+			default:{
+				if (node->GetRHS()->Type()) { // TODO: should be decided in checker semantic analysis. The checker should decide
+					     	   // which type the operation will yield via Type Promotion that uses "Path of Least Loss.".
+					mlir::arith::CmpFPredicate predicate;
+					switch (node->OperatorType()) {
+						case AST::OperatorKind::EQS: predicate = mlir::arith::CmpFPredicate::OEQ; break;
+						case AST::OperatorKind::NEQ: predicate = mlir::arith::CmpFPredicate::ONE; break;
+						case AST::OperatorKind::LES: predicate = mlir::arith::CmpFPredicate::OLT; break;
+						case AST::OperatorKind::LEQ: predicate = mlir::arith::CmpFPredicate::OLE; break;
+						case AST::OperatorKind::GEQ: predicate = mlir::arith::CmpFPredicate::OGE; break;
+						case AST::OperatorKind::GRT: predicate = mlir::arith::CmpFPredicate::OGT; break;
+						default: /* handle error */ break;
+					}
+					retValue = mlir::arith::CmpFOp::create(*builder, location, predicate, lhs, rhs);
+				} else {
+					mlir::arith::CmpIPredicate predicate;
+					switch (node->OperatorType()) {
+						case AST::OperatorKind::EQS: predicate = mlir::arith::CmpIPredicate::eq;  break;
+						case AST::OperatorKind::NEQ: predicate = mlir::arith::CmpIPredicate::ne;  break;
+						case AST::OperatorKind::LES: predicate = mlir::arith::CmpIPredicate::slt; break;
+						case AST::OperatorKind::LEQ: predicate = mlir::arith::CmpIPredicate::sle; break;
+						case AST::OperatorKind::GEQ: predicate = mlir::arith::CmpIPredicate::sge; break;
+						case AST::OperatorKind::GRT: predicate = mlir::arith::CmpIPredicate::sgt; break;
+						default: /* handle error */ break;
+					}
+					retValue = mlir::arith::CmpIOp::create(*builder, location, predicate, lhs, rhs);
+				}
 				break;
-			case AST::OperatorKind::NEQ:
-				predicate = mlir::arith::CmpIPredicate::ne;
-				break;
-			case AST::OperatorKind::LES:
-				predicate = mlir::arith::CmpIPredicate::slt;
-				break;
-			case AST::OperatorKind::LEQ:
-				predicate = mlir::arith::CmpIPredicate::sle;
-				break;
-			case AST::OperatorKind::GEQ:
-				predicate = mlir::arith::CmpIPredicate::sge;
-				break;
-			case AST::OperatorKind::GRT:
-				predicate = mlir::arith::CmpIPredicate::sgt;
-				break;
-			default:
-				// TODO: error handle
-				break;
+			}
 		}
 
-		retValue =mlir::arith::CmpIOp::create(*builder, location, predicate, lhs, rhs);
+		return;
 	}
 }
