@@ -322,7 +322,7 @@ def WhileOp : Typher_Op<"while", [RecursiveMemoryEffects]> {
 // ReturnOp
 //===----------------------------------------------------------------------===//
 
-def ReturnOp : Typher_Op<"return", [Pure, ParentOneOf<["FuncOp", "IfOp"]>,
+def ReturnOp : Typher_Op<"return", [Pure, ParentOneOf<["FuncOp", "IfOp", "WhileOp"]>,
                                  Terminator]> {
   let summary = "return operation";
   let description = [{

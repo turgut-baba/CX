@@ -119,44 +119,34 @@ struct IfOpLowering : public OpConversionPattern<typher::IfOp> {
     {
         auto loc = op.getLoc();
 
-        auto fixTerminator = [&](Block *block) {
+        auto fixTerminator = [&](Block *block, Block *dest) {
             if (block->empty()) return;
 
             Operation *terminator = block->getTerminator();
 
-            // If it's our custom YieldOp, replace it with scf.yield
             if (auto yieldOp = llvm::dyn_cast<typher::YieldOp>(terminator)) {
                 rewriter.setInsertionPoint(yieldOp);
-                
-                // scf::YieldOp takes the results of the region (if any)
-                // If your IfOp doesn't return values, ValueRange{} is fine.
-                rewriter.replaceOpWithNewOp<mlir::scf::YieldOp>(yieldOp, yieldOp.getOperands());
+                rewriter.replaceOpWithNewOp<mlir::cf::BranchOp>(yieldOp, dest);
             }
         };
 
-        auto scfIf = rewriter.create<scf::IfOp>(op.getLoc(), 
-                                                adaptor.getCondition(), 
-                                                /*hasElse=*/!op.getElseRegion().empty());
+        Block *currentBlock = rewriter.getInsertionBlock();
+        Block *continuationBlock = rewriter.splitBlock(currentBlock, op->getIterator());
+        Block *thenBlock = &op.getThenRegion().front();
+        Block *elseBlock = op.getElseRegion().empty() 
+                            ? continuationBlock 
+                            : &op.getElseRegion().front();
 
+        rewriter.setInsertionPointToEnd(currentBlock);
+        rewriter.create<mlir::cf::CondBranchOp>(loc, adaptor.getCondition(), thenBlock, elseBlock);
 
-        Block *continuationBlock = &scfIf.getThenRegion().back();
-        
-        // Inline the 'then' region
         rewriter.inlineRegionBefore(op.getThenRegion(), continuationBlock);
-        rewriter.eraseBlock(continuationBlock); // Remove the default empty block
 
-        // Handle the 'else' region if it exists
+        fixTerminator(thenBlock, continuationBlock);
         if (!op.getElseRegion().empty()) {
-            rewriter.inlineRegionBefore(op.getElseRegion(), &scfIf.getElseRegion().back());
-            rewriter.eraseBlock(&scfIf.getElseRegion().back());
-        }
-
-        fixTerminator(&scfIf.getThenRegion().front());
-        if (!scfIf.getElseRegion().empty()) {
-            fixTerminator( &scfIf.getElseRegion().front());
+            fixTerminator(elseBlock, continuationBlock);
             rewriter.inlineRegionBefore(op.getElseRegion(), continuationBlock);
         }
-
 
         rewriter.eraseOp(op);
         return success();
@@ -170,27 +160,44 @@ struct WhileLowering : public OpConversionPattern<typher::WhileOp> {
                                  ConversionPatternRewriter &rewriter) const override {
         auto loc = op.getLoc();
 
-        auto scfWhile = rewriter.create<scf::WhileOp>(loc, TypeRange{}, ValueRange{});
+        // 1. Safety Check: Ensure regions aren't empty
+        if (op.getCondRegion().empty() || op.getBodyRegion().empty())
+            return failure();
 
-        rewriter.inlineRegionBefore(op.getCondRegion(), scfWhile.getBefore(), scfWhile.getBefore().end());
+        // 2. Identify the surrounding context
+        Block *currentBlock = rewriter.getInsertionBlock();
         
-        rewriter.inlineRegionBefore(op.getBodyRegion(), scfWhile.getAfter(), scfWhile.getAfter().end());
+        // Split block at the 'op' itself to create the exit point
+        Block *continuationBlock = rewriter.splitBlock(currentBlock, Block::iterator(op));
 
-        Block &beforeBlock = scfWhile.getBefore().front();
-        auto condYield = llvm::cast<typher::YieldOp>(beforeBlock.getTerminator());
-        
-        rewriter.setInsertionPoint(condYield);
-        mlir::Value condition = condYield.getOperands()[0]; 
-        
-        rewriter.replaceOpWithNewOp<scf::ConditionOp>(
-            condYield, condition, scfWhile.getBeforeArguments());
+        // 3. Prepare the new Blocks
+        // We move the existing blocks out of the regions into the Function
+        Block *condBlock = &op.getCondRegion().front();
+        Block *bodyBlock = &op.getBodyRegion().front();
 
-        Block &afterBlock = scfWhile.getAfter().front();
-        auto bodyYield = llvm::cast<typher::YieldOp>(afterBlock.getTerminator());
-        
-        rewriter.setInsertionPoint(bodyYield);
-        rewriter.replaceOpWithNewOp<scf::YieldOp>(bodyYield, ValueRange{});
+        // Inline them before the continuation point
+        rewriter.inlineRegionBefore(op.getCondRegion(), continuationBlock);
+        rewriter.inlineRegionBefore(op.getBodyRegion(), continuationBlock);
 
+        // 4. Wire the Entry -> Condition
+        rewriter.setInsertionPointToEnd(currentBlock);
+        rewriter.create<mlir::cf::BranchOp>(loc, condBlock);
+
+        // 5. Wire the Condition -> Body OR Exit
+        Operation *condTerminator = condBlock->getTerminator();
+        // Use the yield value as the branch condition
+        Value condition = condTerminator->getOperand(0); 
+
+        rewriter.setInsertionPointToEnd(condBlock);
+        rewriter.replaceOpWithNewOp<mlir::cf::CondBranchOp>(
+            condTerminator, condition, bodyBlock, continuationBlock);
+
+        // 6. Wire the Body -> Condition (The Back-edge)
+        Operation *bodyTerminator = bodyBlock->getTerminator();
+        rewriter.setInsertionPointToEnd(bodyBlock);
+        rewriter.replaceOpWithNewOp<mlir::cf::BranchOp>(bodyTerminator, condBlock);
+
+        // 7. Success
         rewriter.eraseOp(op);
         return success();
     }
