@@ -148,6 +148,13 @@ namespace Lex {
 								TokenOperator::MODULUS);
 			break;
 		case LexicalChar::DOUBLE_QUOTE:
+			current_token.SetTokenType<TokenLiteral>(
+				TokenLiteral::STRING);
+			keyword_parser.ScanStringLiteral();
+			break;
+		case LexicalChar::SINGLE_QUOTE:
+			current_token.SetTokenType<TokenLiteral>(
+				TokenLiteral::CHARACTER);
 			keyword_parser.ScanStringLiteral();
 			break;
 		case LexicalChar::NUM_0:

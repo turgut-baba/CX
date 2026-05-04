@@ -90,7 +90,21 @@ namespace Lex {
 	}
 
 	void Keywords::ScanStringLiteral() {
+		lexer_->GetToken().SetType(TokenType::Literal);
+		auto token = lexer_->Peek();             
 
+		std::string value;
+		while (LexicalChar::DOUBLE_QUOTE != token && 
+			   LexicalChar::SINGLE_QUOTE != token) {
+			std::string letter(1, static_cast<char>(token));
+			value += letter;
+			lexer_->IterForward();
+			token = lexer_->Peek();
+		}
+		std::cout << "Ident: " << value << std::endl;
+		lexer_->GetToken().SetIdent(value);
+		// TODO: Make sure the last char is a double quote
+		lexer_->IterForward(); // Skip over ''' or '"'
 	};
 
 	void Keywords::ScanNumber(bool isFloating) {

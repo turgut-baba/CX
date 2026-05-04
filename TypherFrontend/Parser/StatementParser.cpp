@@ -3,6 +3,7 @@
 #include "Helpers.h"
 
 namespace Parser {
+
 	StatementParser::StatementParser(std::shared_ptr<ParserState> state,
 		DiagnosticEngine& diags, MemoryAllocator *allocator)
 		: Parser(diags, allocator)
@@ -29,7 +30,7 @@ namespace Parser {
 			break;
 		}
 		default:
-			UNREACHABLE("Unknown statement start.");
+			UNREACHABLE("Unknown statement start: " + token.Ident());
 			return nullptr;
 		};
 
