@@ -3,10 +3,8 @@ int func() {
 	return 43;
 }
 
-int main() {
+int justcompile() {
 	int a = 1;
-	int j = 64;
-	
 	while (a < 3) {
 		a = a + 1;
 		if(a == 1) {
@@ -28,4 +26,10 @@ int main() {
 	}
 
 	return a;
+}
+
+int main() {
+	char b = 'z';
+
+	return 3;	
 }

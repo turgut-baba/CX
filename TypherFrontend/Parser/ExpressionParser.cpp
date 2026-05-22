@@ -53,11 +53,17 @@ namespace Parser {
 				Lexer()->NextToken();
 				return ident;
 			}
-			case Lex::TokenLiteral::CHARACTER: 
+			case Lex::TokenLiteral::CHARACTER: {
+				char number = (char)Lexer()->GetToken().DecimalValue();
+				AST::StringLiteral* ident = Allocator()->Allocate<AST::StringLiteral>(number);
+				ident->SetLocation(Lexer()->GetToken().GetLocation());
+				ident->SetType(true); // TODO: temp
+				Lexer()->NextToken();
+				return ident;
+			}
 			case Lex::TokenLiteral::STRING: {
-				std::cout << "EUS" << std::endl;
-				float number = Lexer()->GetToken().FloatingValue();
-				AST::IntegerLiteral* ident = Allocator()->Allocate<AST::IntegerLiteral>(number);
+				const char* number = Lexer()->GetToken().Ident().c_str();
+				AST::StringLiteral* ident = Allocator()->Allocate<AST::StringLiteral>((char*)number);
 				ident->SetLocation(Lexer()->GetToken().GetLocation());
 				ident->SetType(true); // TODO: temp
 				Lexer()->NextToken();

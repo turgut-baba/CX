@@ -66,12 +66,45 @@ def ConstantOp : Typher_Op<"constant", [Pure]> {
 
   let builders = [
     OpBuilder<(ins "mlir::Type":$type, "int":$value)>,
-    OpBuilder<(ins "mlir::Type":$type, "double":$value)>
+    OpBuilder<(ins "mlir::Type":$type, "double":$value)>,
+
+    OpBuilder<(ins "mlir::Type":$type, "char":$value)>
   ];
 
   let hasVerifier = 1;
 }
 
+//===----------------------------------------------------------------------===//
+// StringConstantOp
+//===----------------------------------------------------------------------===//
+
+def StringConstantOp : Typher_Op<"string_constant", [Pure]> {
+  let summary = "C string literal constant";
+  let description = [{
+    Produces a pointer to a NUL-terminated string stored in read-only memory.
+    Mirrors a C string literal like "hello".
+
+    Example:
+```mlir
+      %0 = typher.string_constant "hello\00" : !typher.ptr<i8>
+```
+    The caller is responsible for including the explicit NUL terminator in
+    the value attribute if C semantics are desired.
+  }];
+
+  // StringAttr holds the raw byte content (including \0 if you add it)
+  let arguments = (ins StrAttr:$value);
+
+  // Result is a pointer-to-char; adjust to your pointer type dialect
+  let results = (outs C_PtrType:$result);  // e.g. !typher.ptr<i8>
+
+  let hasCustomAssemblyFormat = 1;
+  let hasVerifier = 1;
+
+  let builders = [
+    OpBuilder<(ins "mlir::Type":$ptrType, "llvm::StringRef":$value)>
+  ];
+}
 
 //===----------------------------------------------------------------------===//
 // AddOp

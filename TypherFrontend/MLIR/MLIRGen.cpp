@@ -237,6 +237,16 @@ namespace MLIR {
 		}
 	}
 
+	void Generator::Visit(AST::StringLiteral* node) 
+	{
+		if(node->IsChar()) {
+			retValue = mlir::typher::ConstantOp::create(*builder,
+			 	loc(node->Loc()), builder->getI8Type(), node->Value<char>());
+		} else {
+			
+		}
+	}
+
 	void Generator::Visit(AST::WhileStatement* node) 
 	{
 		auto location = loc(node->Loc()); 

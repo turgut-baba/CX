@@ -6,6 +6,7 @@
 #include "AST/Expressions/CallExpression.h"
 #include "AST/Expressions/Operator.h"
 #include "AST/Literals/IntegerLiteral.h"
+#include "AST/Literals/StringLiteral.h"
 #include "AST/Literals/Literal.h"
 #include "ParserState.h"
 

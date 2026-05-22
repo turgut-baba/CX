@@ -140,6 +140,14 @@ void ConstantOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
     state.addTypes(type);
 }
 
+void ConstantOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
+                       mlir::Type type, char value){
+    // char is always i8 — store it as a signed integer attribute
+    assert(type == builder.getI8Type() && "char constant must have i8 result type");
+    auto attr = builder.getIntegerAttr(type, static_cast<int64_t>(value));
+    build(builder, state, type, attr);
+}
+
 // 2. Updated Parser: Uses TypedAttr to handle any scalar (float, int, etc.)
 mlir::ParseResult ConstantOp::parse(mlir::OpAsmParser &parser,
                                     mlir::OperationState &result) {
@@ -169,6 +177,29 @@ llvm::LogicalResult ConstantOp::verify() {
            << ") must match attribute type (" << attrType << ")";
   } */
     return mlir::success();
+}
+
+//===----------------------------------------------------------------------===//
+// StringConstantOp
+//===----------------------------------------------------------------------===//
+
+void StringConstantOp::build(mlir::OpBuilder &builder,
+                              mlir::OperationState &state,
+                              mlir::Type ptrType,
+                              llvm::StringRef value) {
+  // Append NUL terminator to match C semantics
+  llvm::SmallString<64> nullTerminated(value);
+  nullTerminated.push_back('\0');
+
+  auto attr = builder.getStringAttr(nullTerminated);
+  build(builder, state, ptrType, attr);
+}
+
+mlir::LogicalResult StringConstantOp::verify() {
+  // Ensure result is actually a pointer type in your dialect
+  if (!mlir::isa<YourPtrType>(getResult().getType()))
+    return emitOpError("string_constant result must be a pointer type");
+  return mlir::success();
 }
 
 //===----------------------------------------------------------------------===//

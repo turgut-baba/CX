@@ -156,6 +156,7 @@ namespace Lex {
 			current_token.SetTokenType<TokenLiteral>(
 				TokenLiteral::CHARACTER);
 			keyword_parser.ScanStringLiteral();
+			// TODO: raise error on multiple chars.
 			break;
 		case LexicalChar::NUM_0:
 		case LexicalChar::NUM_1:

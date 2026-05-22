@@ -44,6 +44,7 @@
 #include "AST/statements/IfStatement.h"
 #include "AST/statements/WhileStatement.h"
 #include "AST/Literals/IntegerLiteral.h"
+#include "AST/Literals/StringLiteral.h"
 #include "AST/statements/ExpressionStatement.h"
 #include <fstream>
 
@@ -76,6 +77,7 @@ namespace MLIR {
         void Visit(AST::Expression* node) override;
 		void Visit(AST::Identifier* node) override;
 		void Visit(AST::IntegerLiteral* node) override;
+		void Visit(AST::StringLiteral* node) override;
 		void Visit(AST::VariableDeclaration* node) override;
 		void Visit(AST::Operator* node) override;
 		void Visit(AST::CallExpression* node) override;

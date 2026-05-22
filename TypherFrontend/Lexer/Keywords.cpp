@@ -101,8 +101,11 @@ namespace Lex {
 			lexer_->IterForward();
 			token = lexer_->Peek();
 		}
-		std::cout << "Ident: " << value << std::endl;
 		lexer_->GetToken().SetIdent(value);
+		
+		// TODO: single quote values and string values should be set differently.
+		lexer_->GetToken().decimal = (int)value.c_str()[0];
+
 		// TODO: Make sure the last char is a double quote
 		lexer_->IterForward(); // Skip over ''' or '"'
 	};

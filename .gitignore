@@ -17,3 +17,5 @@ out/
 *.a
 *.o
 tablegen_compile_commands.yml
+
+third_party/**
