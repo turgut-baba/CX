@@ -1,5 +1,7 @@
 #include "StatementParser.h"
 #include "ExpressionParser.h"
+#include "DeclaratorParser.hpp"
+
 #include "Helpers.h"
 
 namespace Parser {
@@ -10,6 +12,8 @@ namespace Parser {
 	{
 		state_ = state;
 		state_->expression_parser = Allocator()->Allocate<ExpressionParser>(state_, 
+			diags_, allocator_);
+		state_->declarator_parser = Allocator()->Allocate<DeclaratorParser>(state_, 
 			diags_, allocator_);
 	}
 
@@ -84,82 +88,6 @@ namespace Parser {
 		return if_statement;
 	}
 
-	// TODO: move this to expression parser. Declaration should be a statement but declarator should be 
-	// an expression.
-	SlabVector<AST::VariableDeclarator*> StatementParser::ParseDeclarators(AST::Identifier* ident) 
-	{
-		// This handles int a, b = 5;. The 'a, b = 5;' part.
-		Lexer()->NextToken(); // Skip '='
-		auto token = Lexer()->GetToken();
-
-		SlabVector<AST::VariableDeclarator*> declarators = Allocator()->ArrayAllocate<AST::VariableDeclarator*>();
-		while (true) {
-			auto expr = state_->expression_parser->parse_expression();
-			AST::VariableDeclarator* decl = Allocator()->Allocate<AST::VariableDeclarator>(expr, ident);
-			declarators.push_back(decl);
-
-			if (IsStatementEnd())
-			{
-				Lexer()->NextToken();
-				break;
-			}
-
-			if (token.IsTokenType<Lex::TokenPunctuator>(Lex::TokenPunctuator::COMMA)) {
-				Lexer()->NextToken();
-				ParseDeclarators(ident); // THIS CAUSES AN ERROR.  declarators REDIFNED ON EACH CALL.
-				continue;
-			}
-
-			break; // TODO: HANDLE OTHER CASES
-		}
-
-		if (declarators.empty())
-		{
-			Diagnostic().report<DiagLevel::Error>({}) 
-				<< "Expected expression.";
-		}
-
-		return declarators;
-	}
-
-	AST::Statement* StatementParser::PottentialVariableOrFunctionDecl()
-	{
-		// AST::Statement* statement = state_->assignment_parser->parse_assignment();
-
-		Lex::TokenKeyword token_style_type = Lexer()->GetToken().GetTokenType<Lex::TokenKeyword>(); // TODO: Turn this into a type class.
-		AstBuiltinTypes type = TokenTypeToAstType(token_style_type);
-		auto Ident = ExpectIdentifier();
-
-		Lexer()->NextToken();
-		auto token = Lexer()->GetToken();
-		switch (token.Type()) {
-			case Lex::TokenType::Punctuator:
-			{
-				if (token.IsTokenType(Lex::TokenPunctuator::LEFT_PARENTHESES)) {
-					return ParseFunction(Ident);
-				} else if (token.IsTokenType(Lex::TokenPunctuator::SEMICOLON)) {
-					auto declarator = Allocator()->Allocate<AST::VariableDeclarator>(Ident);
-					auto declaration = Allocator()->Allocate<AST::VariableDeclaration>(declarator, Allocator(), type);
-					Lexer()->NextToken();
-					return declaration;
-				}
-				else {
-					// throw error
-					break;
-				}
-			}
-			case Lex::TokenType::Operator:
-			{
-				if (token.IsTokenType(Lex::TokenOperator::ASSIGNMENT)) {
-					auto declarators = ParseDeclarators(Ident); // THIS CAUSES AN ERROR. 
-					return Allocator()->Allocate<AST::VariableDeclaration>(declarators, type);
-				}
-			}
-		}
-
-		return nullptr;
-	}
-
 	AST::Body* StatementParser::ParseBody(AST::Statement* owner)
 	{
 		Lexer()->NextToken(); // Skip '{'
@@ -171,28 +99,6 @@ namespace Parser {
 		}
 		Lexer()->NextToken(); // Skip '}'
 		return body;
-	}
-
-	AST::Statement* StatementParser::ParseFunction(AST::Identifier* ident)
-	{
-		Lexer()->NextToken(); // Skip '('
-		AST::Function* functionDecl = Allocator()->Allocate<AST::Function>(ident, Allocator());
-		while (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::RIGHT_PARENTHESES)) {
-			// ParseParameter();
-			if (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::COMMA)) {
-				// Log error
-			}
-		}
-		Lexer()->NextToken(); // Skip ')'
-
-		if (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::SEMICOLON)) {
-			// return;
-		}
-
-		AST::Body* function_body = ParseBody(functionDecl);
-		functionDecl->SetBody(function_body);
-
-		return functionDecl;
 	}
 
 	AST::ReturnStatement* StatementParser::HandleReturnStatement()
@@ -221,7 +127,7 @@ namespace Parser {
 		case Lex::TokenKeyword::INT:
 		case Lex::TokenKeyword::FLOAT:
 		case Lex::TokenKeyword::DOUBLE:
-			statement = PottentialVariableOrFunctionDecl();
+			statement = state_->declarator_parser->VariableOrFunctionDecl();
 			break;
 		case Lex::TokenKeyword::IF:
 			statement = HandleIfKeyword();

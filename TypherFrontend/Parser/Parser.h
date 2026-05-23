@@ -19,7 +19,7 @@ class Parser {
 public:
 	Parser(std::string& file_buffer, 
 		DiagnosticEngine& diags, MemoryAllocator *allocator);
-
+	
 	void parse();
 
 	SlabVector<AST::Statement*> AST()

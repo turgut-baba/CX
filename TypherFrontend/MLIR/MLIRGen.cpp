@@ -141,16 +141,13 @@ namespace MLIR {
 			location, memrefType);
 
 		if (node->Expr()) {
-			node->Expr()->Accept(this); // result ends up in retValue
+			node->Expr()->Accept(this);
 			mlir::Value initialValue = retValue;
 			
-			// Use your AssignOp to store the value into the new address
 			mlir::typher::AssignOp::create(*builder, location, initialValue, address);
 		}
-		// 5. Store the ADDRESS in the symbol table
 		mlir::StringAttr persistentName = builder->getStringAttr(node->Name());
 
-		// 2. Insert using the persistent StringRef
 		symbolTable.insert(persistentName.getValue(), address);
 
 		retValue = address;
@@ -300,6 +297,11 @@ namespace MLIR {
 		return ; 
 	}
 
+	mlir::Value HandleRefAndAdr()
+	{
+		std::cout << "Handling deref" << std::endl;
+	}
+
 	void Generator::Visit(AST::Operator* node) 
 	{
 		auto location = loc(node->Loc());
@@ -322,6 +324,11 @@ namespace MLIR {
 			return;
 
 		switch(node->OperatorType()) {
+			case AST::OperatorKind::ADO:
+			case AST::OperatorKind::DRF: {
+				retValue = HandleRefAndAdr();
+				return;
+			}
 			case AST::OperatorKind::ADD: {
 				retValue = mlir::arith::AddIOp::create(*builder, location, lhs, rhs);
 				return;

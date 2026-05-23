@@ -1,9 +1,11 @@
 int func() {
-	char z = 'a';
+	int b = 5;
+	int* test = &b;
 	return 43;
 }
 
-int justcompile() {
+int* justcompile() {
+
 	int a = 1;
 	while (a < 3) {
 		a = a + 1;

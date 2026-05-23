@@ -4,6 +4,8 @@
 #include "Parser.h"
 #include "ParserState.h"
 #include "AST/Expressions/VariableDeclarator.h"
+#include "AST/Statement.h"
+#include "Helpers.h"
 
 namespace Parser {
     class DeclaratorParser: public Parser{
@@ -14,8 +16,11 @@ namespace Parser {
 		{
 			state_ = state;
 		}
-    private:
+
         AST::VariableDeclarator* parse_declarator();
+        AST::Statement* VariableOrFunctionDecl();
+    private:
+        AST::Statement* ParseFunctionDeclaration(AST::VariableDeclarator* ident);
     };
 } // namespace Parser
 

@@ -121,6 +121,11 @@ public:
     SlabVector(SlabAllocator* a) 
         : alloc(a), data(nullptr), size_(0), capacity(0) { init = true;}
 
+    bool Initialized() 
+    {
+        return init;
+    }
+
     Type& operator[](size_t index) 
     { 
         if(init == false); // TODO: static assert and throw error.

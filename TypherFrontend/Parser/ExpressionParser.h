@@ -22,12 +22,13 @@ namespace Parser {
 
 		AST::Expression* parse_expression();
 		AST::Expression* parse_assignment();
-	private:
-		AST::CallExpression* ParseFunctionCall(AST::Identifier* ident);
+		private:
+		AST::Expression* CheckDeRefAndAddressOf();
 		AST::Expression* CheckIdentifier();
+		AST::Literal* CheckLiteral();
+		AST::CallExpression* ParseFunctionCall(AST::Identifier* ident);
 		AST::ASTNode* ParsePrimaryExpression();
 		AST::Expression* ParseOperator(AST::Expression* lhs);
-		AST::Literal* CheckLiteral();
 		AST::Expression* ParseSingleExpression();
 	};
 }

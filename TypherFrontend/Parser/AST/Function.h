@@ -19,8 +19,8 @@ namespace AST {
 			node_type_ = AstNodeType::FUNCTION;
 		}
 
-		Function(AST::Identifier* ident, SlabAllocator* alloc)
-			:ident_(ident)
+		Function(AST::VariableDeclarator* decl, SlabAllocator* alloc)
+			:ident_(decl->Ident())
 		{
 			body_ = alloc->Allocate<Body>(alloc);
         	body_->SetOwner(this);

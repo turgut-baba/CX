@@ -4,7 +4,7 @@
 #include "AST/ASTNode.h"
 
 namespace Parser {
-    AstBuiltinTypes TokenTypeToAstType(Lex::TokenKeyword token_type)
+    static AstBuiltinTypes TokenTypeToAstType(Lex::TokenKeyword token_type)
     {
         switch(token_type) {
             case Lex::TokenKeyword::VOID:

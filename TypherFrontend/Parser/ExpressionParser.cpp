@@ -99,6 +99,8 @@ namespace Parser {
 			expr = CheckLiteral();
 		} else if (Lexer()->GetToken().Type() == Lex::TokenType::Identifier) {	
 			expr = CheckIdentifier();
+		} else if(Lexer()->GetToken().Type() == Lex::TokenType::Operator) {
+			expr = CheckDeRefAndAddressOf();
 		} else {
 			// TODO: also look for operators for Unary expressions. And some keywords
 			// like true or nullptr.
@@ -107,6 +109,29 @@ namespace Parser {
 		}
 		return expr;
 	}
+
+	AST::Expression* ExpressionParser::CheckDeRefAndAddressOf() 
+	{
+		int de_ref_depth = 0;
+		bool is_ref = false;
+		while (Lexer()->GetToken().IsTokenType(Lex::TokenOperator::MULTIPLY)) {
+			Lexer()->NextToken();
+			de_ref_depth++;
+		}
+
+		if ((Lexer()->GetToken().IsTokenType(Lex::TokenOperator::BITWISE_AND))) {
+			Lexer()->NextToken();
+			de_ref_depth--;
+			is_ref = true;
+		}
+
+		AST::Operator* operator_ = Allocator()->Allocate<AST::Operator>(de_ref_depth);
+		
+		auto* expr = parse_expression();
+		operator_->SetLHS(expr);
+		return operator_;
+	}
+
 
 	AST::Expression* ExpressionParser::parse_expression() 
 	{

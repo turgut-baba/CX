@@ -7,15 +7,17 @@
 #include "AST/Visitor.h"
 
 namespace AST {
+	
+	enum DeclaratorKind { Pointer, Array, Reference };
 
 	class VariableDeclarator : public Expression {
 	public:
 		VariableDeclarator()
 			: Expression(AstNodeType::VARIABLE_DECLARATOR) {}
 
-		VariableDeclarator(Expression* expr, Identifier* ident);
+		VariableDeclarator(Expression* expr, Identifier* ident, std::vector<DeclaratorKind> modifiers);
 
-		VariableDeclarator(Identifier* ident);
+		VariableDeclarator(Identifier* ident, std::vector<DeclaratorKind> modifiers);
 
 		virtual ~VariableDeclarator() = default;
 
@@ -23,22 +25,31 @@ namespace AST {
 		{
 			return ident_->Value();
 		}
-		
-		void Accept(NodeVisitor* v) override { v->Visit(this); }
 
+		Identifier* Ident()
+		{
+			return ident_;
+		}
+		
 		Expression* Expr() const
 		{
 			return expression;
 		}
-
+		
 		std::string String() override
 		{
 			return "DECLARATOR node";
 		}
 
+		int GetPointerDepth();
+		
+		void Accept(NodeVisitor* v) override { v->Visit(this); }
 	private:
+		std::vector<DeclaratorKind> modifiers_;
+
+		int arraySize = 0;
+
 		Identifier* ident_;
-		Lex::TokenKeyword type_; // TODO: turn this into a type class.
 		Expression* expression;
 	};
 }

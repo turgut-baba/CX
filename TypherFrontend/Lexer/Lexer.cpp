@@ -147,6 +147,11 @@ namespace Lex {
 			current_token.SetTokenType<TokenOperator>(
 								TokenOperator::MODULUS);
 			break;
+		case LexicalChar::AMPERSAND:
+			current_token.SetIdent("&"); // TEMP
+			current_token.SetTokenType<TokenOperator>(
+								TokenOperator::BITWISE_AND);
+			break;
 		case LexicalChar::DOUBLE_QUOTE:
 			current_token.SetTokenType<TokenLiteral>(
 				TokenLiteral::STRING);

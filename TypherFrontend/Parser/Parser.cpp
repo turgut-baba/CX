@@ -48,7 +48,7 @@ namespace Parser {
 		const auto token = Lexer()->GetToken();
 		if (token.Type() == Lex::TokenType::Identifier)
 		{
-			AST::Identifier* ident = Allocator()->Allocate<AST::Identifier>(token.Ident()); // TODO: TURN THIS INTO CUSTOM ALLOCATOR
+			AST::Identifier* ident = Allocator()->Allocate<AST::Identifier>(token.Ident());
 			return ident;
 		}
 
