@@ -10,12 +10,14 @@ namespace Parser {
 
 	class StatementParser;
 	class ExpressionParser;
+	class DeclaratorParser;
 
 	struct ParserState {
 		std::unique_ptr<Lex::Lexer> lexer_;
 
 		StatementParser* statement_parser;
 		ExpressionParser* expression_parser;
+		DeclaratorParser* declarator_parser;
 	};
 }
 
