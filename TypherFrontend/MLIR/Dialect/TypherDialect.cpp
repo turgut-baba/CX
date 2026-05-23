@@ -183,24 +183,6 @@ llvm::LogicalResult ConstantOp::verify() {
 // StringConstantOp
 //===----------------------------------------------------------------------===//
 
-void StringConstantOp::build(mlir::OpBuilder &builder,
-                              mlir::OperationState &state,
-                              mlir::Type ptrType,
-                              llvm::StringRef value) {
-  // Append NUL terminator to match C semantics
-  llvm::SmallString<64> nullTerminated(value);
-  nullTerminated.push_back('\0');
-
-  auto attr = builder.getStringAttr(nullTerminated);
-  build(builder, state, ptrType, attr);
-}
-
-mlir::LogicalResult StringConstantOp::verify() {
-  // Ensure result is actually a pointer type in your dialect
-  if (!mlir::isa<YourPtrType>(getResult().getType()))
-    return emitOpError("string_constant result must be a pointer type");
-  return mlir::success();
-}
 
 //===----------------------------------------------------------------------===//
 // FuncOp

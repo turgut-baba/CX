@@ -29,7 +29,7 @@ int justcompile() {
 }
 
 int main() {
-	char b = 'z';
+	int b = func();
 
 	return 3;	
 }

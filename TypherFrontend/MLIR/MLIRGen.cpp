@@ -175,16 +175,14 @@ namespace MLIR {
 
 	void Generator::Visit(AST::CallExpression* node) 
 	{
-		llvm::StringRef callee = node->Callee();
+		std::string callee = node->Callee();
 		auto location = loc(node->Loc());
-
 		// Codegen the operands first.
 		SmallVector<mlir::Value, 4> operands;
 		for (auto &expr : node->Args()) {
 			expr->Accept(this);
 			operands.push_back(retValue);
 		}
-
 		// TODO: do this better.
 		retValue = (mlir::Value)mlir::typher::GenericCallOp::create(*builder, 
 			location, callee, operands).getResult(0);
