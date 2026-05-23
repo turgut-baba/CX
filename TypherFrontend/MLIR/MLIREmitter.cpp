@@ -141,6 +141,11 @@ namespace MLIR{
                 return mlir::LLVM::LLVMPointerType::get(type.getContext());
             });
 
+            typeConverter.addConversion([&](mlir::typher::PointerType type) -> std::optional<mlir::Type> {
+                // Turn !typher.ptr<anyType> into a raw LLVM opaque pointer
+                return mlir::LLVM::LLVMPointerType::get(type.getContext());
+            });
+
             patterns.add<
                 AddOpLowering, 
                 CallOpLowering, 

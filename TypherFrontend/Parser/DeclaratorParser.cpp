@@ -10,7 +10,6 @@ AST::VariableDeclarator* DeclaratorParser::parse_declarator()
 {
     std::vector<AST::DeclaratorKind> modifiers;
     AST::Identifier* Ident;
-    
     bool parse_modifiers = true;
     do {
         auto token = Lexer()->GetToken();
@@ -53,7 +52,7 @@ AST::VariableDeclarator* DeclaratorParser::parse_declarator()
             }
         }
     }
-
+    
     return Allocator()->Allocate<AST::VariableDeclarator>(Ident, modifiers);
 }
 

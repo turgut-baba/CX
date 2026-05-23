@@ -10,12 +10,13 @@ include "mlir/Interfaces/SideEffectInterfaces.td"
 // Provide a definition of the 'toy' dialect in the ODS framework so that we
 // can define our operations.
 def Typher_Dialect : Dialect {
-  let name = "typher";
-  let cppNamespace = "::mlir::typher";
-  let summary = "A dialect for Typher langauge that uses C-language constructs.";
+    let name = "typher";
+    let cppNamespace = "::mlir::typher";
+    let summary = "A dialect for Typher langauge that uses C-language constructs.";
+    let useDefaultTypePrinterParser = 1;
 }
 
-def C_Type : AnyTypeOf<[I1, I8, I16, I32, I64, F32, F64]>;
+include "Types.td"
 
 // Base class for toy dialect operations. This operation inherits from the base
 // `Op` class in OpBase.td, and provides:

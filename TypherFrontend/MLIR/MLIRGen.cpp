@@ -135,6 +135,13 @@ namespace MLIR {
 
 		mlir::Type varType = ASTTypeToMlirType(((AST::VariableDeclaration*)node->Parent())->Type(), builder);
 
+		for (auto& modifier: node->Modifiers()) {
+			if(modifier == AST::DeclaratorKind::Pointer){
+        		varType = mlir::typher::PointerType::get(builder->getContext(), varType);
+			}
+    	}
+		
+		//auto memrefType = mlir::typher::PointerType::get(builder->getContext(), varType);
 		auto memrefType = mlir::MemRefType::get({}, varType);
 
 		mlir::Value address = mlir::typher::AllocaOp::create(*builder, 

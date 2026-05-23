@@ -13,6 +13,8 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Casting.h"
+#include "mlir/IR/OpImplementation.h"
+#include "mlir/IR/DialectImplementation.h"
 
 #include <iostream>
 
@@ -30,10 +32,14 @@ using namespace mlir::typher;
 
   //MLIR_DEFINE_EXPLICIT_TYPE_ID(TypherDialect)
 void TypherDialect::initialize() {
-  addOperations<
-  #define GET_OP_LIST
-  #include "Ops.cpp.inc"
-  >();
+    addOperations<
+        #define GET_OP_LIST
+        #include "Ops.cpp.inc"
+    >();
+    addTypes<                    // add this
+        #define GET_TYPEDEF_LIST
+        #include "Types.cpp.inc"
+    >();
 }
 
 static mlir::ParseResult parseBinaryOp(mlir::OpAsmParser &parser,
@@ -296,6 +302,9 @@ LogicalResult IfOp::verify() {
 
 	return success();
 }
+
+#define GET_TYPEDEF_CLASSES
+#include "Types.cpp.inc"
 
 #define GET_OP_CLASSES
 #include "Ops.cpp.inc"

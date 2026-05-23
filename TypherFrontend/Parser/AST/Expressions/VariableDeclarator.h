@@ -41,13 +41,16 @@ namespace AST {
 			return "DECLARATOR node";
 		}
 
-		int GetPointerDepth();
+		const std::vector<DeclaratorKind>& Modifiers() 
+		{
+			return modifiers_;
+		}
 		
 		void Accept(NodeVisitor* v) override { v->Visit(this); }
 	private:
 		std::vector<DeclaratorKind> modifiers_;
 
-		int arraySize = 0;
+		int array_size_ = 0;
 
 		Identifier* ident_;
 		Expression* expression;
