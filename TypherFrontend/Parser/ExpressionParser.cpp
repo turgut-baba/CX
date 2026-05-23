@@ -113,7 +113,6 @@ namespace Parser {
 	AST::Expression* ExpressionParser::CheckDeRefAndAddressOf() 
 	{
 		int de_ref_depth = 0;
-		bool is_ref = false;
 		while (Lexer()->GetToken().IsTokenType(Lex::TokenOperator::MULTIPLY)) {
 			Lexer()->NextToken();
 			de_ref_depth++;
@@ -122,13 +121,12 @@ namespace Parser {
 		if ((Lexer()->GetToken().IsTokenType(Lex::TokenOperator::BITWISE_AND))) {
 			Lexer()->NextToken();
 			de_ref_depth--;
-			is_ref = true;
 		}
 
 		AST::Operator* operator_ = Allocator()->Allocate<AST::Operator>(de_ref_depth);
 		
 		auto* expr = parse_expression();
-		operator_->SetLHS(expr);
+		operator_->SetRHS(expr);
 		return operator_;
 	}
 

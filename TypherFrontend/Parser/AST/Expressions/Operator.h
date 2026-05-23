@@ -8,10 +8,10 @@
 namespace AST {
 
 	enum OperatorKind {
-		ADD, SUB, MUL, DIV, MOD,
-		ASN,
-		EQS, LEQ, LES, NEQ, GEQ, GRT,
-		DRF, ADO
+		ADD, SUB, MUL, DIV, MOD, 		// Basic math operations
+		ASN, 							// Assignment
+		EQS, LEQ, LES, NEQ, GEQ, GRT, 	// Equal comparison operaions.
+		DRF, ADR 						// De-ref and address of operations.
 	};
 
 	class Operator : public Expression {

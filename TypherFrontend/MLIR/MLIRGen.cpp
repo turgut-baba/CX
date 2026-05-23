@@ -304,14 +304,34 @@ namespace MLIR {
 		return ; 
 	}
 
-	mlir::Value HandleRefAndAdr()
+	mlir::Value Generator::HandleRefAndAdr(AST::Operator* node)
 	{
-		std::cout << "Handling deref" << std::endl;
+		mlir::Value address;
+		if (node->OperatorType() ==  AST::OperatorKind::ADR) {
+			node->GetRHS()->Accept(this);
+			mlir::Value varRef = retValue;
+
+			mlir::StringAttr persistentName = builder->getStringAttr(
+				((AST::Identifier*)node->GetRHS())->Value() // TODO: Find a better approach to this.
+			);
+			address = symbolTable.lookup(persistentName.getValue());
+			
+			if (!address) {
+				emitError(loc(node->Loc()), "Undefined variable target for address-of operator");
+			}
+		}
+		return address;
 	}
 
 	void Generator::Visit(AST::Operator* node) 
 	{
 		auto location = loc(node->Loc());
+
+		if(node->OperatorType() ==  AST::OperatorKind::ADR ||
+		   node->OperatorType() ==  AST::OperatorKind::DRF) {
+			retValue = HandleRefAndAdr(node);
+			return;
+		}
 
 		node->GetRHS()->Accept(this);
 		mlir::Value rhs = retValue;
@@ -331,11 +351,6 @@ namespace MLIR {
 			return;
 
 		switch(node->OperatorType()) {
-			case AST::OperatorKind::ADO:
-			case AST::OperatorKind::DRF: {
-				retValue = HandleRefAndAdr();
-				return;
-			}
 			case AST::OperatorKind::ADD: {
 				retValue = mlir::arith::AddIOp::create(*builder, location, lhs, rhs);
 				return;

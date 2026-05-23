@@ -46,7 +46,7 @@ namespace AST {
 		: Expression(AstNodeType::OPERATOR)
 	{
 		if (de_ref_depth == -1) {
-			OpType = OperatorKind::ADD;
+			OpType = OperatorKind::ADR;
 		} else {
 			OpType = OperatorKind::DRF;
 			de_ref_depth_ = de_ref_depth;

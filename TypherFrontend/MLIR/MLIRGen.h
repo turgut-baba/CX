@@ -70,6 +70,7 @@ namespace MLIR {
 
 	private:
 		mlir::OwningOpRef<mlir::ModuleOp> GenTree();
+		mlir::Value HandleRefAndAdr(AST::Operator* node);
 
 		void Visit(AST::Function* node) override;
 		void Visit(AST::Statement* node) override;
