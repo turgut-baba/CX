@@ -23,6 +23,26 @@ namespace Parser {
                 return AstBuiltinTypes::NONE;
         }
     }
+
+    static std::string AstTypeToString(AstBuiltinTypes AST_type)
+    {
+        switch(AST_type) {
+            case AstBuiltinTypes::VOID:
+                return "void";
+            case AstBuiltinTypes::BOOL:
+                return "bool";
+            case AstBuiltinTypes::CHAR:
+                return "char";
+            case AstBuiltinTypes::INT:
+                return "int";
+            case AstBuiltinTypes::FLOAT:
+                return "float";
+            case AstBuiltinTypes::DOUBLE:
+                return "double";
+            default:
+                return "N/A";
+        }
+    }
 }
 
 #endif

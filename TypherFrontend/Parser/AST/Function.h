@@ -42,10 +42,20 @@ namespace AST {
 			return ident_->Value();
 		}
 
+		AstBuiltinTypes ReturnType()
+		{
+			return ReturnType_;
+		}
+
+		void SetReturnType(AstBuiltinTypes return_type)
+		{
+			ReturnType_ = return_type;
+		}
+
 		void Accept(NodeVisitor* v) override { v->Visit(this); }
 	private:
 		// TODO: give better name to these variables
-		Lex::TokenKeyword ReturnType_; // TODO: turn this into a type class.
+		AstBuiltinTypes ReturnType_;
 		SlabVector<VariableDeclarator*> param_list_;
 		AST::Identifier* ident_;
 	};

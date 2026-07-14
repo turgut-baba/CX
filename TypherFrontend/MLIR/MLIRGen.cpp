@@ -1,5 +1,6 @@
 #include "MLIRGen.h" // TODO: change this to checker/analyzer.
 #include "MLIRHelpers.h"
+#include "Helpers.h"
 
 namespace MLIR {
 	using llvm::dyn_cast;
@@ -81,14 +82,15 @@ namespace MLIR {
 		builder->setInsertionPointToEnd(theModule.getBody());
 
 		auto location = loc(node->Loc());
-		llvm::SmallVector<mlir::Type, 4> argTypes(node->Params().size(),
-												  builder->getI32Type()); // TODO: change this to accept all types.
+		auto returnType = ASTTypeToMlirType(node->ReturnType(), builder);
+		llvm::SmallVector<mlir::Type, 4> argTypes(node->Params().size(), 
+			ASTTypeToMlirType(node->ReturnType(), builder)); // TODO: change this to accept argument types.
 
-		auto funcType = builder->getFunctionType(argTypes, {builder->getI32Type()});
+		auto funcType = builder->getFunctionType(argTypes, returnType);
 		mlir::typher::FuncOp function = mlir::typher::FuncOp::create(*builder, location, node->Name(),
 										funcType);
 
-		mlir::Type expectedType = builder->getI32Type(); // TODO: change this to accept all types.
+		mlir::Type expectedType = returnType; // TODO: change this to accept all types.
 
 		mlir::Block &entryBlock = function.front();
     	auto funcArgs = node->Params();
@@ -118,7 +120,7 @@ namespace MLIR {
 			mlir::typher::ReturnOp::create(*builder, location);
 		} else if(returnOp.hasOperand()){
 			function.setType(builder->getFunctionType(
-          		function.getFunctionType().getInputs(), builder->getI32Type()));
+          		function.getFunctionType().getInputs(), returnType));
 		}
 
 		// retType = function;

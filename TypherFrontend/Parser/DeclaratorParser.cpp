@@ -70,7 +70,7 @@ AST::Statement* DeclaratorParser::VariableOrFunctionDecl()
 
     auto token = Lexer()->GetToken();
     if (token.IsTokenType(Lex::TokenPunctuator::LEFT_PARENTHESES)) {
-        return ParseFunctionDeclaration(declarator);
+        return ParseFunctionDeclaration(declarator, type);
     }
     while(true) {
         token = Lexer()->GetToken();
@@ -104,7 +104,7 @@ AST::Statement* DeclaratorParser::VariableOrFunctionDecl()
 }
 
 
-AST::Statement* DeclaratorParser::ParseFunctionDeclaration(AST::VariableDeclarator* declarator)
+AST::Statement* DeclaratorParser::ParseFunctionDeclaration(AST::VariableDeclarator* declarator, AstBuiltinTypes return_type)
 {
     Lexer()->NextToken(); // Skip '('
     AST::Function* functionDecl = Allocator()->Allocate<AST::Function>(declarator, Allocator());
@@ -122,6 +122,7 @@ AST::Statement* DeclaratorParser::ParseFunctionDeclaration(AST::VariableDeclarat
 
     AST::Body* function_body = state_->statement_parser->ParseBody(functionDecl);
     functionDecl->SetBody(function_body);
+    functionDecl->SetReturnType(return_type);
 
     return functionDecl;
 }
