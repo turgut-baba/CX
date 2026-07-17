@@ -248,6 +248,15 @@ struct FuncOpLowering : public OpConversionPattern<mlir::typher::FuncOp> {
 
     TypeConverter::SignatureConversion signatureConversion(op.getNumArguments());
     SmallVector<Type, 4> convertedResults;
+
+    for (auto argType : op.getFunctionType().getInputs()) {
+        SmallVector<Type, 1> convertedTypes;
+        if (failed(converter->convertType(argType, convertedTypes))) {
+            return rewriter.notifyMatchFailure(op, "Failed to convert input argument type");
+        }
+        // This registers the mapping so getConvertedTypes() actually has data!
+        signatureConversion.addInputs(convertedTypes);
+    }
     
     if (failed(converter->convertTypes(op.getFunctionType().getResults(), convertedResults))) {
       return rewriter.notifyMatchFailure(op, "Failed to convert function signature types");

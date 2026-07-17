@@ -231,12 +231,13 @@ void FuncOp::print(mlir::OpAsmPrinter &p) {
 //===----------------------------------------------------------------------===//
 
 void GenericCallOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
-                          StringRef callee, ArrayRef<mlir::Value> arguments) {
-  // Generic call always returns an unranked Tensor initially.
-    state.addTypes(builder.getI32Type());
+                          mlir::Type returnType, StringRef callee, 
+                          ArrayRef<mlir::Value> arguments) {
+    // Instead of hardcoding builder.getI32Type(), use the passed-in type
+    state.addTypes(returnType);
     state.addOperands(arguments);
     state.addAttribute("callee",
-                      mlir::SymbolRefAttr::get(builder.getContext(), callee));
+                       mlir::SymbolRefAttr::get(builder.getContext(), callee));
 }
 
 

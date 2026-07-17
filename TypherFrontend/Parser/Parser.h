@@ -81,6 +81,7 @@ protected:
 	bool IsStatementEnd();
 
 protected:
+	AstBuiltinTypes ParseType();
 	AST::Identifier* ExpectIdentifier();
 	SlabVector<AST::Statement*> AST_tree;
 

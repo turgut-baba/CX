@@ -256,7 +256,7 @@ def GenericCallOp : Typher_Op<"generic_call"> {
 
   // The generic call operation takes a symbol reference attribute as the
   // callee, and inputs for the call.
-  let arguments = (ins FlatSymbolRefAttr:$callee, Variadic<C_Type>:$inputs);
+  let arguments = (ins FlatSymbolRefAttr:$callee, Variadic<AnyType>:$inputs);
 
   // The generic call operation returns a single value of TensorType.
   let results = (outs Variadic<C_Type>);
@@ -268,7 +268,7 @@ def GenericCallOp : Typher_Op<"generic_call"> {
 
   // Add custom build methods for the generic call operation.
   let builders = [
-    OpBuilder<(ins "StringRef":$callee, "ArrayRef<Value>":$arguments)>
+    OpBuilder<(ins "Type":$returnType, "StringRef":$callee, "ArrayRef<Value>":$arguments)>
   ];
 }
 

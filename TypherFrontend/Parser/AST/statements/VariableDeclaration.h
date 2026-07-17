@@ -14,7 +14,7 @@ namespace AST {
 
 		VariableDeclaration() = default;
 		virtual ~VariableDeclaration() = default;
-
+  
 		std::string String() override
 		{
 			return "DECLARATION node";

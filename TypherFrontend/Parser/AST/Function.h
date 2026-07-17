@@ -8,6 +8,31 @@
 #include "AST/statements/VariableDeclaration.h"
 
 namespace AST {
+
+	// This is a wrapper class to manage the parameters.
+	// We can change it to a seperate class unrelated to VariableDeclaration.
+	class Parameter {
+	public:
+		Parameter(AST::VariableDeclaration* decl)
+			:decl_(decl) {}
+
+		AstBuiltinTypes Type()
+		{
+			return decl_->Type();
+		}
+
+		std::string Name()
+		{
+			return decl_->Declarators()[0]->Name();
+		}
+
+		AST::VariableDeclarator* AsDeclarator() 
+		{
+			return decl_->Declarators()[0];
+		}
+	private:
+		AST::VariableDeclaration* decl_;
+	};
 	class Function: public Statement {
 	public:
 		virtual ~Function() = default;
@@ -20,7 +45,7 @@ namespace AST {
 		}
 
 		Function(AST::VariableDeclarator* decl, SlabAllocator* alloc)
-			:ident_(decl->Ident()), declaration_(decl)
+			:ident_(decl->Ident()), declaraton_(decl)
 		{
 			body_ = alloc->Allocate<Body>(alloc);
         	body_->SetOwner(this);
@@ -32,7 +57,7 @@ namespace AST {
 			return "Function node ";
 		}
 
-		SlabVector<VariableDeclarator*> Params()
+		std::vector<Parameter> Params()
 		{
 			return param_list_;
 		}
@@ -52,17 +77,22 @@ namespace AST {
 			ReturnType_ = return_type;
 		}
 
-		AST::VariableDeclarator* Declaration()
+		AST::VariableDeclarator* Declarator()
 		{
-			return declaration_;
+			return declaraton_;
+		}
+
+		void AddParameter(AST::VariableDeclaration* decl)
+		{
+			param_list_.push_back(decl);
 		}
 
 		void Accept(NodeVisitor* v) override { v->Visit(this); }
 	private:
-		AST::VariableDeclarator* declaration_;
+		AST::VariableDeclarator* declaraton_;
 		// TODO: give better name to these variables
 		AstBuiltinTypes ReturnType_;
-		SlabVector<VariableDeclarator*> param_list_;
+		std::vector<Parameter> param_list_;
 		AST::Identifier* ident_;
 	};
 }

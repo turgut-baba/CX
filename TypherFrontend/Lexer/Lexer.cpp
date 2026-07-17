@@ -120,7 +120,9 @@ namespace Lex {
 			break;
 		case LexicalChar::COMMA:
 			current_token.SetIdent(","); // TEMP
-			current_token.SetType(TokenType::Punctuator);
+			current_token.SetTokenType<TokenPunctuator>(
+								TokenPunctuator::COMMA);
+			//current_token.SetType(TokenType::Punctuator);
 			break;
 		case LexicalChar::PLUS:
 			current_token.SetIdent("+"); // TEMP

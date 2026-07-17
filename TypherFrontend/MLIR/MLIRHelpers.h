@@ -25,7 +25,7 @@ namespace MLIR {
         }
     }
 
-    void ApplyModifiers(AST::VariableDeclarator* node, mlir::Type& varType, std::shared_ptr<mlir::OpBuilder> builder)
+    void ApplyTypeModifiers(AST::VariableDeclarator* node, mlir::Type& varType, std::shared_ptr<mlir::OpBuilder> builder)
     {
         for (auto& modifier: node->Modifiers()) {
 			if(modifier == AST::DeclaratorKind::Pointer){

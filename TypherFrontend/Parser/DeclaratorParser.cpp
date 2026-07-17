@@ -59,9 +59,7 @@ AST::VariableDeclarator* DeclaratorParser::parse_declarator()
 AST::Statement* DeclaratorParser::VariableOrFunctionDecl()
 {
     // AST::Statement* statement = state_->assignment_parser->parse_assignment();
-
-    Lex::TokenKeyword token_style_type = Lexer()->GetToken().GetTokenType<Lex::TokenKeyword>(); // TODO: Turn this into a type class.
-    AstBuiltinTypes type = TokenTypeToAstType(token_style_type);
+    AstBuiltinTypes type = ParseType();
 
     Lexer()->NextToken(); // Skip the type
     SlabVector<AST::VariableDeclarator*> declarators = nullptr;
@@ -103,17 +101,32 @@ AST::Statement* DeclaratorParser::VariableOrFunctionDecl()
     return nullptr;
 }
 
+void DeclaratorParser::ParseParameter(AST::Function* functionDecl)
+{
+    AstBuiltinTypes type = ParseType();
+
+    Lexer()->NextToken(); // Skip the type
+
+    AST::VariableDeclarator* param = parse_declarator();
+
+    auto decl = Allocator()->Allocate<AST::VariableDeclaration>(param, Allocator(), type);
+
+    functionDecl->AddParameter(decl);
+}
 
 AST::Statement* DeclaratorParser::ParseFunctionDeclaration(AST::VariableDeclarator* declarator, AstBuiltinTypes return_type)
 {
     Lexer()->NextToken(); // Skip '('
     AST::Function* functionDecl = Allocator()->Allocate<AST::Function>(declarator, Allocator());
     while (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::RIGHT_PARENTHESES)) {
-        // ParseParameter();
-        if (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::COMMA)) {
-            // Log error
+        ParseParameter(functionDecl);
+
+        std::cout << Lexer()->GetToken().Ident()<< std::endl;
+        if (Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::COMMA)) {
+            Lexer()->NextToken(); // Skip ','
         }
     }
+
     Lexer()->NextToken(); // Skip ')'
 
     if (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::SEMICOLON)) {

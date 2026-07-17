@@ -84,11 +84,18 @@ namespace MLIR {
 		auto location = loc(node->Loc());
 		
 		auto returnType = ASTTypeToMlirType(node->ReturnType(), builder);
+		ApplyTypeModifiers(node->Declarator(), returnType, builder);
 
-		ApplyModifiers(node->Declaration(), returnType, builder);
+		auto funcArgs = node->Params();
 
-		llvm::SmallVector<mlir::Type, 4> argTypes(node->Params().size(), 
-			ASTTypeToMlirType(node->ReturnType(), builder)); // TODO: change this to accept argument types.
+		llvm::SmallVector<mlir::Type, 4> argTypes; // TODO: change this to accept argument types.
+
+		for (size_t i = 0; i < funcArgs.size(); i++) 
+		{
+			auto arg_type = ASTTypeToMlirType(funcArgs[i].Type(), builder);
+			ApplyTypeModifiers(funcArgs[i].AsDeclarator(), arg_type, builder);
+			argTypes.push_back(arg_type);
+		}
 
 		auto funcType = builder->getFunctionType(argTypes, returnType);
 		mlir::typher::FuncOp function = mlir::typher::FuncOp::create(*builder, location, node->Name(),
@@ -97,18 +104,7 @@ namespace MLIR {
 		mlir::Type expectedType = returnType; // TODO: change this to accept all types.
 
 		mlir::Block &entryBlock = function.front();
-    	auto funcArgs = node->Params();
 		auto entryArgs = entryBlock.getArguments();
-
-		for (size_t i = 0; i < funcArgs.size(); i++) 
-		{
-			if (entryArgs[i].getType() != expectedType) {
-				return;
-			}
-
-			if (failed(declare(funcArgs[i]->Name(), entryArgs[i])))
-				return;
-		}
 
 		builder->setInsertionPointToStart(&entryBlock);
 		
@@ -141,7 +137,7 @@ namespace MLIR {
 
 		mlir::Type varType = ASTTypeToMlirType(((AST::VariableDeclaration*)node->Parent())->Type(), builder);
 
-		ApplyModifiers(node, varType, builder);
+		ApplyTypeModifiers(node, varType, builder);
 		
 		//auto memrefType = mlir::typher::PointerType::get(builder->getContext(), varType);
 		auto memrefType = mlir::MemRefType::get({}, varType);
@@ -189,9 +185,17 @@ namespace MLIR {
 			expr->Accept(this);
 			operands.push_back(retValue);
 		}
+
+		mlir::Type varType = builder->getI32Type();//ASTTypeToMlirType(node->Type(), builder);
+
 		// TODO: do this better.
-		retValue = (mlir::Value)mlir::typher::GenericCallOp::create(*builder, 
-			location, callee, operands).getResult(0);
+		retValue = (mlir::Value)mlir::typher::GenericCallOp::create(
+				*builder, 
+				location, 
+				varType, // Added parameter
+				callee, 
+				operands
+			).getResult(0);
 	}
 
 	void Generator::Visit(AST::ReturnStatement* node) 

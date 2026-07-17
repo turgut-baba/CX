@@ -2,6 +2,7 @@
 #include "Tokens/TokenTypes.h"
 #include "AST/Statement.h"
 #include "StatementParser.h"
+#include "Helpers.h"
 
 namespace Parser {
 
@@ -28,6 +29,13 @@ namespace Parser {
 	Lex::Lexer* Parser::Lexer() const
 	{
 		return state_->lexer_.get();
+	}
+
+	AstBuiltinTypes Parser::ParseType() 
+	{
+		// TODO: Turn this into a type class.
+		Lex::TokenKeyword token_style_type = Lexer()->GetToken().GetTokenType<Lex::TokenKeyword>(); 
+		return TokenTypeToBuiltinAstType(token_style_type);
 	}
 
 	bool Parser::IsStatementEnd()

@@ -20,6 +20,7 @@ namespace Parser {
         AST::VariableDeclarator* parse_declarator();
         AST::Statement* VariableOrFunctionDecl();
     private:
+        void ParseParameter(AST::Function* functionDecl);
         AST::Statement* ParseFunctionDeclaration(AST::VariableDeclarator* ident, AstBuiltinTypes return_type);
     };
 } // namespace Parser
