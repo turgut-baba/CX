@@ -20,7 +20,7 @@ namespace AST {
 		}
 
 		Function(AST::VariableDeclarator* decl, SlabAllocator* alloc)
-			:ident_(decl->Ident())
+			:ident_(decl->Ident()), declaration_(decl)
 		{
 			body_ = alloc->Allocate<Body>(alloc);
         	body_->SetOwner(this);
@@ -52,8 +52,14 @@ namespace AST {
 			ReturnType_ = return_type;
 		}
 
+		AST::VariableDeclarator* Declaration()
+		{
+			return declaration_;
+		}
+
 		void Accept(NodeVisitor* v) override { v->Visit(this); }
 	private:
+		AST::VariableDeclarator* declaration_;
 		// TODO: give better name to these variables
 		AstBuiltinTypes ReturnType_;
 		SlabVector<VariableDeclarator*> param_list_;

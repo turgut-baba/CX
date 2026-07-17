@@ -82,7 +82,11 @@ namespace MLIR {
 		builder->setInsertionPointToEnd(theModule.getBody());
 
 		auto location = loc(node->Loc());
+		
 		auto returnType = ASTTypeToMlirType(node->ReturnType(), builder);
+
+		ApplyModifiers(node->Declaration(), returnType, builder);
+
 		llvm::SmallVector<mlir::Type, 4> argTypes(node->Params().size(), 
 			ASTTypeToMlirType(node->ReturnType(), builder)); // TODO: change this to accept argument types.
 
@@ -137,11 +141,7 @@ namespace MLIR {
 
 		mlir::Type varType = ASTTypeToMlirType(((AST::VariableDeclaration*)node->Parent())->Type(), builder);
 
-		for (auto& modifier: node->Modifiers()) {
-			if(modifier == AST::DeclaratorKind::Pointer){
-        		varType = mlir::typher::PointerType::get(builder->getContext(), varType);
-			}
-    	}
+		ApplyModifiers(node, varType, builder);
 		
 		//auto memrefType = mlir::typher::PointerType::get(builder->getContext(), varType);
 		auto memrefType = mlir::MemRefType::get({}, varType);

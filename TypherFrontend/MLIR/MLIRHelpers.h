@@ -24,6 +24,15 @@ namespace MLIR {
                 return builder->getI32Type();
         }
     }
+
+    void ApplyModifiers(AST::VariableDeclarator* node, mlir::Type& varType, std::shared_ptr<mlir::OpBuilder> builder)
+    {
+        for (auto& modifier: node->Modifiers()) {
+			if(modifier == AST::DeclaratorKind::Pointer){
+        		varType = mlir::typher::PointerType::get(builder->getContext(), varType);
+			}
+    	}
+    }
 }
 
 #endif

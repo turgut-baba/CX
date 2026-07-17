@@ -240,11 +240,36 @@ struct FuncOpLowering : public OpConversionPattern<mlir::typher::FuncOp> {
   using OpConversionPattern<mlir::typher::FuncOp>::OpConversionPattern;
 
   LogicalResult matchAndRewrite(mlir::typher::FuncOp op, OpAdaptor adaptor,
-                  ConversionPatternRewriter &rewriter) const {
-    auto func = mlir::func::FuncOp::create(rewriter, op.getLoc(), op.getName(),
-                                           op.getFunctionType());
+                                ConversionPatternRewriter &rewriter) const override {
+    const TypeConverter *converter = getTypeConverter();
+    if (!converter) {
+      return rewriter.notifyMatchFailure(op, "Type converter missing in pattern");
+    }
+
+    TypeConverter::SignatureConversion signatureConversion(op.getNumArguments());
+    SmallVector<Type, 4> convertedResults;
+    
+    if (failed(converter->convertTypes(op.getFunctionType().getResults(), convertedResults))) {
+      return rewriter.notifyMatchFailure(op, "Failed to convert function signature types");
+    }
+
+    auto newFuncType = rewriter.getFunctionType(
+        signatureConversion.getConvertedTypes(), 
+        convertedResults
+    );
+
+    auto func = rewriter.create<mlir::func::FuncOp>(
+        op.getLoc(), 
+        op.getName(), 
+        newFuncType
+    );
 
     rewriter.inlineRegionBefore(op.getRegion(), func.getBody(), func.end());
+
+    if (failed(rewriter.convertRegionTypes(&func.getBody(), *converter, &signatureConversion))) {
+      return rewriter.notifyMatchFailure(op, "Failed to rewrite region block signatures");
+    }
+
     rewriter.eraseOp(op);
     return success();
   }
