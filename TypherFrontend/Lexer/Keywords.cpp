@@ -21,7 +21,7 @@ namespace Lex {
 		std::string final_word(1, static_cast<char>(start_letter_));
 		auto token = lexer_->Peek();
 
-		while (LexicalChar::UPPERCASE_A < token && token < LexicalChar::LOWERCASE_Z) {
+		while (LexicalChar::UPPERCASE_A <= token && token <= LexicalChar::LOWERCASE_Z) {
 			std::string letter(1, static_cast<char>(token));
 			final_word += letter;
 			lexer_->IterForward();
