@@ -1,9 +1,9 @@
 #ifndef OPERATOR_H
 #define OPERATOR_H
 
-#include "AST/ASTNode.h"
+#include "ASTNode.h"
 #include "Tokens/TokenTypes.h"
-#include "AST/Expression.h"
+#include "Expression.h"
 
 namespace AST {
 

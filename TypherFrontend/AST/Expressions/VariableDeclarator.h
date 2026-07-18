@@ -1,10 +1,10 @@
 #ifndef VARIABLE_DECLARATOR_H
 #define VARIABLE_DECLARATOR_H
 
-#include "AST/Statement.h"
-#include "AST/Expression.h"
-#include "AST/Expressions/Identifier.h"
-#include "AST/Visitor.h"
+#include "Statement.h"
+#include "Expression.h"
+#include "Expressions/Identifier.h"
+#include "Visitor.h"
 
 namespace AST {
 	

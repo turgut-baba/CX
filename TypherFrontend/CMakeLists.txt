@@ -54,38 +54,41 @@ set(LLVM_LINK_COMPONENTS
   Support
 )
 link_directories(${LLVM_LIBRARY_DIRS})
-add_executable (TypherCompiler "Core/TypherCompiler.cpp" 
-"Core/CompilerImpl.cpp" 
-"Lexer/Lexer.cpp" 
-"Lexer/Tokens/Token.cpp" 
-"Parser/StatementParser.cpp"
-"Lexer/Keywords.cpp" 
-"Parser/Parser.cpp" 
-"Parser/AST/ASTNode.cpp"
-"Parser/AST/Body.cpp"
-"Parser/ExpressionParser.cpp" 
-"Parser/DeclaratorParser.cpp" 
-"Parser/AST/Literals/Literal.h"
-"Parser/AST/Expressions/VariableDeclarator.cpp"
-"Parser/AST/statements/VariableDeclaration.cpp"
-"Parser/AST/Expressions/CallExpression.cpp"
-"Parser/AST/Expressions/Operator.cpp" 
-"Parser/AST/Statements.cpp"
-"Parser/AST/statements/IfStatement.cpp"
-"Parser/AST/statements/WhileStatement.cpp"
-"Parser/AST/statements/ReturnStatement.cpp"
-"Parser/AST/statements/ExpressionStatement.cpp"
-"Checker/Checker.cpp" 
-"Checker/SemanticAnalyzer.cpp" 
-"MLIR/MLIRGen.cpp"
-"MLIR/MLIRBuilder.cpp"
-"MLIR/MLIREmitter.cpp"
+
+add_executable (TypherCompiler 
+  "Core/TypherCompiler.cpp" 
+  "Core/CompilerImpl.cpp" 
+  "Parser/Lexer/Lexer.cpp" 
+  "Parser/Lexer/Tokens/Token.cpp" 
+  "Parser/Lexer/Keywords.cpp" 
+  "Parser/StatementParser.cpp"
+  "Parser/Parser.cpp" 
+  "Parser/ExpressionParser.cpp" 
+  "Parser/DeclaratorParser.cpp" 
+  "AST/ASTNode.cpp"
+  "AST/Body.cpp"
+  "AST/Literals/Literal.h"
+  "AST/Expressions/VariableDeclarator.cpp"
+  "AST/statements/VariableDeclaration.cpp"
+  "AST/Expressions/CallExpression.cpp"
+  "AST/Expressions/Operator.cpp" 
+  "AST/Statements.cpp"
+  "AST/statements/IfStatement.cpp"
+  "AST/statements/WhileStatement.cpp"
+  "AST/statements/ReturnStatement.cpp"
+  "AST/statements/ExpressionStatement.cpp"
+  "Checker/Checker.cpp" 
+  "Checker/SemanticAnalyzer.cpp" 
+  "MLIR/MLIRGen.cpp"
+  "MLIR/MLIRBuilder.cpp"
+  "MLIR/MLIREmitter.cpp"
  )
 
 target_include_directories(TypherCompiler
   PRIVATE
-  ${CMAKE_SOURCE_DIR}/TypherFrontend/Lexer
+  ${CMAKE_SOURCE_DIR}/TypherFrontend/AST
   ${CMAKE_SOURCE_DIR}/TypherFrontend/Parser
+  ${CMAKE_SOURCE_DIR}/TypherFrontend/Parser/Lexer
   ${CMAKE_SOURCE_DIR}/TypherFrontend/Core
   ${CMAKE_SOURCE_DIR}/TypherFrontend/MLIR
   ${CMAKE_SOURCE_DIR}/TypherFrontend/Checker

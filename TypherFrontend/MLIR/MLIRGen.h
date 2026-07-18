@@ -36,16 +36,16 @@
 #include "llvm/Support/TargetSelect.h"
 
 #include "Dialect/TypherDialect.h"
-#include "AST/Function.h"
-#include "AST/Visitor.h"
-#include "AST/Expressions/Operator.h"
-#include "AST/Expressions/CallExpression.h"
-#include "AST/statements/ReturnStatement.h"
-#include "AST/statements/IfStatement.h"
-#include "AST/statements/WhileStatement.h"
-#include "AST/Literals/IntegerLiteral.h"
-#include "AST/Literals/StringLiteral.h"
-#include "AST/statements/ExpressionStatement.h"
+#include "Function.h"
+#include "Visitor.h"
+#include "Expressions/Operator.h"
+#include "Expressions/CallExpression.h"
+#include "statements/ReturnStatement.h"
+#include "statements/IfStatement.h"
+#include "statements/WhileStatement.h"
+#include "Literals/IntegerLiteral.h"
+#include "Literals/StringLiteral.h"
+#include "statements/ExpressionStatement.h"
 #include <fstream>
 
 namespace MLIR {

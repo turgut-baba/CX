@@ -2,8 +2,8 @@
 #define IDENTIFIER_H
 
 #include <iostream>
-#include "AST/ASTNode.h"
-#include "AST/Expression.h"
+#include "ASTNode.h"
+#include "Expression.h"
 
 namespace AST {
 	class Identifier: public Expression {

@@ -2,12 +2,12 @@
 #define EXPRESSION_PARSER_H
 
 #include "Parser.h"
-#include "AST/Expression.h"
-#include "AST/Expressions/CallExpression.h"
-#include "AST/Expressions/Operator.h"
-#include "AST/Literals/IntegerLiteral.h"
-#include "AST/Literals/StringLiteral.h"
-#include "AST/Literals/Literal.h"
+#include "Expression.h"
+#include "Expressions/CallExpression.h"
+#include "Expressions/Operator.h"
+#include "Literals/IntegerLiteral.h"
+#include "Literals/StringLiteral.h"
+#include "Literals/Literal.h"
 #include "ParserState.h"
 
 namespace Parser {

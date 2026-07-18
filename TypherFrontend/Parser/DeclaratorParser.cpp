@@ -2,7 +2,7 @@
 #include "ExpressionParser.h"
 #include "StatementParser.h"
 
-#include "AST/Function.h"
+#include "Function.h"
 
 namespace Parser {
     

@@ -37,12 +37,12 @@
 #include "llvm/Support/TargetSelect.h"
 
 #include "Dialect/TypherDialect.h"
-#include "AST/Function.h"
-#include "AST/Visitor.h"
-#include "AST/Expressions/Operator.h"
-#include "AST/Expressions/CallExpression.h"
-#include "AST/statements/ReturnStatement.h"
-#include "AST/Literals/IntegerLiteral.h"
+#include "Function.h"
+#include "Visitor.h"
+#include "Expressions/Operator.h"
+#include "Expressions/CallExpression.h"
+#include "statements/ReturnStatement.h"
+#include "Literals/IntegerLiteral.h"
 
 
 namespace MLIR {

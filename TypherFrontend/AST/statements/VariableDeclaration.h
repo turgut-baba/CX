@@ -1,7 +1,7 @@
 #ifndef VARIABLE_DECLARATION_H
 #define VARIABLE_DECLARATION_H
 
-#include "AST/Expressions/VariableDeclarator.h"
+#include "Expressions/VariableDeclarator.h"
 #include "ParserState.h"
 
 namespace AST {

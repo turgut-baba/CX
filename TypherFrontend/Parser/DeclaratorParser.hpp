@@ -3,8 +3,8 @@
 
 #include "Parser.h"
 #include "ParserState.h"
-#include "AST/Expressions/VariableDeclarator.h"
-#include "AST/Statement.h"
+#include "Expressions/VariableDeclarator.h"
+#include "Statement.h"
 #include "Helpers.h"
 
 namespace Parser {

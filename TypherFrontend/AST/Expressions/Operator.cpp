@@ -1,4 +1,4 @@
-#include "AST/Expressions/Operator.h"
+#include "Expressions/Operator.h"
 
 namespace AST {
 	Operator::Operator(Lex::TokenOperator op)

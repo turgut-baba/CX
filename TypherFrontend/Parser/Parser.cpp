@@ -1,6 +1,6 @@
 #include "Parser.h"
 #include "Tokens/TokenTypes.h"
-#include "AST/Statement.h"
+#include "Statement.h"
 #include "StatementParser.h"
 #include "Helpers.h"
 

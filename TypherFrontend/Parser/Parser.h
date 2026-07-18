@@ -2,11 +2,11 @@
 #define PARSER_H
 
 #include "Lexer.h"
-#include "AST/Expressions/Identifier.h"
-#include "AST/Statement.h"
+#include "Expressions/Identifier.h"
+#include "Statement.h"
 #include "Memory/MemAlloc.h"
 #include "Memory/BumpPtrAlloc.h"
-#include "AST/statements/VariableDeclaration.h"
+#include "statements/VariableDeclaration.h"
 #include "ParserState.h"
 
 #include <memory>

@@ -1,4 +1,4 @@
-#include "AST/statements/IfStatement.h"
+#include "statements/IfStatement.h"
 
 namespace AST{
     IfStatement::IfStatement(Expression* expr, SlabAllocator* alloc)

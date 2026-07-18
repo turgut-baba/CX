@@ -1,4 +1,4 @@
-#include "AST/statements/WhileStatement.h"
+#include "statements/WhileStatement.h"
 
 namespace AST{
     WhileStatement::WhileStatement(Expression* expr, SlabAllocator* alloc)

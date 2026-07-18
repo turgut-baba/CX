@@ -1,7 +1,7 @@
 #ifndef LITERAL_H
 #define LITERAL_H
 
-#include "AST/ASTNode.h"
+#include "ASTNode.h"
 
 namespace AST {
 	class Literal: public Expression {

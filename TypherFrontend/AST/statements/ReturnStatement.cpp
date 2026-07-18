@@ -1,4 +1,4 @@
-#include "AST/statements/ReturnStatement.h"
+#include "statements/ReturnStatement.h"
 
 namespace AST {
     ReturnStatement::ReturnStatement(Expression* expr)

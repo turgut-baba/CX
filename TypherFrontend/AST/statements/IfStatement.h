@@ -1,9 +1,9 @@
 #ifndef IF_STATEMENT_H
 #define IF_STATEMENT_H
 
-#include "AST/ASTNode.h"
-#include "AST/Expression.h"
-#include "AST/Statement.h"
+#include "ASTNode.h"
+#include "Expression.h"
+#include "Statement.h"
 
 namespace AST {
     class IfStatement: public Statement {

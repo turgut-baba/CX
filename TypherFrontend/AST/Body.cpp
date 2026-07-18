@@ -1,5 +1,5 @@
 #include "Body.h"
-#include "AST/Statement.h"
+#include "Statement.h"
 
 namespace AST{
     Body::Body(SlabAllocator* alloc) 

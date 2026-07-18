@@ -5,7 +5,7 @@
 #include <vector>
 #include "Memory/MemAlloc.h"
 #include <functional>
-#include "AST/Visitor.h"
+#include "Visitor.h"
 #include "Location.h"
 
 

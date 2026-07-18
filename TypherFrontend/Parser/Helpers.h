@@ -1,7 +1,7 @@
 #ifndef HELPERS_H
 #define HELPERS_H
 
-#include "AST/ASTNode.h"
+#include "ASTNode.h"
 
 namespace Parser {
     static AstBuiltinTypes TokenTypeToBuiltinAstType(Lex::TokenKeyword token_type)

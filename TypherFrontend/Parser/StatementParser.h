@@ -2,13 +2,13 @@
 #define STATEMENT_PARSER_H
 
 #include "Parser.h"
-#include "AST/Statement.h"
+#include "Statement.h"
 #include "ParserState.h"
-#include "AST/Function.h"
-#include "AST/statements/ReturnStatement.h"
-#include "AST/statements/IfStatement.h"
-#include "AST/statements/WhileStatement.h"
-#include "AST/statements/ExpressionStatement.h"
+#include "Function.h"
+#include "statements/ReturnStatement.h"
+#include "statements/IfStatement.h"
+#include "statements/WhileStatement.h"
+#include "statements/ExpressionStatement.h"
 
 namespace Parser {
 	class StatementParser : public Parser 

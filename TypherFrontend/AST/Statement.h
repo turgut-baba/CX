@@ -2,7 +2,7 @@
 #define STATEMENT_H
 
 #include "ASTNode.h"
-#include "AST/Body.h"
+#include "Body.h"
 
 namespace AST {
 	class Statement : public ASTNode {

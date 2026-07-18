@@ -1,4 +1,4 @@
-#include "AST/ASTNode.h"
+#include "ASTNode.h"
 
 namespace AST {
 	void ASTNode::ChangeChildrenNodesRecursively(const NodeFunction& func)

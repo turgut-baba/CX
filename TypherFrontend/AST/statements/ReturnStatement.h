@@ -1,8 +1,8 @@
 #ifndef RETURN_STATEMENT_H
 #define RETURN_STATEMENT_H
 
-#include "AST/Statement.h"
-#include "AST/Expression.h"
+#include "Statement.h"
+#include "Expression.h"
 
 namespace AST {
     class ReturnStatement: public Statement {

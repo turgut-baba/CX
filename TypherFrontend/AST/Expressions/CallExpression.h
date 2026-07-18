@@ -1,8 +1,8 @@
 #ifndef CALL_EXPRESSION_H
 #define CALL_EXPRESSION_H
 
-#include "AST/ASTNode.h"
-#include "AST/Expression.h"
+#include "ASTNode.h"
+#include "Expression.h"
 
 namespace AST {
 	class CallExpression : public Expression {

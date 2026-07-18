@@ -2,7 +2,7 @@
 #define MLIR_HELPERS_H
 
 #include "mlir/IR/Builders.h"
-#include "AST/ASTNode.h"
+#include "ASTNode.h"
 
 namespace MLIR {
     mlir::Type ASTTypeToMlirType(AstBuiltinTypes AST_type, std::shared_ptr<mlir::OpBuilder> builder)

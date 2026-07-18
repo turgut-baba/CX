@@ -1,9 +1,9 @@
 #ifndef SEMANTIC_ANALYZER_H
 #define SEMANTIC_ANALYZER_H
 
-#include "AST/Expression.h"
-#include "AST/Expressions/Operator.h"
-#include "AST/Literals/IntegerLiteral.h"
+#include "Expression.h"
+#include "Expressions/Operator.h"
+#include "Literals/IntegerLiteral.h"
 
 namespace checker {
     class SemanticAnalyzer {
