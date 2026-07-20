@@ -88,7 +88,7 @@ namespace MLIR {
 
 		auto funcArgs = node->Params();
 
-		llvm::SmallVector<mlir::Type, 4> argTypes; // TODO: change this to accept argument types.
+		llvm::SmallVector<mlir::Type, 4> argTypes;
 
 		for (size_t i = 0; i < funcArgs.size(); i++) 
 		{
@@ -101,7 +101,7 @@ namespace MLIR {
 		mlir::typher::FuncOp function = mlir::typher::FuncOp::create(*builder, location, node->Name(),
 										funcType);
 
-		mlir::Type expectedType = returnType; // TODO: change this to accept all types.
+		mlir::Type expectedType = returnType;
 
 		mlir::Block &entryBlock = function.front();
 		auto entryArgs = entryBlock.getArguments();
@@ -128,7 +128,7 @@ namespace MLIR {
 
 	void Generator::Visit(AST::Statement* node)
 	{
-		
+		UNREACHABLE("Pure statment reached on MLIRGen.");
 	}
 
 	void Generator::Visit(AST::VariableDeclarator* node) 
@@ -233,7 +233,6 @@ namespace MLIR {
 	}
 
 	
-
 	void Generator::Visit(AST::IntegerLiteral* node) 
 	{
 		if(node->IsFloating()) {
@@ -253,6 +252,64 @@ namespace MLIR {
 		} else {
 			
 		}
+	}
+
+	void Generator::Visit(AST::ForStatement* node) 
+	{
+		auto location = loc(node->Loc()); 
+
+		// 1. Handle the initialization statement (e.g., int i = 0;)
+		// This happens in the current block *before* entering the loop op.
+		if (node->InitializeStmt()) {
+			node->InitializeStmt()->Accept(this);
+		}
+
+		// 2. Create the WhileOp to orchestrate the loop mechanics
+		auto whileOp = mlir::typher::WhileOp::create(*builder, location);
+		
+		// 3. Setup the Condition Region
+		mlir::Block* condBlock = builder->createBlock(&whileOp.getCondRegion());
+		builder->setInsertionPointToStart(condBlock);
+		
+		// Evaluate the condition expression (e.g., i < 10)
+		if (node->ConditionExpr()) {
+			node->ConditionExpr()->Accept(this);
+		} else {
+			// If the condition is empty (e.g., for(;;)), it's an infinite loop. 
+			// Materialize a constant true boolean (i1).
+			retValue = builder->create<mlir::arith::ConstantIntOp>(location, 1, 1);
+		}
+		
+		mlir::Value condition = retValue;
+		if (!condition)
+			return;
+
+
+		if (node->IteratorExpr()) {
+			node->IteratorExpr()->Accept(this);
+		}
+
+		// Yield out of the condition block to evaluate whether to jump to body
+		mlir::typher::YieldOp::create(*builder, location, condition);
+
+		// 4. Setup the Body Region
+		mlir::Block* bodyBlock = builder->createBlock(&whileOp.getBodyRegion());
+		builder->setInsertionPointToStart(bodyBlock);
+		
+		// Generate code for the actual loop statements
+		GenBody(node->GetBody(), location);
+
+		// 5. Handle the Increment Expression (e.g., i++)
+		// Crucial: The increment happens at the end of the body block!
+
+
+		// Explicitly yield back to the top of the loop to re-evaluate condition
+		// (Ensure your WhileOp body block terminates correctly)
+		// mlir::typher::YieldOp::create(*builder, location);
+
+		// 6. Restore the builder to the parent block continuation point
+		builder->setInsertionPointAfter(whileOp);
+		return;
 	}
 
 	void Generator::Visit(AST::WhileStatement* node) 

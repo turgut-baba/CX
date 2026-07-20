@@ -12,7 +12,7 @@ namespace AST {
 
         virtual std::string String() override
 		{
-			return "If statement ";
+			return "While statement ";
 		}
 
         Expression* ConditionExpr()
@@ -23,8 +23,6 @@ namespace AST {
         void Accept(NodeVisitor* v) override { v->Visit(this); }
     private:
         Expression* condition_;
-        Body* else_body_ = nullptr;
-        WhileStatement* elif_statement_ = nullptr;
     };
 
 }

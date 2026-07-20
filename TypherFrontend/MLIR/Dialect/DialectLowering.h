@@ -22,9 +22,6 @@ struct BinaryOpLowering : public OpConversionPattern<BinaryOp> {
     }
 };
 
-using AddOpLowering = BinaryOpLowering<mlir::typher::AddOp, arith::AddFOp>;
-// using MulOpLowering = BinaryOpLowering<mlir::typher::::MulOp, arith::MulFOp>;
-
 struct ConstantOpLowering : public OpConversionPattern<mlir::typher::ConstantOp> {
     using OpConversionPattern<mlir::typher::ConstantOp>::OpConversionPattern;
 

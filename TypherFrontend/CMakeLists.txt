@@ -75,6 +75,7 @@ add_executable (TypherCompiler
   "AST/Statements.cpp"
   "AST/statements/IfStatement.cpp"
   "AST/statements/WhileStatement.cpp"
+  "AST/statements/ForStatement.cpp"
   "AST/statements/ReturnStatement.cpp"
   "AST/statements/ExpressionStatement.cpp"
   "Checker/Checker.cpp" 

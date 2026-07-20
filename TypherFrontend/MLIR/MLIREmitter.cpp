@@ -147,7 +147,6 @@ namespace MLIR{
             });
 
             patterns.add<
-                AddOpLowering, 
                 CallOpLowering, 
                 ConstantOpLowering, 
                 FuncOpLowering, 

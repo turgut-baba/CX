@@ -8,6 +8,7 @@
 #include "statements/ReturnStatement.h"
 #include "statements/IfStatement.h"
 #include "statements/WhileStatement.h"
+#include "statements/ForStatement.h"
 #include "statements/ExpressionStatement.h"
 
 namespace Parser {
@@ -27,6 +28,7 @@ namespace Parser {
 
 		AST::IfStatement* HandleIfKeyword();
 		AST::WhileStatement* HandleWhileKeyword();
+		AST::ForStatement* HandleForKeyword();
 
 		AST::ReturnStatement* HandleReturnStatement();
 	};

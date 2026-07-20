@@ -43,6 +43,7 @@
 #include "statements/ReturnStatement.h"
 #include "statements/IfStatement.h"
 #include "statements/WhileStatement.h"
+#include "statements/ForStatement.h"
 #include "Literals/IntegerLiteral.h"
 #include "Literals/StringLiteral.h"
 #include "statements/ExpressionStatement.h"
@@ -86,6 +87,8 @@ namespace MLIR {
 		void Visit(AST::IfStatement* node) override;
 		void Visit(AST::ExpressionStatement* node) override;
 		void Visit(AST::WhileStatement* node) override;
+		void Visit(AST::ForStatement* node) override;
+		
 
 		mlir::Location loc(const Location &loc) {
 			return mlir::FileLineColLoc::get(builder->getStringAttr(loc.file), loc.line, loc.col);

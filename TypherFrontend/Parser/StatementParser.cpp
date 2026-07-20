@@ -41,6 +41,33 @@ namespace Parser {
 		return statement;
 	}
 
+	AST::ForStatement* StatementParser::HandleForKeyword()
+	{
+		Lexer()->NextToken(); // Skip 'for';
+		
+		Lexer()->NextToken(); // Skip '('
+
+		// TODO: Add a parameter here like 'IsVariableOnly' so it throws an error when it encounters 
+		// a function declaration.
+		auto init = state_->declarator_parser->VariableOrFunctionDecl();
+		
+		auto cond = state_->expression_parser->parse_expression();
+
+		Lexer()->NextToken(); // Skip ';'
+
+		auto iter = state_->expression_parser->parse_expression();
+
+		Lexer()->NextToken(); // Skip ')'
+		
+		AST::ForStatement* for_statement = 
+			Allocator()->Allocate<AST::ForStatement>(init, cond, iter, Allocator());
+
+		AST::Body* for_body = ParseBody(for_statement);
+		for_statement->SetBody(for_body);
+
+		return for_statement;
+	}
+
 	AST::WhileStatement* StatementParser::HandleWhileKeyword()
 	{
 		Lexer()->NextToken(); // Skip 'while';
@@ -134,6 +161,9 @@ namespace Parser {
 			break;
 		case Lex::TokenKeyword::WHILE:
 			statement = HandleWhileKeyword();
+			break;
+		case Lex::TokenKeyword::FOR:
+			statement = HandleForKeyword();
 			break;
 		case Lex::TokenKeyword::ELSE:
 			Diagnostic().report<DiagLevel::Error>({}) 

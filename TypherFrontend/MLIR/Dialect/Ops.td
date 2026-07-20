@@ -80,37 +80,6 @@ def ConstantOp : Typher_Op<"constant", [Pure]> {
 //===----------------------------------------------------------------------===//
 
 
-
-//===----------------------------------------------------------------------===//
-// AddOp
-//===----------------------------------------------------------------------===//
-
-def AddOp : Typher_Op<"add"> {
-  let summary = "scalar addition operation";
-  let description = [{
-    The "add" operation performs addition between two scalar values.
-    It supports standard C types including integers and floating-point values.
-    Both operands and the result must share the same type.
-  }];
-
-  // Define a constraint for C-like scalar types
-  let arguments = (ins 
-    AnyTypeOf<[AnyInteger, AnyFloat]>:$lhs, 
-    AnyTypeOf<[AnyInteger, AnyFloat]>:$rhs
-  );
-
-  let results = (outs 
-    AnyTypeOf<[AnyInteger, AnyFloat]>:$result
-  );
-
-  let hasCustomAssemblyFormat = 1;
-
-  let builders = [
-    OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
-  ];
-}
-
-
 //===----------------------------------------------------------------------===//
 // AssignOp
 //===----------------------------------------------------------------------===//
@@ -306,9 +275,38 @@ def IfOp : Typher_Op<"if", [
 }
 
 //===----------------------------------------------------------------------===//
+// ForOp
+//===----------------------------------------------------------------------===//
+def ForOp : Typher_Op<"for", []> {
+    let summary = "Structured C-style for loop";
+    let description = [{
+        Represents a structured loop. 
+        Example:
+        typher.for %i = %lb to %ub step %step {
+            // loop body
+        }
+    }];
+
+    // The loop requires 3 arguments: lower bound, upper bound, and step stride
+    let arguments = (ins 
+        SignlessIntegerLike:$lowerBound,
+        SignlessIntegerLike:$upperBound,
+        SignlessIntegerLike:$step
+    );
+
+    // A C-style loop doesn't return anything (unlike yield-based loops)
+    let results = (outs);
+
+    // This gives the loop an internal body block
+    let regions = (region SizedRegion<1>:$bodyRegion);
+
+    // Let MLIR automatically generate a clean custom printer/parser format
+    let hasCustomAssemblyFormat = 1;
+}
+
+//===----------------------------------------------------------------------===//
 // WhileOp
 //===----------------------------------------------------------------------===//
-
 
 def WhileOp : Typher_Op<"while", [RecursiveMemoryEffects]> {
     let summary = "C-like while loop";
