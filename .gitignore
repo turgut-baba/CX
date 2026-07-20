@@ -18,4 +18,7 @@ out/
 *.o
 tablegen_compile_commands.yml
 
+c_test.c
+run_c_test.sh
+
 third_party/**

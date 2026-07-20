@@ -83,7 +83,7 @@ namespace MLIR {
 
 		auto location = loc(node->Loc());
 		
-		auto returnType = ASTTypeToMlirType(node->ReturnType(), builder);
+		mlir::Type returnType = ASTTypeToMlirType(node->ReturnType(), builder);
 		ApplyTypeModifiers(node->Declarator(), returnType, builder);
 
 		auto funcArgs = node->Params();
@@ -94,10 +94,11 @@ namespace MLIR {
 		{
 			auto arg_type = ASTTypeToMlirType(funcArgs[i].Type(), builder);
 			ApplyTypeModifiers(funcArgs[i].AsDeclarator(), arg_type, builder);
+			
 			argTypes.push_back(arg_type);
 		}
 
-		auto funcType = builder->getFunctionType(argTypes, returnType);
+		mlir::FunctionType funcType = builder->getFunctionType(argTypes, returnType);
 		mlir::typher::FuncOp function = mlir::typher::FuncOp::create(*builder, location, node->Name(),
 										funcType);
 
@@ -107,7 +108,13 @@ namespace MLIR {
 		auto entryArgs = entryBlock.getArguments();
 
 		builder->setInsertionPointToStart(&entryBlock);
-		
+
+		for (size_t i = 0; i < funcArgs.size(); ++i) {
+			mlir::StringAttr paramName = builder->getStringAttr(funcArgs[i].Name());
+			mlir::Value mlirArg = entryArgs[i];
+			symbolTable.insert(paramName.getValue(), mlirArg);
+		}
+
 		GenBody(node->GetBody(), location);
 
  		mlir::typher::ReturnOp returnOp;
@@ -151,9 +158,9 @@ namespace MLIR {
 			
 			mlir::typher::AssignOp::create(*builder, location, initialValue, address);
 		}
-		mlir::StringAttr persistentName = builder->getStringAttr(node->Name());
-
-		symbolTable.insert(persistentName.getValue(), address);
+		
+		mlir::StringAttr varName = builder->getStringAttr(node->Name());
+		symbolTable.insert(varName.getValue(), address);
 
 		retValue = address;
 	}
@@ -224,9 +231,16 @@ namespace MLIR {
 		auto location = loc(node->Loc());
 
 		if (auto variable = symbolTable.lookup(node->Value()))
-		{		
-			retValue = LvalueToRvalue(variable, location);
-      		//retValue = variable;
+		{
+			if (mlir::isa<mlir::MemRefType>(variable.getType())) 
+			{
+				retValue = LvalueToRvalue(variable, location);
+			}
+			else 
+			{
+				// It's already an Rvalue (e.g., a function parameter %arg0)
+				retValue = variable; 
+			}
 		}
 		// TODO: log error
 		return;
