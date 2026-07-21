@@ -6,6 +6,7 @@ namespace Parser {
 		SlabVector<AST::Expression*> params(Allocator());
 		Lexer()->NextToken(); // Skip '('
 		while (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::RIGHT_PARENTHESES)) {
+			std::cout << Lexer()->GetToken().Ident() << std::endl;
 			params.push_back(parse_expression());
 			if (Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::COMMA)) {
 				Lexer()->NextToken(); // Skip ','
@@ -143,20 +144,14 @@ namespace Parser {
 			expr = ParseSingleExpression();
 		}
 
-		if (IsStatementEnd() ||
-			Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::RIGHT_PARENTHESES) 
-		 ) {
-			return expr;
-		}
-
 		if(Lexer()->GetToken().Type() == Lex::TokenType::Operator) {
 			return ParseOperator(expr);
 		}
 
-		Diagnostic().report<DiagLevel::Error>({}) 
-            << "Expected ';' at the end of expression.";
+		return expr;
 
-		return nullptr;
+		//Diagnostic().report<DiagLevel::Error>({}) 
+        //    << "Expected ';' at the end of expression.";
 	}
 
 	AST::Expression* ExpressionParser::parse_assignment()

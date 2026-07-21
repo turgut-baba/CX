@@ -84,6 +84,7 @@ namespace AST {
 
 		void AddParameter(AST::VariableDeclaration* decl)
 		{
+			decl->SetParent(this);
 			param_list_.push_back(decl);
 		}
 
