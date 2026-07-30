@@ -11,6 +11,8 @@
 #include <cstring>
 #include "Log/Diagnostics.h"
 #include "Checker.h"
+#include "Comments.h"
+
 
 std::string read_file(const std::filesystem::path& path) {
     if (!std::filesystem::exists(path))
@@ -66,6 +68,7 @@ int main(int argc, char** argv)
     
     try {
         std::string file_buffer = read_file(entry_file);
+        PreProcessor::strip_comments_in_place(file_buffer);
         Parser::Parser parse = Parser::Parser(file_buffer, diags, &allocator);
         parse.parse();
 

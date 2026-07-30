@@ -30,6 +30,8 @@ set(LLVM_BUILD_DIR "${LLVM_ROOT}/build")
 set(MLIR_DIR "${LLVM_BUILD_DIR}/lib/cmake/mlir")
 set(LLVM_DIR "${LLVM_BUILD_DIR}/lib/cmake/llvm")
 
+message(STATUS "MLIR_DIR: ${MLIR_DIR}")
+
 list(APPEND CMAKE_MODULE_PATH "${LLVM_PROJ_SRC}/llvm/cmake/modules")
 
 # 3. Now find_package will work
@@ -58,6 +60,8 @@ link_directories(${LLVM_LIBRARY_DIRS})
 add_executable (TypherCompiler 
   "Core/TypherCompiler.cpp" 
   "Core/CompilerImpl.cpp" 
+  "PreProcess/Comments.cpp"
+  "PreProcess/PreProcessor.cpp"
   "Parser/Lexer/Lexer.cpp" 
   "Parser/Lexer/Tokens/Token.cpp" 
   "Parser/Lexer/Keywords.cpp" 
@@ -93,6 +97,7 @@ target_include_directories(TypherCompiler
   ${CMAKE_SOURCE_DIR}/TypherFrontend/Core
   ${CMAKE_SOURCE_DIR}/TypherFrontend/MLIR
   ${CMAKE_SOURCE_DIR}/TypherFrontend/Checker
+  ${CMAKE_SOURCE_DIR}/TypherFrontend/PreProcess
 )
 
 target_include_directories(TypherCompiler SYSTEM PRIVATE 

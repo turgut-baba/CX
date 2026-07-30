@@ -60,7 +60,7 @@ std::string PreProcessor::Process()
             }
 
             std::string_view view(&file_buffer_[start_of_directive], i - start_of_directive);
-            directives_.Process(view, current_line);
+            //directives_.Process(view, current_line);
             
             continue; 
         }

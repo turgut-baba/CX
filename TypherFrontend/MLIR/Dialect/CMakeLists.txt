@@ -22,3 +22,10 @@ add_mlir_dialect_library(TypherDialect
   MLIRSupport
   MLIRSideEffectInterfaces
 )
+
+target_include_directories(TypherDialect PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_SOURCE_DIR}
+  ${CMAKE_BINARY_DIR}
+)

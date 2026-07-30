@@ -2,6 +2,8 @@
 out/
 .gitmodules
 
+build/
+
 **/CMakeFiles/
 
 **/TypherCompiler
