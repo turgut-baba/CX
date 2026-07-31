@@ -11,7 +11,6 @@ namespace AST {
 		ADD, SUB, MUL, DIV, MOD, 		// Basic math operations
 		ASN, 							// Assignment
 		EQS, LEQ, LES, NEQ, GEQ, GRT, 	// Equal comparison operaions.
-		DRF, ADR 						// De-ref and address of operations.
 	};
 
 	class Operator : public Expression {
@@ -20,7 +19,6 @@ namespace AST {
 			:Expression(AstNodeType::OPERATOR) {}
 		 
 		Operator(Lex::TokenOperator op);
-		Operator(int de_ref_depth);
 
 		void SetLHS(AST::Expression* lhs);
 		void SetRHS(AST::Expression* rhs);
@@ -42,7 +40,6 @@ namespace AST {
 
 		void Accept(NodeVisitor* v) override { v->Visit(this); }
 	private:
-		int de_ref_depth_ = 0;
 		OperatorKind OpType;
 		Lex::TokenOperator operator_; // TODO: Put this in an enum.
 		AST::Expression* lhs_;

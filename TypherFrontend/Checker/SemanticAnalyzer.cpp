@@ -7,7 +7,6 @@ namespace checker {
 
     /*checker::Type*/ void SemanticAnalyzer::Check(AST::IntegerLiteral *node)
     {
-        std::cout << "Yay litrealy literal" << std::endl;
         if(node->Parent()->NodeType() == AstNodeType::VARIABLE_DECLARATOR)
         {
 

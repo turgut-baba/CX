@@ -121,7 +121,6 @@ AST::Statement* DeclaratorParser::ParseFunctionDeclaration(AST::VariableDeclarat
     while (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::RIGHT_PARENTHESES)) {
         ParseParameter(functionDecl);
 
-        // std::cout << Lexer()->GetToken().Ident()<< std::endl;
         if (Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::COMMA)) {
             Lexer()->NextToken(); // Skip ','
         }

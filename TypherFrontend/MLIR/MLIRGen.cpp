@@ -179,7 +179,31 @@ namespace MLIR {
 	void Generator::Visit(AST::Expression* node) 
 	{
 		node->Accept(this);
+	}
 
+	void Generator::Visit(AST::MemoryOperation* node) 
+	{
+		std::cout << "Parsing memory access.." << std::endl;
+
+		node->GetExpression()->Accept(this);
+		mlir::Value address = retValue;
+		
+		for (int i = 0; i < node->AddressDepth(); i++) {
+			mlir::StringAttr persistentName = builder->getStringAttr(
+				((AST::Identifier*)node->GetExpression())->Value() // TODO: Find a better approach to this.
+			);
+			address = symbolTable.lookup(persistentName.getValue());
+			
+			if (!address) {
+				emitError(loc(node->Loc()), "Undefined variable target for address-of operator");
+			}
+		}
+
+		for (int i = 0; i < node->DeRefDepth(); i++) { 
+			address = LvalueToRvalue(address, loc(node->Loc()));
+		}
+
+		retValue = address;
 	}
 
 	void Generator::Visit(AST::CallExpression* node) 
@@ -214,8 +238,7 @@ namespace MLIR {
 			node->Expr()->Accept(this);
 			mlir::Value addr = retValue; // This is the memref<i32> from symbolTable
 
-			mlir::typher::ReturnOp::create(*builder, location,
-				addr);
+			mlir::typher::ReturnOp::create(*builder, location, addr);
 			return;
 		} else {
 			//retValue = NULL;
@@ -272,20 +295,15 @@ namespace MLIR {
 	{
 		auto location = loc(node->Loc()); 
 
-		// 1. Handle the initialization statement (e.g., int i = 0;)
-		// This happens in the current block *before* entering the loop op.
 		if (node->InitializeStmt()) {
 			node->InitializeStmt()->Accept(this);
 		}
 
-		// 2. Create the WhileOp to orchestrate the loop mechanics
 		auto whileOp = mlir::typher::WhileOp::create(*builder, location);
 		
-		// 3. Setup the Condition Region
 		mlir::Block* condBlock = builder->createBlock(&whileOp.getCondRegion());
 		builder->setInsertionPointToStart(condBlock);
 		
-		// Evaluate the condition expression (e.g., i < 10)
 		if (node->ConditionExpr()) {
 			node->ConditionExpr()->Accept(this);
 		} else {
@@ -303,25 +321,14 @@ namespace MLIR {
 			node->IteratorExpr()->Accept(this);
 		}
 
-		// Yield out of the condition block to evaluate whether to jump to body
 		mlir::typher::YieldOp::create(*builder, location, condition);
 
-		// 4. Setup the Body Region
 		mlir::Block* bodyBlock = builder->createBlock(&whileOp.getBodyRegion());
 		builder->setInsertionPointToStart(bodyBlock);
 		
 		// Generate code for the actual loop statements
 		GenBody(node->GetBody(), location);
 
-		// 5. Handle the Increment Expression (e.g., i++)
-		// Crucial: The increment happens at the end of the body block!
-
-
-		// Explicitly yield back to the top of the loop to re-evaluate condition
-		// (Ensure your WhileOp body block terminates correctly)
-		// mlir::typher::YieldOp::create(*builder, location);
-
-		// 6. Restore the builder to the parent block continuation point
 		builder->setInsertionPointAfter(whileOp);
 		return;
 	}
@@ -381,34 +388,9 @@ namespace MLIR {
 		return ; 
 	}
 
-	mlir::Value Generator::HandleRefAndAdr(AST::Operator* node)
-	{
-		mlir::Value address;
-		if (node->OperatorType() ==  AST::OperatorKind::ADR) {
-			node->GetRHS()->Accept(this);
-			mlir::Value varRef = retValue;
-
-			mlir::StringAttr persistentName = builder->getStringAttr(
-				((AST::Identifier*)node->GetRHS())->Value() // TODO: Find a better approach to this.
-			);
-			address = symbolTable.lookup(persistentName.getValue());
-			
-			if (!address) {
-				emitError(loc(node->Loc()), "Undefined variable target for address-of operator");
-			}
-		}
-		return address;
-	}
-
 	void Generator::Visit(AST::Operator* node) 
 	{
 		auto location = loc(node->Loc());
-
-		if(node->OperatorType() ==  AST::OperatorKind::ADR ||
-		   node->OperatorType() ==  AST::OperatorKind::DRF) {
-			retValue = HandleRefAndAdr(node);
-			return;
-		}
 
 		node->GetRHS()->Accept(this);
 		mlir::Value rhs = retValue;

@@ -40,6 +40,7 @@
 #include "Visitor.h"
 #include "Expressions/Operator.h"
 #include "Expressions/CallExpression.h"
+#include "Expressions/MemoryOperation.h"
 #include "statements/ReturnStatement.h"
 #include "statements/IfStatement.h"
 #include "statements/WhileStatement.h"
@@ -83,6 +84,7 @@ namespace MLIR {
 		void Visit(AST::VariableDeclaration* node) override;
 		void Visit(AST::Operator* node) override;
 		void Visit(AST::CallExpression* node) override;
+		void Visit(AST::MemoryOperation* node) override;
 		void Visit(AST::ReturnStatement* node) override;
 		void Visit(AST::IfStatement* node) override;
 		void Visit(AST::ExpressionStatement* node) override;

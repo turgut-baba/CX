@@ -16,7 +16,8 @@ enum class AstNodeType { // TODO: move this to a seperate file
 	VARIABLE_DECLARATOR,
 	CALL_EXPR,
 	OPERATOR,
-	LITERAL
+	LITERAL,
+	MEMORY_OPERATION,
 };
 
 enum class AstBuiltinTypes { // TODO: move this to a seperate file

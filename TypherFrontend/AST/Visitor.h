@@ -12,6 +12,7 @@ namespace AST {
     class StringLiteral;
     class Operator;
     class CallExpression;
+    class MemoryOperation;
     class ReturnStatement;
     class IfStatement;
     class ExpressionStatement;
@@ -30,6 +31,7 @@ namespace AST {
         virtual void Visit(StringLiteral* node) = 0;
         virtual void Visit(Operator* node) = 0;
         virtual void Visit(CallExpression* node) = 0;
+        virtual void Visit(MemoryOperation* node) = 0;
         virtual void Visit(ReturnStatement* node) = 0;
         virtual void Visit(IfStatement* node) = 0;
         virtual void Visit(ExpressionStatement* node) = 0;

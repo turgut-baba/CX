@@ -3,17 +3,18 @@ int teste(int z) {
 	return g;
 }
 
-void compute_benchmark_raw(float* arrX, float* arrY, float* arrOut, int size) {
-    for (int i = 0; i < size; i++) {
-        float x = arrX[i];
-        float y = arrY[i];
+
+int compute_benchmark_raw(float* arrX, float* arrY, float* arrOut, int size) {
+    for (int i = 0; i < size; i = i + 1) {
+        float x = *arrX;//arrX[i];
+        float y = *arrX;//arrY[i];
         
         float val = 0.1;
         
         // Compute-heavy loop relying solely on primitive math operations.
         // This creates a dense dependency chain per element that forces 
         // heavy ALU utilization without needing transcendental functions.
-        for (int j = 0; j < 40; j++) {
+        for (int j = 0; j < 40; j = j + 1) {
             float old_x = x;
             x = (x * x) - (y * y) + val;
             y = (2.0 * old_x * y) + val;
@@ -22,9 +23,11 @@ void compute_benchmark_raw(float* arrX, float* arrY, float* arrOut, int size) {
             val = x * 0.15 + y * 0.25;
         }
         
-        arrOut[i] = x + y;
+        //arrOut[i] = x + y;
     }
+    return 0;
 }
+
 
 int justcompile(int b) {
 	int a = teste(3);
@@ -51,10 +54,15 @@ int justcompile(int b) {
 	return a;
 }
 
+
+
 int main() {
 	// just compile man
 	int b = justcompile(5); // Eyyyy
 	int* test = &b;
+
+
+
 	/* I am a multi comment
 	yea oh yea */
 	char* a = "asdasd";

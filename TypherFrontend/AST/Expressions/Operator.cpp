@@ -42,18 +42,6 @@ namespace AST {
 		} 
 	}
 
-	Operator::Operator(int de_ref_depth)
-		: Expression(AstNodeType::OPERATOR)
-	{
-		if (de_ref_depth == -1) {
-			OpType = OperatorKind::ADR;
-		} else {
-			OpType = OperatorKind::DRF;
-			de_ref_depth_ = de_ref_depth;
-		}
-	}
-
-
 	void Operator::SetLHS(AST::Expression* lhs)
 	{
 		lhs_ = lhs;

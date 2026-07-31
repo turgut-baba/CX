@@ -6,7 +6,6 @@ namespace Parser {
 		SlabVector<AST::Expression*> params(Allocator());
 		Lexer()->NextToken(); // Skip '('
 		while (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::RIGHT_PARENTHESES)) {
-			std::cout << Lexer()->GetToken().Ident() << std::endl;
 			params.push_back(parse_expression());
 			if (Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::COMMA)) {
 				Lexer()->NextToken(); // Skip ','
@@ -17,6 +16,22 @@ namespace Parser {
 		return Allocator()->Allocate<AST::CallExpression>(ident->Value(), params);
 	}
 
+	AST::MemoryOperation* ExpressionParser::ParseArray(AST::Expression* expr)
+	{
+		std::vector<AST::Expression*> indices;
+		while (Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::LEFT_SQUARE_BRACKETS)) {
+			Lexer()->NextToken(); // Skip '['
+			AST::Expression* index_expr = parse_expression();
+			indices.push_back(index_expr);
+			if (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::RIGHT_SQUARE_BRACKETS)) {
+				Diagnostic().report<DiagLevel::Error>({}) 
+					<< "Expected ']' after array index expression.";
+			}
+			Lexer()->NextToken(); // Skip ']'
+		}
+
+		return Allocator()->Allocate<AST::MemoryOperation>(expr, indices, indices.size());
+	}
 
 	AST::Expression* ExpressionParser::CheckIdentifier()
 	{
@@ -27,6 +42,9 @@ namespace Parser {
 		if (Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::LEFT_PARENTHESES)) {
 			AST::CallExpression* callExpr = ParseFunctionCall(ident);
 			return callExpr;
+		}
+		else if (Lexer()->GetToken().IsTokenType<Lex::TokenPunctuator>(Lex::TokenPunctuator::LEFT_SQUARE_BRACKETS)) {
+			ParseArray(ident); // TODO: This should be moved to a different place. It should be after expressions not idents.
 		}
 		else if (Lexer()->GetToken().IsTokenType<Lex::TokenPunctuator>(Lex::TokenPunctuator::DOT)) {
 			// TODO: Handle class members.
@@ -52,6 +70,7 @@ namespace Parser {
 				ident->SetLocation(Lexer()->GetToken().GetLocation());
 				ident->SetType(true); // TODO: temp
 				Lexer()->NextToken();
+				// TODO: check for the 'f' suffix for float literals and handle it.
 				return ident;
 			}
 			case Lex::TokenLiteral::CHARACTER: {
@@ -101,34 +120,34 @@ namespace Parser {
 		} else if (Lexer()->GetToken().Type() == Lex::TokenType::Identifier) {	
 			expr = CheckIdentifier();
 		} else if(Lexer()->GetToken().Type() == Lex::TokenType::Operator) {
-			expr = CheckDeRefAndAddressOf();
-		} else {
 			// TODO: also look for operators for Unary expressions. And some keywords
 			// like true or nullptr.
+			expr = CheckMemoryOperation();
+		} else {
 			Diagnostic().report<DiagLevel::Error>({}) 
 				<< "Unexpected token '" << Lexer()->GetToken().Ident() << "'. Expected an operator.";
 		}
 		return expr;
 	}
 
-	AST::Expression* ExpressionParser::CheckDeRefAndAddressOf() 
+	AST::Expression* ExpressionParser::CheckMemoryOperation() 
 	{
-		int de_ref_depth = 0;
+		unsigned int de_ref_depth = 0;
+		unsigned int address_depth = 0;
 		while (Lexer()->GetToken().IsTokenType(Lex::TokenOperator::MULTIPLY)) {
-			Lexer()->NextToken();
+			Lexer()->NextToken(); // Skip '*'
 			de_ref_depth++;
 		}
 
 		if ((Lexer()->GetToken().IsTokenType(Lex::TokenOperator::BITWISE_AND))) {
-			Lexer()->NextToken();
-			de_ref_depth--;
+			Lexer()->NextToken(); // Skip '&'
+			address_depth++;
 		}
 
-		AST::Operator* operator_ = Allocator()->Allocate<AST::Operator>(de_ref_depth);
-		
-		auto* expr = parse_expression();
-		operator_->SetRHS(expr);
-		return operator_;
+		auto* expr = parse_expression(); // Parse the accessed expression
+
+		AST::MemoryOperation* memory_op = Allocator()->Allocate<AST::MemoryOperation>(expr, de_ref_depth, address_depth);
+		return memory_op;
 	}
 
 

@@ -5,6 +5,7 @@
 #include "Expression.h"
 #include "Expressions/CallExpression.h"
 #include "Expressions/Operator.h"
+#include "Expressions/MemoryOperation.h"
 #include "Literals/IntegerLiteral.h"
 #include "Literals/StringLiteral.h"
 #include "Literals/Literal.h"
@@ -22,14 +23,16 @@ namespace Parser {
 
 		AST::Expression* parse_expression();
 		AST::Expression* parse_assignment();
-		private:
-		AST::Expression* CheckDeRefAndAddressOf();
+
+	private:
+		AST::Expression* CheckMemoryOperation();
 		AST::Expression* CheckIdentifier();
 		AST::Literal* CheckLiteral();
 		AST::CallExpression* ParseFunctionCall(AST::Identifier* ident);
 		AST::ASTNode* ParsePrimaryExpression();
 		AST::Expression* ParseOperator(AST::Expression* lhs);
 		AST::Expression* ParseSingleExpression();
+		AST::MemoryOperation* ParseArray(AST::Expression* expr);
 	};
 }
 
