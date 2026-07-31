@@ -84,12 +84,22 @@ namespace Lex {
 			current_token.SetTokenType<TokenPunctuator>(TokenPunctuator::RIGHT_PARENTHESES);
 			break;
 		case LexicalChar::AT:
+			current_token.SetIdent("@"); // TEMP
 			current_token.SetTokenType<TokenPunctuator>(TokenPunctuator::AT);
-			
 			break;
 		case LexicalChar::SEMICOLON:
 			current_token.SetIdent(";"); // TEMP
 			current_token.SetTokenType<TokenPunctuator>(TokenPunctuator::SEMICOLON);
+			break;
+		case LexicalChar::LEFT_SQUARE:
+			current_token.SetIdent("["); // TEMP
+			current_token.SetTokenType<TokenPunctuator>(
+								TokenPunctuator::LEFT_SQUARE_BRACKETS);
+			break;
+		case LexicalChar::RIGHT_SQUARE:
+			current_token.SetIdent("]"); // TEMP
+			current_token.SetTokenType<TokenPunctuator>(
+								TokenPunctuator::RIGHT_SQUARE_BRACKETS);
 			break;
 		case LexicalChar::LEFT_CURLY_BRACE:
 			current_token.SetIdent("{"); // TEMP
@@ -240,7 +250,8 @@ namespace Lex {
 		case LexicalChar::UPPERCASE_W:
 		case LexicalChar::UPPERCASE_X:
 		case LexicalChar::UPPERCASE_Y:
-		case LexicalChar::UPPERCASE_Z: {
+		case LexicalChar::UPPERCASE_Z:
+		case LexicalChar::UNDERSCORE: {
 			keyword_parser.KeyIdentifier();
 			break;
 		}

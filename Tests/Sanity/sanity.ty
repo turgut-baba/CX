@@ -4,18 +4,20 @@ int teste(int z) {
 }
 
 
-int compute_benchmark_raw(float* arrX, float* arrY, float* arrOut, int size) {
-    for (int i = 0; i < size; i = i + 1) {
-        float x = *arrX;//arrX[i];
-        float y = *arrX;//arrY[i];
+int compute_benchmark_raw(int* arrX, int* arrY, int* arrOut, int size) {
+    for (int i = 0; i < 15; i = i + 1) {
+        int x = arrX[i];
+        int y = *arrX;//arrY[i];
         
-        float val = 0.1;
+        int val = 0.1;
         
         // Compute-heavy loop relying solely on primitive math operations.
         // This creates a dense dependency chain per element that forces 
         // heavy ALU utilization without needing transcendental functions.
+
+		
         for (int j = 0; j < 40; j = j + 1) {
-            float old_x = x;
+            int old_x = x;
             x = (x * x) - (y * y) + val;
             y = (2.0 * old_x * y) + val;
             
@@ -25,6 +27,7 @@ int compute_benchmark_raw(float* arrX, float* arrY, float* arrOut, int size) {
         
         //arrOut[i] = x + y;
     }
+
     return 0;
 }
 
@@ -71,5 +74,10 @@ int main() {
 		b = b + i;
 	}
 
-	return b;	
+	int ba = 255;
+	int* alignas = &ba;
+
+	int za = *alignas;
+
+	return za;	
 }

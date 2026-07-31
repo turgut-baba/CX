@@ -43,9 +43,6 @@ namespace Parser {
 			AST::CallExpression* callExpr = ParseFunctionCall(ident);
 			return callExpr;
 		}
-		else if (Lexer()->GetToken().IsTokenType<Lex::TokenPunctuator>(Lex::TokenPunctuator::LEFT_SQUARE_BRACKETS)) {
-			ParseArray(ident); // TODO: This should be moved to a different place. It should be after expressions not idents.
-		}
 		else if (Lexer()->GetToken().IsTokenType<Lex::TokenPunctuator>(Lex::TokenPunctuator::DOT)) {
 			// TODO: Handle class members.
 		}
@@ -165,6 +162,10 @@ namespace Parser {
 
 		if(Lexer()->GetToken().Type() == Lex::TokenType::Operator) {
 			return ParseOperator(expr);
+		}
+
+		if (Lexer()->GetToken().IsTokenType<Lex::TokenPunctuator>(Lex::TokenPunctuator::LEFT_SQUARE_BRACKETS)) {
+			return ParseArray(expr);
 		}
 
 		return expr;

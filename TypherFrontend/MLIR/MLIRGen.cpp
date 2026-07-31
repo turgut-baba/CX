@@ -248,8 +248,6 @@ namespace MLIR {
 
 	void Generator::Visit(AST::MemoryOperation* node) 
 	{
-		std::cout << "Parsing memory access.." << std::endl;
-
 		node->GetExpression()->Accept(this);
 		mlir::Value address = retValue;
 		
