@@ -132,16 +132,21 @@ def AllocaOp : Typher_Op<"alloca"> {
 // LoadOp
 //===----------------------------------------------------------------------===//
 
+// Define a type constraint that accepts either MLIR MemRef or Typher_Pointer
+def Typher_PointerOrMemRef : AnyTypeOf<[AnyMemRef, Typher_Pointer]>;
 
 def LoadOp : Typher_Op<"load"> {
     let summary = "Read a value from memory (dereference)";
     let description = [{
-        Loads a scalar value from a memory location (memref).
+        Loads a scalar value from a memory location (memref or typher.ptr).
         This is used to convert an L-value (address) into an R-value (data).
-        Example: `%val = typher.load %ptr : memref<i32> -> i32`
+        Example: 
+          %val1 = typher.load %mem : memref<i32> -> i32
+          %val2 = typher.load %ptr : !typher.ptr<f32> -> f32
     }];
 
-    let arguments = (ins Arg<AnyMemRef, "the address to read from", [MemRead]>:$addr);
+    // Allow both AnyMemRef and Typher_Pointer
+    let arguments = (ins Arg<Typher_PointerOrMemRef, "the address to read from", [MemRead]>:$addr);
     let results = (outs AnyType:$value);
 
     let assemblyFormat = "$addr attr-dict `:` type($addr) `->` type($value)";

@@ -12,14 +12,14 @@ class Typher_Type<string name, string typeMnemonic, list<Trait> traits = []>
 
 // Custom Pointer Type Definition
 def Typher_Pointer : Typher_Type<"Pointer", "ptr", [MemRefElementTypeInterface]> {
-  let summary = "Typher pointer type";
-  let description = [{
-    Represents a pointer to a piece of memory holding a specific type.
-    Syntax: `!typher.ptr<elementType>`
-  }];
+    let summary = "Typher pointer type";
+    let description = [{
+      Represents a pointer to a piece of memory holding a specific type.
+      Syntax: `!typher.ptr<elementType>`
+    }];
 
-  let parameters = (ins "::mlir::Type":$elementType);
-  let assemblyFormat = "`<` $elementType `>`";
+    let parameters = (ins "::mlir::Type":$elementType);
+    let assemblyFormat = "`<` $elementType `>`";
 }
 
 def C_Type : AnyTypeOf<[I1, I8, I16, I32, I64, F32, F64, Typher_Pointer]>;

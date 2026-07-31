@@ -20,11 +20,20 @@ namespace MLIR {
 
 	mlir::Value Generator::LvalueToRvalue(mlir::Value addr, mlir::Location location)
 	{
-		auto elementType = mlir::cast<mlir::MemRefType>(addr.getType()).getElementType();
-		mlir::Value val = mlir::typher::LoadOp::create(*builder, location,
-			elementType, addr);
+		mlir::Type addrType = addr.getType();
+		
+		if (auto memrefType = mlir::dyn_cast<mlir::MemRefType>(addrType)) {
+			mlir::Type elementType = memrefType.getElementType();
+			return mlir::typher::LoadOp::create(*builder, location, elementType, addr);
+		} 
 
-		return val; 
+		if (auto ptrType = mlir::dyn_cast<mlir::typher::PointerType>(addrType)) {
+        	mlir::Type elementType = ptrType.getElementType();
+        	return builder->create<mlir::typher::LoadOp>(location, elementType, addr);
+    	}
+
+		emitError(location, "Cannot dereference non-pointer type: ") << addrType;
+		return nullptr;
 	}
 
 	Generator::~Generator()
@@ -111,8 +120,21 @@ namespace MLIR {
 
 		for (size_t i = 0; i < funcArgs.size(); ++i) {
 			mlir::StringAttr paramName = builder->getStringAttr(funcArgs[i].Name());
-			mlir::Value mlirArg = entryArgs[i];
-			symbolTable.insert(paramName.getValue(), mlirArg);
+			mlir::Value mlirArg = entryArgs[i]; // The incoming Rvalue argument
+			
+			// 1. Get the type of the argument
+			mlir::Type argType = mlirArg.getType();
+
+			// 2. Allocate a local stack slot for the parameter (Lvalue)
+			// Note: If using MemRefType for stack slots, build memref<argType>
+			auto memrefType = mlir::MemRefType::get({}, argType);
+			mlir::Value paramAlloc = builder->create<mlir::typher::AllocaOp>(location, memrefType);
+
+			// 3. Store the incoming argument value into the stack slot
+			builder->create<mlir::typher::AssignOp>(location, mlirArg, paramAlloc);
+
+			// 4. Register the STACK SLOT (Lvalue) in the symbol table, NOT the raw argument
+			symbolTable.insert(paramName.getValue(), paramAlloc);
 		}
 
 		GenBody(node->GetBody(), location);
@@ -181,31 +203,6 @@ namespace MLIR {
 		node->Accept(this);
 	}
 
-	void Generator::Visit(AST::MemoryOperation* node) 
-	{
-		std::cout << "Parsing memory access.." << std::endl;
-
-		node->GetExpression()->Accept(this);
-		mlir::Value address = retValue;
-		
-		for (int i = 0; i < node->AddressDepth(); i++) {
-			mlir::StringAttr persistentName = builder->getStringAttr(
-				((AST::Identifier*)node->GetExpression())->Value() // TODO: Find a better approach to this.
-			);
-			address = symbolTable.lookup(persistentName.getValue());
-			
-			if (!address) {
-				emitError(loc(node->Loc()), "Undefined variable target for address-of operator");
-			}
-		}
-
-		for (int i = 0; i < node->DeRefDepth(); i++) { 
-			address = LvalueToRvalue(address, loc(node->Loc()));
-		}
-
-		retValue = address;
-	}
-
 	void Generator::Visit(AST::CallExpression* node) 
 	{
 		std::string callee = node->Callee();
@@ -247,6 +244,31 @@ namespace MLIR {
 		// Otherwise, this return operation has zero operands.
 		mlir::typher::ReturnOp::create(*builder, location,
 						retValue);
+	}
+
+	void Generator::Visit(AST::MemoryOperation* node) 
+	{
+		std::cout << "Parsing memory access.." << std::endl;
+
+		node->GetExpression()->Accept(this);
+		mlir::Value address = retValue;
+		
+		for (int i = 0; i < node->AddressDepth(); i++) {
+			mlir::StringAttr persistentName = builder->getStringAttr(
+				((AST::Identifier*)node->GetExpression())->Value() // TODO: Find a better approach to this.
+			);
+			address = symbolTable.lookup(persistentName.getValue());
+			
+			if (!address) {
+				emitError(loc(node->Loc()), "Undefined variable target for address-of operator");
+			}
+		}
+
+		for (int i = 0; i < node->DeRefDepth(); i++) { 
+			address = LvalueToRvalue(address, loc(node->Loc()));
+		}
+
+		retValue = address;
 	}
 
 	void Generator::Visit(AST::Identifier* node) 
