@@ -24,6 +24,8 @@ namespace AST {
         {
             return expr_;
         }
+
+        std::vector<AST::Expression*> ArrayIndices() const { return array_indices_; }
         
 		std::string String() override
 		{

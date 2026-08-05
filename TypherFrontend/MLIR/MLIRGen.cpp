@@ -246,6 +246,7 @@ namespace MLIR {
 						retValue);
 	}
 
+
 	void Generator::Visit(AST::MemoryOperation* node) 
 	{
 		node->GetExpression()->Accept(this);
@@ -260,6 +261,39 @@ namespace MLIR {
 			if (!address) {
 				emitError(loc(node->Loc()), "Undefined variable target for address-of operator");
 			}
+		}
+
+		const auto& indexExprs = node->ArrayIndices(); 
+		if (!indexExprs.empty()) 
+		{
+			// A. Evaluate each index expression into an mlir::Value of type `index`
+			llvm::SmallVector<mlir::Value, 4> indexValues;
+			for (AST::Expression* indexExpr : indexExprs) {
+				indexExpr->Accept(this);
+				mlir::Value indexVal = retValue;
+				
+				// Cast integer indices to MLIR's built-in `index` type if necessary
+				if (!indexVal.getType().isIndex()) {
+					indexVal = builder->create<mlir::arith::IndexCastOp>(
+						loc(indexExpr->Loc()), 
+						builder->getIndexType(), 
+						indexVal
+					);
+				}
+				indexValues.push_back(indexVal);
+			}
+
+			// C. Wrap the target element type into your native `!typher.ptr<ElementType>`
+			mlir::Type mlirElemType = builder->getI32Type(); //ASTTypeToMlirType(...);
+			auto resultPtrType = mlir::typher::PointerType::get(builder->getContext(), mlirElemType);
+
+			// D. Create your native dialect GEP operation
+			address = builder->create<mlir::typher::AccessOp>(
+				loc(node->Loc()),
+				resultPtrType, // Result: !typher.ptr<targetElemType>
+				address,       // Base: !typher.ptr<...>
+				indexValues    // Variadic dynamic indices of type `index`
+			);
 		}
 
 		for (int i = 0; i < node->DeRefDepth(); i++) { 

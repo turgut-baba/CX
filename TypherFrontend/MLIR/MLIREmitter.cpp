@@ -41,6 +41,8 @@
 
 #include "llvm/IR/LegacyPassManager.h"
 
+#include "mlir/Conversion/ReconcileUnrealizedCasts/ReconcileUnrealizedCasts.h"
+
 namespace MLIR{
 
     std::unique_ptr<mlir::Pass> createShapeInferencePass();
@@ -71,6 +73,8 @@ namespace MLIR{
 		{
 			pm.addPass(createLowerToLLVMPass());
 	    	pm.addPass(mlir::LLVM::createDIScopeForLLVMFuncOpPass());
+
+            pm.addPass(mlir::createReconcileUnrealizedCastsPass());
 		}
         pm.run(module);
         LowerToLLVMIR(module);
@@ -147,7 +151,8 @@ namespace MLIR{
             });
 
             patterns.add<
-                CallOpLowering, 
+                CallOpLowering,
+                AccessOpLowering,
                 ConstantOpLowering, 
                 FuncOpLowering, 
                 ReturnOpLowering,

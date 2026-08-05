@@ -300,6 +300,38 @@ struct ReturnOpLowering : public OpConversionPattern<mlir::typher::ReturnOp> {
 };
 
 
+struct AccessOpLowering : public mlir::OpConversionPattern<mlir::typher::AccessOp> {
+    using OpConversionPattern<mlir::typher::AccessOp>::OpConversionPattern;
+
+    mlir::LogicalResult matchAndRewrite(
+        mlir::typher::AccessOp op,
+        OpAdaptor adaptor, // <--- MUST USE ADAPTOR FOR OPERANDS
+        mlir::ConversionPatternRewriter &rewriter) const override 
+    {
+        mlir::Value llvmBasePtr = adaptor.getBase();
+        
+        // adaptor.getIndices() contains the values AFTER type conversion (already converted to i64!)
+        auto llvmIndices = adaptor.getIndices(); 
+
+        auto typherPtrType = llvm::cast<mlir::typher::PointerType>(op.getBase().getType());
+        mlir::Type llvmElementType = getTypeConverter()->convertType(typherPtrType.getElementType());
+
+        if (!llvmElementType) {
+            return rewriter.notifyMatchFailure(op, "Failed to convert element type");
+        }
+
+        rewriter.replaceOpWithNewOp<mlir::LLVM::GEPOp>(
+            op,
+            mlir::LLVM::LLVMPointerType::get(getContext()), // Result: !llvm.ptr
+            llvmElementType,                                 // Pointee element type
+            llvmBasePtr,                                     // Converted base
+            llvmIndices                                      // Converted indices (i64)
+        );
+
+        return mlir::success();
+    }
+};
+
 struct CallOpLowering : public OpConversionPattern<mlir::typher::GenericCallOp> {
     using OpConversionPattern<mlir::typher::GenericCallOp>::OpConversionPattern;
 

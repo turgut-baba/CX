@@ -208,6 +208,33 @@ def FuncOp : Typher_Op<"func", [
 }
 
 //===----------------------------------------------------------------------===//
+// ArrayAccessOp
+//===----------------------------------------------------------------------===//
+
+def Typher_AccessOp : Typher_Op<"gep", [Pure]> {
+    let summary = "Compute pointer address to an array element";
+    let description = [{
+        Calculates the memory address of an element given a base pointer and indices.
+        
+        Syntax:
+        `%elem_ptr = typher.gep %base[%idx] : (!typher.ptr<!typher.array<10 x i32>>, index) -> !typher.ptr<i32>`
+    }];
+
+    let arguments = (ins 
+        Typher_Pointer:$base,
+        Variadic<Index>:$indices
+    );
+
+    let results = (outs 
+        Typher_Pointer:$result
+    );
+
+    let assemblyFormat = [{
+        $base `[` $indices `]` attr-dict `:` `(` type($base) `,` type($indices) `)` `->` type($result)
+    }];
+}
+
+//===----------------------------------------------------------------------===//
 // GenericCallOp
 //===----------------------------------------------------------------------===//
 
