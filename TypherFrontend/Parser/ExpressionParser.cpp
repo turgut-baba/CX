@@ -18,11 +18,11 @@ namespace Parser {
 
 	AST::MemoryOperation* ExpressionParser::ParseArray(AST::Expression* expr)
 	{
-		std::vector<AST::Expression*> indices;
+		AST::MemoryOperation* MemOp = Allocator()->Allocate<AST::MemoryOperation>(expr, Allocator());
 		while (Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::LEFT_SQUARE_BRACKETS)) {
 			Lexer()->NextToken(); // Skip '['
 			AST::Expression* index_expr = parse_expression();
-			indices.push_back(index_expr);
+			MemOp->AddArrayIndexExpression(index_expr);
 			if (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::RIGHT_SQUARE_BRACKETS)) {
 				Diagnostic().report<DiagLevel::Error>({}) 
 					<< "Expected ']' after array index expression.";
@@ -30,7 +30,7 @@ namespace Parser {
 			Lexer()->NextToken(); // Skip ']'
 		}
 
-		return Allocator()->Allocate<AST::MemoryOperation>(expr, indices, indices.size());
+		return MemOp;
 	}
 
 	AST::Expression* ExpressionParser::CheckIdentifier()
@@ -147,10 +147,32 @@ namespace Parser {
 		return memory_op;
 	}
 
+	AST::InitializerList* ExpressionParser::ParseInitializerList(AST::Expression* expr)
+	{
+		Lexer()->NextToken(); // Skip '{'
+		SlabVector<AST::Expression*> elements(Allocator());
+		while (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::RIGHT_CURLY_BRACE)) {
+			AST::Expression* element_expr = parse_expression();
+			elements.push_back(element_expr);
+			if (Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::COMMA)) {
+				Lexer()->NextToken(); // Skip ','
+			}
+
+			// TODO: Handle the case where the initializer list is not properly closed with a '}'.
+		}
+		Lexer()->NextToken(); // Skip '}'
+
+		return Allocator()->Allocate<AST::InitializerList>(elements);
+	}
 
 	AST::Expression* ExpressionParser::parse_expression() 
 	{
 		AST::Expression* expr;
+
+		if (Lexer()->GetToken().IsTokenType<Lex::TokenPunctuator>(Lex::TokenPunctuator::LEFT_CURLY_BRACE)) {
+			return ParseInitializerList(expr);
+		}
+
 		if (Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::LEFT_PARENTHESES)) {
 			// Check if the lhs is an expression itself with () for example: (a + 5) + b
 			Lexer()->NextToken();// Skip '('

@@ -34,26 +34,40 @@ AST::VariableDeclarator* DeclaratorParser::parse_declarator()
     } while (parse_modifiers);
 
     Lexer()->NextToken(); // Skip ident
+
+    AST::VariableDeclarator* declarator = Allocator()->Allocate<AST::VariableDeclarator>(Ident, modifiers);
+    
     auto token = Lexer()->GetToken();
     switch (token.Type()) {
         case Lex::TokenType::Punctuator:
         {
-            if (token.IsTokenType(Lex::TokenPunctuator::LEFT_SQUARE_BRACKETS)) {
-                // TODO: Handle arrays
+            while (token.IsTokenType(Lex::TokenPunctuator::LEFT_SQUARE_BRACKETS)) {
+                declarator->ToggleArrayDeclarator(Allocator());
+                Lexer()->NextToken(); // Skip '['
+                AST::Expression* index_expr = state_->expression_parser->parse_expression();
+                declarator->AddArrayIndexExpression(index_expr);
+                if (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::RIGHT_SQUARE_BRACKETS)) {
+                    Diagnostic().report<DiagLevel::Error>({}) 
+                        << "Expected ']' after array declarator. Got: " << Lexer()->GetToken().Ident();
+                }
+                Lexer()->NextToken(); // Skip ']'
+
+                token = Lexer()->GetToken();
             }
-            break;
+            [[fallthrough]];
         }
         case Lex::TokenType::Operator:
         {
             if (token.IsTokenType(Lex::TokenOperator::ASSIGNMENT)) {
                 Lexer()->NextToken(); // Skip '='
                 auto assigned_expression = state_->expression_parser->parse_expression();
-                return Allocator()->Allocate<AST::VariableDeclarator>(assigned_expression, Ident, modifiers);
+                declarator->SetExpression(assigned_expression);
             }
+            break;
         }
     }
     
-    return Allocator()->Allocate<AST::VariableDeclarator>(Ident, modifiers);
+    return declarator;
 }
 
 AST::Statement* DeclaratorParser::VariableOrFunctionDecl()

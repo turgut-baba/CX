@@ -77,6 +77,7 @@ add_executable (TypherCompiler
   "AST/Expressions/MemoryOperation.cpp"
   "AST/Expressions/CallExpression.cpp"
   "AST/Expressions/Operator.cpp" 
+  "AST/Expressions/InitializerList.cpp"
   "AST/statements/VariableDeclaration.cpp"
   "AST/statements/IfStatement.cpp"
   "AST/statements/WhileStatement.cpp"

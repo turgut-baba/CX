@@ -24,13 +24,16 @@ namespace AST {
 			return type_;
 		}
 
+		SlabVector<Expression*> ArrayIndices() const { return array_indices_; }
+
 		void SetType(bool type) // TODO: TEMP
 		{
 			type_ = type;
 		}
 
 		void Accept(NodeVisitor* v) override { v->Visit(this); }
-
+	protected:
+	    SlabVector<Expression*> array_indices_;
 	private:
 		bool type_; // TODO: turn this into a type class.
 	};

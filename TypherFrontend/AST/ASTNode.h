@@ -18,6 +18,7 @@ enum class AstNodeType { // TODO: move this to a seperate file
 	OPERATOR,
 	LITERAL,
 	MEMORY_OPERATION,
+	INITIALIZER_LIST,
 };
 
 enum class AstBuiltinTypes { // TODO: move this to a seperate file

@@ -6,6 +6,7 @@
 #include "Expressions/CallExpression.h"
 #include "Expressions/Operator.h"
 #include "Expressions/MemoryOperation.h"
+#include "Expressions/InitializerList.h"
 #include "Literals/IntegerLiteral.h"
 #include "Literals/StringLiteral.h"
 #include "Literals/Literal.h"
@@ -33,6 +34,7 @@ namespace Parser {
 		AST::Expression* ParseOperator(AST::Expression* lhs);
 		AST::Expression* ParseSingleExpression();
 		AST::MemoryOperation* ParseArray(AST::Expression* expr);
+		AST::InitializerList* ParseInitializerList(AST::Expression* expr);
 	};
 }
 

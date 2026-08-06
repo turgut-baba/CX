@@ -137,19 +137,19 @@ public:
         return size_;
     }
     
-    Type* begin()
+    Type* begin() const
     { 
         if(init == false); // TODO: static assert and throw error.
         return data;
     }
     
-    Type* end()
+    Type* end() const
     { 
         if(init == false); // TODO: static assert and throw error.
         return data + size_;
     }
 
-    bool empty() 
+    bool empty() const
     {
 		return size_ == 0;
 	}

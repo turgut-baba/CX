@@ -11,9 +11,9 @@ namespace AST {
 		MemoryOperation() 
 			:Expression(AstNodeType::MEMORY_OPERATION) {}
 
-        MemoryOperation(AST::Expression* expr, std::vector<AST::Expression*> indices, unsigned int array_depth = 0);
 		MemoryOperation(AST::Expression* expr, unsigned int de_ref_depth = 0, unsigned int address_depth = 0);
-
+        MemoryOperation(AST::Expression* expr, SlabAllocator *allocator, unsigned int array_depth_ = 0);
+        
 		void SetExpression(AST::Expression* expr) 
         {
             expr_ = expr;
@@ -25,12 +25,19 @@ namespace AST {
             return expr_;
         }
 
-        std::vector<AST::Expression*> ArrayIndices() const { return array_indices_; }
+        SlabVector<Expression*> ArrayIndices() const { return array_indices_; }
         
 		std::string String() override
 		{
             return "MemoryOperation node";
 		}
+
+        void AddArrayIndexExpression(AST::Expression* expr) 
+        {
+            array_depth_++;
+            expr->SetParent(this);
+            array_indices_.push_back(expr);
+        }
 
         unsigned int DeRefDepth() const { return de_ref_depth_; }
         unsigned int AddressDepth() const { return address_depth_; }
@@ -42,8 +49,6 @@ namespace AST {
 		unsigned int de_ref_depth_ = 0;
         unsigned int address_depth_ = 0;
         unsigned int array_depth_ = 0;
-
-        std::vector<AST::Expression*> array_indices_;
 
 		AST::Expression* expr_;
 	};

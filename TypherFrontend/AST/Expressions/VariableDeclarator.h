@@ -45,6 +45,31 @@ namespace AST {
 		{
 			return modifiers_;
 		}
+
+		void AddModifier(DeclaratorKind kind)
+		{
+			modifiers_.push_back(kind);
+		}
+
+		void AddArrayIndexExpression(Expression* expr)
+		{
+			if (!array_indices_.Initialized()) {
+                UNREACHABLE("Array indices vector not initialized. Call ToggleArrayDeclarator() first.");
+			}
+			array_indices_.push_back(expr);
+		}
+
+		void SetExpression(Expression* expr)
+		{
+			expression = expr;
+			expr->SetParent(this);
+		}
+
+		void ToggleArrayDeclarator(SlabAllocator *allocator)
+		{
+			modifiers_.push_back(DeclaratorKind::Array);
+			array_indices_ = SlabVector<Expression*>(allocator);
+		}
 		
 		void Accept(NodeVisitor* v) override { v->Visit(this); }
 	private:
