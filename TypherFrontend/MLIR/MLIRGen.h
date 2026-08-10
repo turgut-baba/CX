@@ -41,6 +41,7 @@
 #include "Expressions/Operator.h"
 #include "Expressions/CallExpression.h"
 #include "Expressions/MemoryOperation.h"
+#include "Expressions/InitializerList.h"
 #include "statements/ReturnStatement.h"
 #include "statements/IfStatement.h"
 #include "statements/WhileStatement.h"
@@ -90,7 +91,7 @@ namespace MLIR {
 		void Visit(AST::ExpressionStatement* node) override;
 		void Visit(AST::WhileStatement* node) override;
 		void Visit(AST::ForStatement* node) override;
-		
+		void Visit(AST::InitializerList* node) override;
 
 		mlir::Location loc(const Location &loc) {
 			return mlir::FileLineColLoc::get(builder->getStringAttr(loc.file), loc.line, loc.col);

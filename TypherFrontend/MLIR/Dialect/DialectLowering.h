@@ -1,5 +1,30 @@
 using namespace MLIR;
 
+struct StoreOpLowering : public mlir::OpConversionPattern<mlir::typher::StoreOp> {
+    using mlir::OpConversionPattern<mlir::typher::StoreOp>::OpConversionPattern;
+
+    mlir::LogicalResult
+    matchAndRewrite(mlir::typher::StoreOp op, OpAdaptor adaptor,
+                    mlir::ConversionPatternRewriter &rewriter) const override {
+        
+        // Adaptor operands are already converted to LLVM-compatible types
+        mlir::Value valueToStore = adaptor.getValueToStore();
+        mlir::Value addr = adaptor.getAddr();
+
+        // Create llvm.store %val, %ptr
+        rewriter.create<mlir::LLVM::StoreOp>(
+            op.getLoc(), 
+            valueToStore, 
+            addr
+        );
+
+        // Erase the original typher.store (store produces no results)
+        rewriter.eraseOp(op);
+        return mlir::success();
+    }
+};
+
+
 template <typename BinaryOp, typename LoweredBinaryOp>
 struct BinaryOpLowering : public OpConversionPattern<BinaryOp> {
     using OpConversionPattern<BinaryOp>::OpConversionPattern;
@@ -47,22 +72,32 @@ struct AllocaLowering : public OpConversionPattern<typher::AllocaOp> {
     mlir::LogicalResult
     matchAndRewrite(typher::AllocaOp op, OpAdaptor adaptor,
                     mlir::ConversionPatternRewriter &rewriter) const override {
-        auto allocaOp = mlir::cast<typher::AllocaOp>(op);
         auto loc = op->getLoc();
 
-        // 1. Get the underlying element type (e.g., i32 from memref<i32>)
-        auto memrefType = mlir::cast<mlir::MemRefType>(allocaOp.getAddr().getType());
-        auto elementType = typeConverter->convertType(memrefType.getElementType());;
+        mlir::Type origAllocatedType;
+        mlir::Type addrType = op.getAddr().getType();
 
-        // 2. Create a constant '1' for the number of elements to allocate
+        if (auto ptrType = mlir::dyn_cast<mlir::typher::PointerType>(addrType)) {
+            origAllocatedType = ptrType.getElementType(); // e.g. !typher.array<3 x i32> or i32
+        } else if (auto memrefType = mlir::dyn_cast<mlir::MemRefType>(addrType)) {
+            origAllocatedType = memrefType.getElementType();
+        } else {
+            return rewriter.notifyMatchFailure(op, "unsupported address type");
+        }
+
+        mlir::Type llvmAllocatedType = typeConverter->convertType(origAllocatedType);
+        if (!llvmAllocatedType) {
+            return rewriter.notifyMatchFailure(op, "failed to convert allocated type to LLVM");
+        }
+
         auto one = rewriter.create<mlir::LLVM::ConstantOp>(
             loc, rewriter.getI64Type(), rewriter.getI64IntegerAttr(1));
 
-        // 3. Create the LLVM Alloca (returns a !llvm.ptr)
+        auto resultType = typeConverter->convertType(addrType); // !llvm.ptr
         auto llvmPtr = rewriter.create<mlir::LLVM::AllocaOp>(
-            loc, mlir::LLVM::LLVMPointerType::get(getContext()), elementType, one);
+            loc, resultType, llvmAllocatedType, one);
 
-        rewriter.replaceOp(op, llvmPtr);
+        rewriter.replaceOp(op, llvmPtr.getResult());
         return mlir::success();
     }
 };
@@ -73,7 +108,6 @@ struct LoadLowering : public OpConversionPattern<typher::LoadOp> {
     mlir::LogicalResult
     matchAndRewrite(typher::LoadOp op, OpAdaptor adaptor,
                     mlir::ConversionPatternRewriter &rewriter) const override {
-        
         auto loc = op.getLoc();
 
         // 1. Get the already-converted !llvm.ptr from the adaptor
@@ -210,14 +244,11 @@ struct EqualsOpLowering : public mlir::OpConversionPattern<typher::EqualsOp> {
         mlir::Value lhs = adaptor.getLhs();
         mlir::Value rhs = adaptor.getRhs();
 
-        // 1. Check if they are memrefs. If so, load the value.
-        // Assuming these are 0-dimensional memrefs (like a pointer to a single int)
-        if (mlir::isa<mlir::MemRefType>(lhs.getType())) {
-            // Note: If you're using 'mlir' namespace, you can just use 'isa'
+        if (mlir::isa<mlir::typher::PointerType>(lhs.getType())) {
             lhs = rewriter.create<mlir::memref::LoadOp>(loc, lhs);
         }
-        if (mlir::isa<mlir::MemRefType>(rhs.getType())) {
-            // Note: If you're using 'mlir' namespace, you can just use 'isa'
+
+        if (mlir::isa<mlir::typher::PointerType>(rhs.getType())) {
             rhs = rewriter.create<mlir::memref::LoadOp>(loc, rhs);
         }
 
@@ -288,7 +319,7 @@ struct ReturnOpLowering : public OpConversionPattern<mlir::typher::ReturnOp> {
         mlir::Value returnValue = adaptor.getOperands()[0];
 
         // If we are trying to return a memref to a function expecting an i32:
-        if (mlir::isa<mlir::MemRefType>(returnValue.getType())) {
+        if (mlir::isa<mlir::typher::PointerType>(returnValue.getType())) {
             // Dereference the memref to get the actual i32 value
             auto i32Type = rewriter.getI32Type();
             mlir::Value loadedVal = rewriter.create<mlir::LLVM::LoadOp>(loc, i32Type, returnValue);

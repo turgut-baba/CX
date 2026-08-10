@@ -18,6 +18,11 @@ namespace AST {
             elements_.push_back(member);
         }
 
+        SlabVector<Expression*> GetElements() const 
+        {
+            return elements_;
+        }
+
         void Accept(NodeVisitor* v) override { v->Visit(this); }
         virtual ~InitializerList() = default;
 	private:

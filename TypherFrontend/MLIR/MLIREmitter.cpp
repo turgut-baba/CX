@@ -141,16 +141,19 @@ namespace MLIR{
             mlir::LowerToLLVMOptions options(&getContext());
             mlir::LLVMTypeConverter typeConverter(&getContext(), options);
             
-            typeConverter.addConversion([&](mlir::MemRefType type) {
-                return mlir::LLVM::LLVMPointerType::get(type.getContext());
-            });
-
             typeConverter.addConversion([&](mlir::typher::PointerType type) -> std::optional<mlir::Type> {
                 // Turn !typher.ptr<anyType> into a raw LLVM opaque pointer
                 return mlir::LLVM::LLVMPointerType::get(type.getContext());
             });
 
+            typeConverter.addConversion([&](mlir::typher::ArrayType type) -> std::optional<mlir::Type> {
+                mlir::Type elemType = typeConverter.convertType(type.getElementType());
+                if (!elemType) return nullptr;
+                return mlir::LLVM::LLVMArrayType::get(elemType, type.getSize());
+            });
+
             patterns.add<
+                StoreOpLowering,
                 CallOpLowering,
                 AccessOpLowering,
                 ConstantOpLowering, 

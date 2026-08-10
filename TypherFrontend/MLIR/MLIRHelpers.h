@@ -25,10 +25,35 @@ namespace MLIR {
         }
     }
 
+    int64_t EvaluateCompileTimeConstant(AST::Expression* expr) {
+        if (!expr) return 0;
+
+        // 1. Base case: Literal integer (e.g. '3')
+        if (expr->NodeType() == AstNodeType::LITERAL && static_cast<AST::Literal*>(expr)->IsIntegerLiteral()) {
+            return static_cast<AST::IntegerLiteral*>(expr)->Value<int64_t>(); 
+        }
+
+        //if (auto* sizeOfExpr = llvm::dyn_cast<AST::SizeOfExpr>(expr)) {
+        //    return getTypeSizeInBytes(sizeOfExpr->GetTargetType());
+        //}
+
+        return 1; // Fallback
+    }
+
     void ApplyTypeModifiers(AST::VariableDeclarator* node, mlir::Type& varType, std::shared_ptr<mlir::OpBuilder> builder)
     {
+        const auto& indexExprs = node->ArrayIndexExpressions();
+        for (int i = static_cast<int>(indexExprs.size()) - 1; i >= 0; --i) {
+            int64_t arraySize = EvaluateCompileTimeConstant(indexExprs[i]); 
+            
+            // Wrap current varType in ArrayType: !typher.array<N x varType>
+            varType = mlir::typher::ArrayType::get(builder->getContext(), arraySize, varType);
+        }
+
+        // TODO: change this to be a better fit. no need for a for loop if
+        // the only modifier is a pointer.
         for (auto& modifier: node->Modifiers()) {
-			if(modifier == AST::DeclaratorKind::Pointer){
+			if (modifier == AST::DeclaratorKind::Pointer) {
         		varType = mlir::typher::PointerType::get(builder->getContext(), varType);
 			}
     	}

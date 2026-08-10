@@ -7,6 +7,8 @@ namespace AST {
 	class Literal: public Expression {
 	public:
 		Literal() : Expression(AstNodeType::LITERAL) { }
+
+		virtual bool IsIntegerLiteral() = 0;
 	};
 }
 

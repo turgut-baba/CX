@@ -18,6 +18,7 @@ namespace AST {
     class ExpressionStatement;
     class WhileStatement;
     class ForStatement;
+    class InitializerList;
 
     class NodeVisitor {
     public:
@@ -37,6 +38,7 @@ namespace AST {
         virtual void Visit(ExpressionStatement* node) = 0;
         virtual void Visit(WhileStatement* node) = 0;
         virtual void Visit(ForStatement* node) = 0;
+        virtual void Visit(InitializerList* node) = 0;
     };
 }
 

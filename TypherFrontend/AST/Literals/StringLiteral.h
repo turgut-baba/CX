@@ -47,6 +47,11 @@ namespace AST {
 			return isChar;
 		}
 
+		virtual bool IsIntegerLiteral() override
+		{
+			return false;
+		}
+
 		void Accept(NodeVisitor* v) override { v->Visit(this); }
 	private:
 		bool isChar;

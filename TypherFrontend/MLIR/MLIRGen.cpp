@@ -78,6 +78,7 @@ namespace MLIR {
 			mlir::typher::YieldOp::create(*builder, location);
 		}
 	}
+	
 
 	void Generator::Visit(AST::ExpressionStatement* node)
 	{
@@ -127,7 +128,8 @@ namespace MLIR {
 
 			// 2. Allocate a local stack slot for the parameter (Lvalue)
 			// Note: If using MemRefType for stack slots, build memref<argType>
-			auto memrefType = mlir::MemRefType::get({}, argType);
+			// auto memrefType = mlir::MemRefType::get({}, argType);
+			auto memrefType = mlir::typher::PointerType::get(builder->getContext(), argType);
 			mlir::Value paramAlloc = builder->create<mlir::typher::AllocaOp>(location, memrefType);
 
 			// 3. Store the incoming argument value into the stack slot
@@ -168,8 +170,8 @@ namespace MLIR {
 
 		ApplyTypeModifiers(node, varType, builder);
 		
-		//auto memrefType = mlir::typher::PointerType::get(builder->getContext(), varType);
-		auto memrefType = mlir::MemRefType::get({}, varType);
+		auto memrefType = mlir::typher::PointerType::get(builder->getContext(), varType);
+		//auto memrefType = mlir::MemRefType::get({}, varType);
 
 		mlir::Value address = mlir::typher::AllocaOp::create(*builder, 
 			location, memrefType);
@@ -246,6 +248,67 @@ namespace MLIR {
 						retValue);
 	}
 
+	void Generator::Visit(AST::InitializerList* node)
+	{
+		auto location = loc(node->Loc());
+
+		const auto &elements = node->GetElements();
+		size_t count = elements.size();
+
+		// 1. Evaluate first element (or inspect AST type) to determine the element MLIR type
+		// If elements are empty {}, handle appropriately (e.g. i32 or void type)
+		elements[0]->Accept(this);
+
+		mlir::Value firstVal = retValue;
+		mlir::Type elemType = builder->getI32Type(); // TODO: firstVal.getType();
+
+		// 2. Build the aggregate array type: !typher.array<N x T>
+		auto arrayType = mlir::typher::ArrayType::get(
+			builder->getContext(), count, elemType);
+
+		// 3. Allocate a temporary stack slot for this compound aggregate expression
+		// Result type: !typher.ptr<!typher.array<N x T>>
+		auto ptrToArrayType = mlir::typher::PointerType::get(
+			builder->getContext(), arrayType);
+		
+		mlir::Value tempAlloc = builder->create<mlir::typher::AllocaOp>(
+			location, 
+			ptrToArrayType
+		);
+
+		// 4. Element type for GEP offset pointers: !typher.ptr<T>
+		auto elemPtrType = mlir::typher::PointerType::get(
+			builder->getContext(), elemType);
+
+		// 5. Store the first evaluated element at index 0
+		mlir::Value zeroIdx = builder->create<mlir::arith::ConstantIndexOp>(
+			location, 0);
+		
+		mlir::Value zeroPtr = builder->create<mlir::typher::AccessOp>(
+			location, elemPtrType, tempAlloc, mlir::ValueRange{zeroIdx});
+		
+		builder->create<mlir::typher::StoreOp>(
+			location, firstVal, zeroPtr);
+
+		// 6. Evaluate and store the remaining elements [1..N-1]
+		for (size_t i = 1; i < count; ++i) {
+			elements[i]->Accept(this);
+
+			mlir::Value val = retValue;
+
+			mlir::Value idx = builder->create<mlir::arith::ConstantIndexOp>(
+				location, i);
+
+			mlir::Value elemPtr = builder->create<mlir::typher::AccessOp>(
+				location, elemPtrType, tempAlloc, mlir::ValueRange{idx});
+
+			builder->create<mlir::typher::StoreOp>(
+				location, val, elemPtr);
+		}
+
+		retValue =  tempAlloc;
+	}
+
 
 	void Generator::Visit(AST::MemoryOperation* node) 
 	{
@@ -266,7 +329,6 @@ namespace MLIR {
 		const auto& indexExprs = node->ArrayIndices(); 
 		if (!indexExprs.empty()) 
 		{
-			// A. Evaluate each index expression into an mlir::Value of type `index`
 			llvm::SmallVector<mlir::Value, 4> indexValues;
 			for (AST::Expression* indexExpr : indexExprs) {
 				indexExpr->Accept(this);
@@ -309,16 +371,21 @@ namespace MLIR {
 
 		if (auto variable = symbolTable.lookup(node->Value()))
 		{
-			if (mlir::isa<mlir::MemRefType>(variable.getType())) 
+			mlir::Type varType = variable.getType();
+
+			// Check if the symbol is a memory allocation (MemRef or Typher Pointer)
+			if (mlir::isa<mlir::MemRefType>(varType) || mlir::isa<mlir::typher::PointerType>(varType)) 
 			{
 				retValue = LvalueToRvalue(variable, location);
 			}
 			else 
 			{
-				// It's already an Rvalue (e.g., a function parameter %arg0)
+				// It's already an Rvalue (e.g., direct SSA value or function parameter)
 				retValue = variable; 
 			}
+			return;
 		}
+
 		// TODO: log error
 		return;
 	}

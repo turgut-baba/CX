@@ -42,14 +42,19 @@ AST::VariableDeclarator* DeclaratorParser::parse_declarator()
         case Lex::TokenType::Punctuator:
         {
             while (token.IsTokenType(Lex::TokenPunctuator::LEFT_SQUARE_BRACKETS)) {
+                std::cout << "Parsing array declarator for variable: " << declarator->Name() << std::endl;
                 declarator->ToggleArrayDeclarator(Allocator());
+
                 Lexer()->NextToken(); // Skip '['
+
                 AST::Expression* index_expr = state_->expression_parser->parse_expression();
+
                 declarator->AddArrayIndexExpression(index_expr);
                 if (!Lexer()->GetToken().IsTokenType(Lex::TokenPunctuator::RIGHT_SQUARE_BRACKETS)) {
                     Diagnostic().report<DiagLevel::Error>({}) 
                         << "Expected ']' after array declarator. Got: " << Lexer()->GetToken().Ident();
                 }
+                
                 Lexer()->NextToken(); // Skip ']'
 
                 token = Lexer()->GetToken();

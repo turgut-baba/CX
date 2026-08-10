@@ -132,6 +132,11 @@ public:
         return data[index];
     }
 
+    const Type& operator[](size_t index) const {
+        if(init == false); // TODO: static assert and throw error.
+        return data[index];
+    }
+
     size_t size() const
     { 
         return size_;

@@ -40,8 +40,14 @@ namespace AST {
 			}
 		}
 
-		bool IsFloating() {
+		bool IsFloating()
+		{
 			return isFloating;
+		}
+
+		virtual bool IsIntegerLiteral() override
+		{
+			return true;
 		}
 
 		void Accept(NodeVisitor* v) override { v->Visit(this); }

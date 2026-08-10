@@ -53,8 +53,8 @@ namespace AST {
 
 		void AddArrayIndexExpression(Expression* expr)
 		{
-			if (!array_indices_.Initialized()) {
-                UNREACHABLE("Array indices vector not initialized. Call ToggleArrayDeclarator() first.");
+			if (array_indices_.Initialized() == false) {
+                UNREACHABLE("Can't add array index expression. Array indices vector not initialized. Call ToggleArrayDeclarator() first.");
 			}
 			array_indices_.push_back(expr);
 		}
@@ -69,6 +69,11 @@ namespace AST {
 		{
 			modifiers_.push_back(DeclaratorKind::Array);
 			array_indices_ = SlabVector<Expression*>(allocator);
+		}
+
+		SlabVector<Expression*> ArrayIndexExpressions()
+		{
+			return array_indices_;
 		}
 		
 		void Accept(NodeVisitor* v) override { v->Visit(this); }

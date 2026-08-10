@@ -295,7 +295,19 @@ llvm::LogicalResult ReturnOp::verify() {
 
     return mlir::success();
 }
+//===----------------------------------------------------------------------===//
+// StoreOp
+//===----------------------------------------------------------------------===//
 
+mlir::LogicalResult StoreOp::verify() {
+    auto ptrType = llvm::cast<mlir::typher::PointerType>(getAddr().getType());
+    if (ptrType.getElementType() != getValueToStore().getType()) {
+        return emitError() << "stored value type (" << getValueToStore().getType() 
+                           << ") does not match pointer element type (" 
+                           << ptrType.getElementType() << ")";
+    }
+    return mlir::success();
+}
 
 //===----------------------------------------------------------------------===//
 // EqualsOp

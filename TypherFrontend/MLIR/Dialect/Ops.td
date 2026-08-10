@@ -88,13 +88,12 @@ def AssignOp : Typher_Op<"assign"> {
     let summary = "C-style assignment (store) operation";
     let description = [{
         Assigns a value to a memory location.
-        Example: `mylang.assign %val, %ptr : i32, memref<i32>`
     }];
 
     // Arguments: The value to store and the destination address
     let arguments = (ins 
         AnyType:$value, 
-        Arg<AnyMemRef, "the address to write to", [MemWrite]>:$addr
+        Arg<Typher_Pointer, "the address to write to", [MemWrite]>:$addr
     );
     // C assignments usually don't return a value in the IR, 
     // though the C expression 'a = 5' technically returns 5.
@@ -109,22 +108,19 @@ def AssignOp : Typher_Op<"assign"> {
 // AllocaOp
 //===----------------------------------------------------------------------===//
 
-
-
 def AllocaOp : Typher_Op<"alloca"> {
     let summary = "Stack allocation for a local variable";
     let description = [{
         Allocates memory on the stack for a single scalar value.
-        Example: `%ptr = mylang.alloca : memref<i32>`
     }];
 
     // No input arguments needed for a simple scalar allocation
     let arguments = (ins);
 
     // Returns a memory reference (the address of the variable)
-    let results = (outs AnyMemRef:$addr);
+    //let results = (outs Typher_Pointer:$addr);
+    let results = (outs Typher_Pointer:$addr);
 
-    // Custom assembly: mylang.alloca : memref<i32>
     let assemblyFormat = "attr-dict `:` type($addr)";
 }
 
@@ -133,7 +129,7 @@ def AllocaOp : Typher_Op<"alloca"> {
 //===----------------------------------------------------------------------===//
 
 // Define a type constraint that accepts either MLIR MemRef or Typher_Pointer
-def Typher_PointerOrMemRef : AnyTypeOf<[AnyMemRef, Typher_Pointer]>;
+def Typher_PointerOrMemRef : AnyTypeOf<[Typher_Pointer, Typher_Pointer]>;
 
 def LoadOp : Typher_Op<"load"> {
     let summary = "Read a value from memory (dereference)";
@@ -145,7 +141,7 @@ def LoadOp : Typher_Op<"load"> {
           %val2 = typher.load %ptr : !typher.ptr<f32> -> f32
     }];
 
-    // Allow both AnyMemRef and Typher_Pointer
+    // Allow both Typher_Pointer and Typher_Pointer
     let arguments = (ins Arg<Typher_PointerOrMemRef, "the address to read from", [MemRead]>:$addr);
     let results = (outs AnyType:$value);
 
@@ -231,6 +227,39 @@ def Typher_AccessOp : Typher_Op<"gep", [Pure]> {
 
     let assemblyFormat = [{
         $base `[` $indices `]` attr-dict `:` `(` type($base) `,` type($indices) `)` `->` type($result)
+    }];
+}
+
+//===----------------------------------------------------------------------===//
+// StoreOp
+//===----------------------------------------------------------------------===//
+
+def Typher_StoreOp : Typher_Op<"store", []> {
+    let summary = "Stores a value into a memory location specified by a pointer";
+    let description = [{
+        The `typher.store` operation writes a value to a pointer memory location.
+        
+        Example:
+        ```mlir
+        // Store an i32 value into a !typher.ptr<i32>
+        typher.store %val, %ptr : i32, !typher.ptr<i32>
+        ```
+    }];
+
+    let arguments = (ins 
+        AnyType:$valueToStore, 
+        Typher_Pointer:$addr
+    );
+
+    // Assembly format: typher.store %val, %ptr : i32, !typher.ptr<i32>
+    let assemblyFormat = [{
+        $valueToStore `,` $addr `:` type($valueToStore) `,` type($addr) attr-dict
+    }];
+
+    let hasVerifier = 1;
+    let extraClassDeclaration = [{
+        // Helper to get element type of target pointer
+        mlir::Type getStoredType() { return getValueToStore().getType(); }
     }];
 }
 
@@ -380,7 +409,7 @@ def ReturnOp : Typher_Op<"return", [Pure, ParentOneOf<["FuncOp", "IfOp", "WhileO
 
   // The return operation takes an optional input operand to return. This
   // value must match the return type of the enclosing function.
-  let arguments = (ins AnyTypeOf<[C_Type, AnyMemRef]>:$input);
+  let arguments = (ins AnyTypeOf<[C_Type, Typher_Pointer]>:$input);
 
   // The return operation only emits the input in the format if it is present.
   let assemblyFormat = "$input attr-dict `:` type($input)";
@@ -404,7 +433,7 @@ def ReturnOp : Typher_Op<"return", [Pure, ParentOneOf<["FuncOp", "IfOp", "WhileO
 //===----------------------------------------------------------------------===//
 
 def EqualsOp : Typher_Op<"eq"> {
-    let arguments = (ins AnyTypeOf<[C_Type, AnyMemRef]>:$lhs, AnyTypeOf<[C_Type, AnyMemRef]>:$rhs);
+    let arguments = (ins AnyTypeOf<[C_Type, Typher_Pointer]>:$lhs, AnyTypeOf<[C_Type, Typher_Pointer]>:$rhs);
     let results = (outs I1:$result);
 
     let builders = [
