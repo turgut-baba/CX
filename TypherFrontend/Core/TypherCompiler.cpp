@@ -75,9 +75,10 @@ int main(int argc, char** argv)
         parse.PrintAST(); // DEBUG
         auto ast = parse.AST();
 
+        
         checker::Checker checker = checker::Checker(diags, &allocator);
         checker.StartChecker(ast);
-
+        
         MLIR::Builder mlir = MLIR::Builder();
         mlir.BuildModule(ast);
 

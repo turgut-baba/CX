@@ -31,6 +31,11 @@ namespace AST {
 			type_ = type;
 		}
 
+		virtual Expression* Result() 
+		{
+			//UNREACHABLE("Result function not implemented on children.");
+		}
+
 		void Accept(NodeVisitor* v) override { v->Visit(this); }
 	protected:
 	    SlabVector<Expression*> array_indices_;

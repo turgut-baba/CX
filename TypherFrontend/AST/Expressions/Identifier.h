@@ -37,6 +37,11 @@ namespace AST {
 			return modifiers_;
 		}
 
+		Expression* Result() override 
+		{
+			return this;
+		}
+
 		void Accept(NodeVisitor* v) override { v->Visit(this); }
 	private:
 		std::string value_;

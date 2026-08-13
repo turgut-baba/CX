@@ -32,8 +32,56 @@ namespace MLIR {
         	return builder->create<mlir::typher::LoadOp>(location, elementType, addr);
     	}
 
-		emitError(location, "Cannot dereference non-pointer type: ") << addrType;
-		return nullptr;
+		if(auto arrayType = mlir::dyn_cast<mlir::typher::ArrayType>(addrType)) {
+			// TODO: This doesn't work because the array variables are not allocated as ArrayType.
+			mlir::Type elementType = arrayType.getElementType();
+			return builder->create<mlir::typher::LoadOp>(location, elementType, addr);
+		}
+
+		return addr;
+	}
+
+	mlir::Value Generator::GenArrayAccess(AST::MemoryOperation* node, mlir::Type array_type)
+	{
+		llvm::SmallVector<mlir::Value, 4> indexValues;
+		mlir::StringAttr persistentName = builder->getStringAttr(
+			((AST::Identifier*)node->GetExpression())->Value() // TODO: Find a better approach to this.
+		);
+		
+		mlir::Value address = symbolTable.lookup(persistentName.getValue());
+		// Check if base address points to an ArrayType (!typher.ptr<!typher.array<...>>)
+		auto ptrType = mlir::dyn_cast<mlir::typher::PointerType>(address.getType());
+		if (ptrType && mlir::isa<mlir::typher::ArrayType>(ptrType.getElementType())) {
+			// Prepend index 0 to dereference the array pointer
+			mlir::Value zeroIdx = builder->create<mlir::arith::ConstantIndexOp>(loc(node->Loc()), 0);
+			indexValues.push_back(zeroIdx);
+		}
+
+		for (AST::Expression* indexExpr : node->ArrayIndices()) {
+			indexExpr->Accept(this);
+			mlir::Value indexVal = retValue;
+			
+			if (!indexVal.getType().isIndex()) {
+				indexVal = builder->create<mlir::arith::IndexCastOp>(
+					loc(indexExpr->Loc()), 
+					builder->getIndexType(), 
+					indexVal
+				);
+			}
+			indexValues.push_back(indexVal);
+		}
+
+		auto resultPtrType = mlir::typher::PointerType::get(builder->getContext(), array_type);
+
+		// address is guaranteed to be !typher.ptr<!typher.array<3 x i32>>
+		address = builder->create<mlir::typher::AccessOp>(
+			loc(node->Loc()),
+			resultPtrType, // !typher.ptr<i32>
+			address,       // !typher.ptr<!typher.array<3 x i32>>
+			indexValues    // [%c0, %c1]
+		);
+
+		return address;
 	}
 
 	Generator::~Generator()
@@ -235,93 +283,91 @@ namespace MLIR {
 		// 'return' takes an optional expression, handle that case here.
 		if (node->Expr() != nullptr) {
 			node->Expr()->Accept(this);
+
 			mlir::Value addr = retValue; // This is the memref<i32> from symbolTable
+			addr = LvalueToRvalue(addr, location);
 
 			mlir::typher::ReturnOp::create(*builder, location, addr);
-			return;
 		} else {
-			//retValue = NULL;
+			mlir::typher::ReturnOp::create(*builder, location,
+				retValue);
 		}
-
-		// Otherwise, this return operation has zero operands.
-		mlir::typher::ReturnOp::create(*builder, location,
-						retValue);
 	}
 
-void Generator::Visit(AST::InitializerList* node)
-{
-    auto location = loc(node->Loc());
+	void Generator::Visit(AST::InitializerList* node)
+	{
+		auto location = loc(node->Loc());
 
-    const auto &elements = node->GetElements();
-    size_t count = elements.size();
+		const auto &elements = node->GetElements();
+		size_t count = elements.size();
 
-    if (count == 0) {
-        // TODO: Handle empty initializer list {} if supported
-        return;
-    }
+		if (count == 0) {
+			// TODO: Handle empty initializer list {} if supported
+			return;
+		}
 
-    // 1. Determine element type (e.g. i32)
-    mlir::Type elemType = builder->getI32Type(); 
+		// 1. Determine element type (e.g. i32)
+		mlir::Type elemType = builder->getI32Type(); 
 
-    // 2. Build aggregate array type: !typher.array<N x T>
-    auto arrayType = mlir::typher::ArrayType::get(
-        builder->getContext(), count, elemType
-    );
+		// 2. Build aggregate array type: !typher.array<N x T>
+		auto arrayType = mlir::typher::ArrayType::get(
+			builder->getContext(), count, elemType
+		);
 
-    // 3. Allocate stack slot for this compound aggregate
-    // Result type: !typher.ptr<!typher.array<N x T>>
-    auto ptrToArrayType = mlir::typher::PointerType::get(
-        builder->getContext(), arrayType
-    );
-    
-    mlir::Value tempAlloc = builder->create<mlir::typher::AllocaOp>(
-        location, 
-        ptrToArrayType
-    );
+		// 3. Allocate stack slot for this compound aggregate
+		// Result type: !typher.ptr<!typher.array<N x T>>
+		auto ptrToArrayType = mlir::typher::PointerType::get(
+			builder->getContext(), arrayType
+		);
+		
+		mlir::Value tempAlloc = builder->create<mlir::typher::AllocaOp>(
+			location, 
+			ptrToArrayType
+		);
 
-    // 4. Element pointer type for GEP: !typher.ptr<T>
-    auto elemPtrType = mlir::typher::PointerType::get(
-        builder->getContext(), elemType
-    );
+		// 4. Element pointer type for GEP: !typher.ptr<T>
+		auto elemPtrType = mlir::typher::PointerType::get(
+			builder->getContext(), elemType
+		);
 
-    // Constant index 0 needed for outer pointer dereference
-    mlir::Value zeroIdx = builder->create<mlir::arith::ConstantIndexOp>(
-        location, 0
-    );
+		// Constant index 0 needed for outer pointer dereference
+		mlir::Value zeroIdx = builder->create<mlir::arith::ConstantIndexOp>(
+			location, 0
+		);
 
-    // 5. Unified Loop: Evaluate and store all elements [0..N-1]
-    for (size_t i = 0; i < count; ++i) {
-        // Evaluate element expression -> sets retValue
-        elements[i]->Accept(this);
-        mlir::Value valToStore = retValue;
+		// 5. Unified Loop: Evaluate and store all elements [0..N-1]
+		for (size_t i = 0; i < count; ++i) {
+			// Evaluate element expression -> sets retValue
+			elements[i]->Accept(this);
+			mlir::Value valToStore = retValue;
 
-		llvm::SmallVector<mlir::Value, 4> indexValues;
+			llvm::SmallVector<mlir::Value, 4> indexValues;
 
-        mlir::Value elemIdx = builder->create<mlir::arith::ConstantIndexOp>(
-            location, i
-        );
+			mlir::Value elemIdx = builder->create<mlir::arith::ConstantIndexOp>(
+				location, i
+			);
 
-		indexValues.push_back(zeroIdx);
-		indexValues.push_back(elemIdx);
+			indexValues.push_back(zeroIdx);
+			indexValues.push_back(elemIdx);
 
-        // ✅ FIX: Pass TWO indices {%c0, %i} so AccessOp dereferences 
-        // !typher.ptr<!typher.array<N x T>> to !typher.ptr<T>
-        mlir::Value elemPtr = builder->create<mlir::typher::AccessOp>(
-            location, 
-            elemPtrType, 
-            tempAlloc, 
-            indexValues // <--- Prepend zeroIdx here!
-        );
+			// ✅ FIX: Pass TWO indices {%c0, %i} so AccessOp dereferences 
+			// !typher.ptr<!typher.array<N x T>> to !typher.ptr<T>
+			mlir::Value elemPtr = builder->create<mlir::typher::AccessOp>(
+				location, 
+				elemPtrType, 
+				tempAlloc, 
+				indexValues // <--- Prepend zeroIdx here!
+			);
 
-        // Store value into element address
-        builder->create<mlir::typher::StoreOp>(
-            location, valToStore, elemPtr
-        );
-    }
+			// Store value into element address
+			builder->create<mlir::typher::StoreOp>(
+				location, valToStore, elemPtr
+			);
+		}
 
-    // Return pointer to temporary array aggregate
-    retValue = tempAlloc;
-}
+		// Return pointer to temporary array aggregate
+		retValue = tempAlloc;
+	}
 
 
 	void Generator::Visit(AST::MemoryOperation* node) 
@@ -330,7 +376,6 @@ void Generator::Visit(AST::InitializerList* node)
 		mlir::Value address = retValue;
 		
 		for (int i = 0; i < node->AddressDepth(); i++) {
-			std::cout << "Address Depth: " << i << std::endl;
 			mlir::StringAttr persistentName = builder->getStringAttr(
 				((AST::Identifier*)node->GetExpression())->Value() // TODO: Find a better approach to this.
 			);
@@ -341,56 +386,13 @@ void Generator::Visit(AST::InitializerList* node)
 			}
 		}
 
-		const auto& indexExprs = node->ArrayIndices(); 
-		if (!indexExprs.empty()) 
+		if (!node->ArrayIndices().empty()) 
 		{
-			llvm::SmallVector<mlir::Value, 4> indexValues;
-			mlir::StringAttr persistentName = builder->getStringAttr(
-				((AST::Identifier*)node->GetExpression())->Value() // TODO: Find a better approach to this.
-			);
+			mlir::Type mlirElemType = builder->getI32Type(); // TODO: change this.
 
-			address = symbolTable.lookup(persistentName.getValue());
+			address = GenArrayAccess(node, mlirElemType);
 
-			// Check if base address points to an ArrayType (!typher.ptr<!typher.array<...>>)
-			auto ptrType = mlir::dyn_cast<mlir::typher::PointerType>(address.getType());
-			if (ptrType && mlir::isa<mlir::typher::ArrayType>(ptrType.getElementType())) {
-				// Prepend index 0 to dereference the array pointer
-				mlir::Value zeroIdx = builder->create<mlir::arith::ConstantIndexOp>(loc(node->Loc()), 0);
-				indexValues.push_back(zeroIdx);
-			}
-
-			for (AST::Expression* indexExpr : indexExprs) {
-				indexExpr->Accept(this);
-				mlir::Value indexVal = retValue;
-				
-				if (!indexVal.getType().isIndex()) {
-					indexVal = builder->create<mlir::arith::IndexCastOp>(
-						loc(indexExpr->Loc()), 
-						builder->getIndexType(), 
-						indexVal
-					);
-				}
-				indexValues.push_back(indexVal);
-			}
-
-			mlir::Type mlirElemType = builder->getI32Type();
-			auto resultPtrType = mlir::typher::PointerType::get(builder->getContext(), mlirElemType);
-
-			// address is guaranteed to be !typher.ptr<!typher.array<3 x i32>>
-			address = builder->create<mlir::typher::AccessOp>(
-				loc(node->Loc()),
-				resultPtrType, // !typher.ptr<i32>
-				address,       // !typher.ptr<!typher.array<3 x i32>>
-				indexValues    // [%c0, %c1]
-			);
-
-			// Finally, load the value from the element pointer
-			retValue = builder->create<mlir::typher::LoadOp>(
-				loc(node->Loc()), 
-				mlirElemType, 
-				address
-			);
-			return;
+			//address = LvalueToRvalue(address, loc(node->Loc()));
 		}
 
 		for (int i = 0; i < node->DeRefDepth(); i++) { 
@@ -410,15 +412,8 @@ void Generator::Visit(AST::InitializerList* node)
 			mlir::Type varType = variable.getType();
 
 			// Check if the symbol is a memory allocation (MemRef or Typher Pointer)
-			if (mlir::isa<mlir::MemRefType>(varType) || mlir::isa<mlir::typher::PointerType>(varType)) 
-			{
-				retValue = LvalueToRvalue(variable, location);
-			}
-			else 
-			{
-				// It's already an Rvalue (e.g., direct SSA value or function parameter)
-				retValue = variable; 
-			}
+			retValue = variable; 
+			
 			return;
 		}
 
@@ -550,14 +545,18 @@ void Generator::Visit(AST::InitializerList* node)
 		auto location = loc(node->Loc());
 
 		node->GetRHS()->Accept(this);
-		mlir::Value rhs = retValue;
+		mlir::Value rhs = LvalueToRvalue(retValue, location);
+
 		if (!rhs)
 			return;
 
 		if(node->OperatorType() ==  AST::OperatorKind::ASN)
 		{
-			if (auto lvalue = symbolTable.lookup(((AST::Identifier*)node->GetLHS())->Value()))
-				mlir::typher::AssignOp::create(*builder, location, rhs, lvalue);
+			node->GetLHS()->Accept(this);
+			mlir::Value lvalue = retValue;
+
+			mlir::typher::AssignOp::create(*builder, location, rhs, lvalue);
+
 			return;
 		}
 

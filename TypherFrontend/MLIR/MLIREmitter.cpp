@@ -29,7 +29,9 @@
 #include "mlir/Dialect/ControlFlow/IR/ControlFlowOps.h"
 #include "mlir/Pass/Pass.h"
 #include "mlir/Transforms/DialectConversion.h"
+
 #include "llvm/Support/Casting.h"
+#include "llvm/IR/DebugInfo.h" // Needed for StripDebugInfo
 
 #include "Dialect/DialectLowering.h"
 
@@ -173,6 +175,35 @@ namespace MLIR{
         }
     };
 
+    void emitAssemblyFile(llvm::Module* llvmModule, llvm::TargetMachine* tm)
+    {
+        // 1. Change file extension to .s
+        std::string filename = "typher_output.s";
+        std::error_code ec;
+        llvm::raw_fd_ostream dest(filename, ec, llvm::sys::fs::OF_None);
+
+        if (ec) {
+            llvm::errs() << "Could not open file: " << ec.message() << "\n";
+            return;
+        }
+
+        llvm::legacy::PassManager pass;
+        
+        // 2. Set fileType to AssemblyFile instead of ObjectFile
+        auto fileType = llvm::CodeGenFileType::AssemblyFile;
+        
+        if (tm->addPassesToEmitFile(pass, dest, nullptr, fileType)) {
+            llvm::errs() << "The TargetMachine can't emit an assembly file.\n";
+            return;
+        }
+        
+        // 3. Run the passes and flush to disk
+        pass.run(*llvmModule);
+        dest.flush();
+        
+        llvm::outs() << "Successfully emitted assembly to " << filename << "\n";
+    }
+
     void emitObjectFile(llvm::Module* llvmModule, llvm::TargetMachine* tm); // TEMP
 
     void LowerToLLVMIR(mlir::ModuleOp module)
@@ -188,6 +219,9 @@ namespace MLIR{
             llvm::errs() << "Failed to emit LLVM IR\n";
             return ;
         }
+
+        // TODO: make this debug only.
+        //llvm::StripDebugInfo(*llvmModule);
 
         // Initialize LLVM targets.
         llvm::InitializeNativeTarget();
@@ -242,6 +276,11 @@ namespace MLIR{
         );
 
         llvmModule->setDataLayout(targetMachine->createDataLayout());
+
+        // Emit assembly code to .s file
+        emitAssemblyFile(llvmModule.get(), targetMachine);
+
+        // Emit binary object file to .o file
         emitObjectFile(llvmModule.get(), targetMachine);
     }
 

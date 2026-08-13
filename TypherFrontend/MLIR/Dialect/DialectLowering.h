@@ -170,9 +170,6 @@ struct AssignLowering : public OpConversionPattern<typher::AssignOp> {
                 /*isVolatile=*/false
             );
         } else {
-            // -----------------------------------------------------------------
-            // SCALAR STORE: Standard store
-            // -----------------------------------------------------------------
             rewriter.create<mlir::LLVM::StoreOp>(loc, valueToStore, targetAddr);
         }
 

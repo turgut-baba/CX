@@ -124,6 +124,11 @@ namespace Parser {
 			Diagnostic().report<DiagLevel::Error>({}) 
 				<< "Unexpected token '" << Lexer()->GetToken().Ident() << "'. Expected an operator.";
 		}
+
+		if (Lexer()->GetToken().IsTokenType<Lex::TokenPunctuator>(Lex::TokenPunctuator::LEFT_SQUARE_BRACKETS)) {
+				return ParseArray(expr);
+		}
+		
 		return expr;
 	}
 
@@ -186,13 +191,9 @@ namespace Parser {
 			return ParseOperator(expr);
 		}
 
-		if (Lexer()->GetToken().IsTokenType<Lex::TokenPunctuator>(Lex::TokenPunctuator::LEFT_SQUARE_BRACKETS)) {
-			return ParseArray(expr);
-		}
-
 		return expr;
 
-		//Diagnostic().report<DiagLevel::Error>({}) 
+		// Diagnostic().report<DiagLevel::Error>({}) 
         //    << "Expected ';' at the end of expression.";
 	}
 

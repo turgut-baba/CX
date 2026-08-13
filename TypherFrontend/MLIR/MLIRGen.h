@@ -117,7 +117,7 @@ namespace MLIR {
 		void GenBody(AST::Body* node, mlir::Location& location);
 
 		mlir::Value LvalueToRvalue(mlir::Value val, mlir::Location loc);
-		mlir::Value emitArrayElementGEP(AST::MemoryOperation* node,  mlir::Value basePtr,  mlir::ArrayRef<mlir::Value> indices) ;
+		mlir::Value GenArrayAccess(AST::MemoryOperation* node, mlir::Type array_type);
 	};
 }
 
