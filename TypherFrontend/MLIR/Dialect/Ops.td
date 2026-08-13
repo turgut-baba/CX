@@ -207,7 +207,7 @@ def FuncOp : Typher_Op<"func", [
 // ArrayAccessOp
 //===----------------------------------------------------------------------===//
 
-def Typher_AccessOp : Typher_Op<"gep", [Pure]> {
+def AccessOp : Typher_Op<"gep", [Pure]> {
     let summary = "Compute pointer address to an array element";
     let description = [{
         Calculates the memory address of an element given a base pointer and indices.
@@ -217,7 +217,8 @@ def Typher_AccessOp : Typher_Op<"gep", [Pure]> {
     }];
 
     let arguments = (ins 
-        Typher_Pointer:$base,
+        //Typher_Array:$base, // loc("sanity.ty":1:1): error: 'typher.gep' op operand #0 must be Typher fixed-size or dynamic array type, but got '!typher.ptr<!typher.array<3 x i32>>'
+        Typher_Pointer:$base, // loc("sanity.ty":1:1): error: 'typher.gep' op operand #0 must be Typher pointer type, but got '!typher.array<3 x i32>'
         Variadic<Index>:$indices
     );
 
@@ -234,7 +235,7 @@ def Typher_AccessOp : Typher_Op<"gep", [Pure]> {
 // StoreOp
 //===----------------------------------------------------------------------===//
 
-def Typher_StoreOp : Typher_Op<"store", []> {
+def StoreOp : Typher_Op<"store", []> {
     let summary = "Stores a value into a memory location specified by a pointer";
     let description = [{
         The `typher.store` operation writes a value to a pointer memory location.

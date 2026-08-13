@@ -108,18 +108,15 @@ struct LoadLowering : public OpConversionPattern<typher::LoadOp> {
     mlir::LogicalResult
     matchAndRewrite(typher::LoadOp op, OpAdaptor adaptor,
                     mlir::ConversionPatternRewriter &rewriter) const override {
-        auto loc = op.getLoc();
-
-        // 1. Get the already-converted !llvm.ptr from the adaptor
-        // (This was produced by your AllocaLowering)
+        // 1. Get the converted !llvm.ptr address
         mlir::Value llvmPtr = adaptor.getAddr();
 
-        // 2. Determine the result type (e.g., i32)
-        // We ask the typeConverter to make sure i32 is valid for LLVM
-        mlir::Type resType = typeConverter->convertType(op.getValue().getType());
+        // 2. Convert result type to LLVM type (e.g. i32)
+        mlir::Type resType = getTypeConverter()->convertType(op.getValue().getType());
+        if (!resType)
+            return mlir::failure();
 
-        // 3. Replace typher.load with llvm.load
-        // Modern LLVM Load requires: (location, resultType, pointer)
+        // 3. Lower typher.load -> llvm.load
         rewriter.replaceOpWithNewOp<mlir::LLVM::LoadOp>(op, resType, llvmPtr);
         
         return mlir::success();
@@ -132,10 +129,52 @@ struct AssignLowering : public OpConversionPattern<typher::AssignOp> {
     mlir::LogicalResult
     matchAndRewrite(typher::AssignOp op, OpAdaptor adaptor,
                     mlir::ConversionPatternRewriter &rewriter) const override {
+        auto loc = op.getLoc();
         mlir::Value targetAddr = adaptor.getAddr();
         mlir::Value valueToStore = adaptor.getValue();
-        // Perform the LLVM store
-        rewriter.create<mlir::LLVM::StoreOp>(op.getLoc(), valueToStore, targetAddr);
+
+        // Check the original type of the expression before lowering to !llvm.ptr
+        mlir::Type origType = op.getValue().getType();
+
+        if (auto ptrType = mlir::dyn_cast<typher::PointerType>(origType)) {
+            origType = ptrType.getElementType();
+        }
+
+        if (auto arrayType = mlir::dyn_cast<typher::ArrayType>(origType)) {
+            // -----------------------------------------------------------------
+            // AGGREGATE COPY: Emit llvm.intr.memcpy
+            // -----------------------------------------------------------------
+            int64_t numElements = arrayType.getSize();
+            
+            mlir::Type convertedElemType = getTypeConverter()->convertType(arrayType.getElementType());
+            
+            int64_t elemSize = 4; // Default to 4 bytes for i32
+            if (convertedElemType.isInteger(64) || convertedElemType.isF64()) {
+                elemSize = 8;
+            } else if (convertedElemType.isInteger(8)) {
+                elemSize = 1;
+            }
+
+            int64_t totalBytes = numElements * elemSize;
+
+            mlir::Value bytesVal = rewriter.create<mlir::LLVM::ConstantOp>(
+                loc, rewriter.getI64Type(), rewriter.getI64IntegerAttr(totalBytes)
+            );
+
+            // ✅ Fix: Pass bool literal for isVolatile
+            rewriter.create<mlir::LLVM::MemcpyOp>(
+                loc,
+                targetAddr,   // dst
+                valueToStore, // src
+                bytesVal,     // len
+                /*isVolatile=*/false
+            );
+        } else {
+            // -----------------------------------------------------------------
+            // SCALAR STORE: Standard store
+            // -----------------------------------------------------------------
+            rewriter.create<mlir::LLVM::StoreOp>(loc, valueToStore, targetAddr);
+        }
 
         rewriter.eraseOp(op);
         return mlir::success();
@@ -336,7 +375,7 @@ struct AccessOpLowering : public mlir::OpConversionPattern<mlir::typher::AccessO
 
     mlir::LogicalResult matchAndRewrite(
         mlir::typher::AccessOp op,
-        OpAdaptor adaptor, // <--- MUST USE ADAPTOR FOR OPERANDS
+        OpAdaptor adaptor,
         mlir::ConversionPatternRewriter &rewriter) const override 
     {
         mlir::Value llvmBasePtr = adaptor.getBase();

@@ -40,6 +40,13 @@ def Typher_Array : Typher_Type<"Array", "array", [MemRefElementTypeInterface]> {
     let assemblyFormat = "`<` $size `x` $elementType `>`";
 }
 
-def C_Type : AnyTypeOf<[I1, I8, I16, I32, I64, F32, F64, Typher_Pointer]>;
+def C_Type : AnyTypeOf<[I1, I8, I16, I32, I64, F32, F64, Typher_Pointer, Typher_Array]> {
+    let summary = "C-compatible types";
+    let description = [{
+        Represents types that are compatible with C language semantics.
+        This includes standard integer and floating-point types, as well as
+        Typher-specific pointer and array types.
+    }];
+}
 
 #endif // TYPHER_TYPES

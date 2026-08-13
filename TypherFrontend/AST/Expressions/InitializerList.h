@@ -18,6 +18,11 @@ namespace AST {
             elements_.push_back(member);
         }
 
+        std::string String() override
+		{
+			return "Initializer List node";
+		}
+
         SlabVector<Expression*> GetElements() const 
         {
             return elements_;

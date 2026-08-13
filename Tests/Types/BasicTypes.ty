@@ -4,3 +4,42 @@ int main() {
     double c = 0.25;
     char d = 'A';
 }
+
+
+/**
+ * 
+ * module {
+  typher.func @main() -> i32 {
+    // %0 = destination variable 'a'
+    %0 = typher.alloca : !typher.ptr<!typher.array<2 x i32>>
+    
+    // %1 = temporary Rvalue backing memory for initializer {23, 24}
+    %1 = typher.alloca : !typher.ptr<!typher.array<2 x i32>>
+    
+    %c0 = arith.constant 0 : index
+    
+    // Fill element 0 -> 23
+    %c0_idx = arith.constant 0 : index
+    %v23 = typher.constant 23 : i32
+    %p0 = typher.gep %1[%c0, %c0_idx] : (!typher.ptr<!typher.array<2 x i32>>, index, index) -> !typher.ptr<i32>
+    typher.store %v23, %p0 : i32, !typher.ptr<i32>
+    
+    // Fill element 1 -> 24
+    %c1_idx = arith.constant 1 : index
+    %v24 = typher.constant 24 : i32
+    %p1 = typher.gep %1[%c0, %c1_idx] : (!typher.ptr<!typher.array<2 x i32>>, index, index) -> !typher.ptr<i32>
+    typher.store %v24, %p1 : i32, !typher.ptr<i32>
+    
+    // Assign array initializer (%1) into variable (%0)
+    // Both operands MUST be memory pointer types!
+    typher.assign %1, %0 : !typher.ptr<!typher.array<2 x i32>>, !typher.ptr<!typher.array<2 x i32>>
+    
+    // Read a[0]
+    %idx_0 = arith.constant 0 : index
+    %elem_ptr = typher.gep %0[%c0, %idx_0] : (!typher.ptr<!typher.array<2 x i32>>, index, index) -> !typher.ptr<i32>
+    %val = typher.load %elem_ptr : !typher.ptr<i32> -> i32
+    
+    typher.return %val : i32
+  }
+}
+ */
