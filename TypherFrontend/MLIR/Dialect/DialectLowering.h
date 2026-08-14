@@ -140,38 +140,8 @@ struct AssignLowering : public OpConversionPattern<typher::AssignOp> {
             origType = ptrType.getElementType();
         }
 
-        if (auto arrayType = mlir::dyn_cast<typher::ArrayType>(origType)) {
-            // -----------------------------------------------------------------
-            // AGGREGATE COPY: Emit llvm.intr.memcpy
-            // -----------------------------------------------------------------
-            int64_t numElements = arrayType.getSize();
-            
-            mlir::Type convertedElemType = getTypeConverter()->convertType(arrayType.getElementType());
-            
-            int64_t elemSize = 4; // Default to 4 bytes for i32
-            if (convertedElemType.isInteger(64) || convertedElemType.isF64()) {
-                elemSize = 8;
-            } else if (convertedElemType.isInteger(8)) {
-                elemSize = 1;
-            }
-
-            int64_t totalBytes = numElements * elemSize;
-
-            mlir::Value bytesVal = rewriter.create<mlir::LLVM::ConstantOp>(
-                loc, rewriter.getI64Type(), rewriter.getI64IntegerAttr(totalBytes)
-            );
-
-            // ✅ Fix: Pass bool literal for isVolatile
-            rewriter.create<mlir::LLVM::MemcpyOp>(
-                loc,
-                targetAddr,   // dst
-                valueToStore, // src
-                bytesVal,     // len
-                /*isVolatile=*/false
-            );
-        } else {
-            rewriter.create<mlir::LLVM::StoreOp>(loc, valueToStore, targetAddr);
-        }
+        
+        rewriter.create<mlir::LLVM::StoreOp>(loc, valueToStore, targetAddr);
 
         rewriter.eraseOp(op);
         return mlir::success();

@@ -225,8 +225,10 @@ namespace MLIR {
 			location, memrefType);
 
 		if (node->Expr()) {
+			retValue = address;
 			node->Expr()->Accept(this);
-			mlir::Value initialValue = retValue;
+			mlir::Value initialValue = LvalueToRvalue(retValue, location);
+			mlir::Type addrType = initialValue.getType();
 			
 			mlir::typher::AssignOp::create(*builder, location, initialValue, address);
 		}
@@ -306,24 +308,9 @@ namespace MLIR {
 			return;
 		}
 
-		// 1. Determine element type (e.g. i32)
 		mlir::Type elemType = builder->getI32Type(); 
 
-		// 2. Build aggregate array type: !typher.array<N x T>
-		auto arrayType = mlir::typher::ArrayType::get(
-			builder->getContext(), count, elemType
-		);
-
-		// 3. Allocate stack slot for this compound aggregate
-		// Result type: !typher.ptr<!typher.array<N x T>>
-		auto ptrToArrayType = mlir::typher::PointerType::get(
-			builder->getContext(), arrayType
-		);
-		
-		mlir::Value tempAlloc = builder->create<mlir::typher::AllocaOp>(
-			location, 
-			ptrToArrayType
-		);
+		mlir::Value tempAlloc = retValue;
 
 		// 4. Element pointer type for GEP: !typher.ptr<T>
 		auto elemPtrType = mlir::typher::PointerType::get(
@@ -412,8 +399,15 @@ namespace MLIR {
 			mlir::Type varType = variable.getType();
 
 			// Check if the symbol is a memory allocation (MemRef or Typher Pointer)
-			retValue = variable; 
-			
+			if (mlir::isa<mlir::MemRefType>(varType) || mlir::isa<mlir::typher::PointerType>(varType)) 
+			{
+				retValue = LvalueToRvalue(variable, location);
+			}
+			else 
+			{
+				// It's already an Rvalue (e.g., direct SSA value or function parameter)
+				retValue = variable; 
+			}
 			return;
 		}
 
@@ -561,7 +555,7 @@ namespace MLIR {
 		}
 
 		node->GetLHS()->Accept(this);
-		mlir::Value lhs = retValue;
+		mlir::Value lhs = LvalueToRvalue(retValue, location);;
 		if (!lhs)
 			return;
 
