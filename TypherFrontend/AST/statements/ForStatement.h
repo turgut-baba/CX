@@ -31,6 +31,7 @@ namespace AST {
         }
 
         void Accept(NodeVisitor* v) override { v->Visit(this); }
+        //void Check(Checker* v) override { v->Visit(this); }
     private:
         Statement* initialize_;
         Expression* condition_;

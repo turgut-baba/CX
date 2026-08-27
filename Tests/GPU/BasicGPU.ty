@@ -1,0 +1,79 @@
+@gpu class Phase{
+    virtual void execute() = 0;
+};
+
+
+<: phases :>
+@gpu class Fragment: public Phase {
+    void execute() override 
+    {
+        ...
+    }
+};
+
+<: phases :>
+@gpu class Vectorize: public Phase {
+    void execute() override 
+    {
+        ...
+    }
+};
+
+@gpu kernel void vectorAdd(const float* A, const float* B, float* C, int N)
+{
+    // Calculate global thread index
+    std::vector<Phase*> phase_list;
+    <: for phase in Phases :>
+            phase_list.push_back(new phase());
+    <: endfor :>
+    
+    int i = block.index.x * block.size.x + thread.index.x;
+
+    // Boundary check to ensure we don't access out of bounds memory
+    if (i < N) {
+        C[i] = A[i] + B[i];
+    }
+}
+
+<: template(type T, int BLOCK_SIZE) :>
+@gpu kernel void processSensorData(T* data, uint N) {
+    
+    // Compile-time type branching replaces template partial specialization
+    <: if (T == float) :>
+        // Fast-path FP32 intrinsic path on GPU
+        float val = data[global_idx.x];
+        data[global_idx.x] = @gpu.fast_fma(val, 2.0f, 1.0f);
+
+    <: else if (T == double) :>
+        // Precision FP64 path
+        data[global_idx.x] = data[global_idx.x] * 2.0 + 1.0;
+
+    <: else :>
+        // Generic fallback for custom structs
+        data[global_idx.x].update();
+    <: endif :>
+}
+
+int main()
+{
+    int N = 100000;
+    float h_A[N], h_B[N], h_C[N]; // Assume these are popularted
+
+    // Allocates N floats on GPU memory and immediately populates with h_A/h_B data
+    float* d_A = @gpu transfer float[N, h_A]; 
+    float* d_B = @gpu transfer float[N, h_B]; 
+
+    // ALLOCATE ONLY (Uninitialized GPU buffer for output)
+    float* d_C = @gpu new float[N]; 
+
+    // Kernel Execution
+    launch<<<(N + 255) / 256, 256>>> vectorAdd(d_A, d_B, d_C, N);
+
+    // transfer d_C back to h_C
+    @gpu transfer d_C to h_C[N]; 
+
+    // Cleanup
+    @gpu delete[] d_A;
+    @gpu delete[] d_B;
+    @gpu delete[] d_C;
+}

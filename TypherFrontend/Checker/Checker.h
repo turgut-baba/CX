@@ -2,7 +2,7 @@
 #define CHECKER_H
 
 #include "Parser.h"
-#include "SemanticAnalyzer.h"
+//#include "SemanticAnalyzer.h"
 #include "Memory/MemAlloc.h"
 #include "Memory/BumpPtrAlloc.h"
 
@@ -14,16 +14,23 @@ namespace checker {
 	public:
 		explicit Checker(DiagnosticEngine &diags, MemoryAllocator *allocator);
 
-		//NO_COPY_SEMANTIC(Checker);
-    	// NO_MOVE_SEMANTIC(Checker);
-
-		Type *BuiltinByteType() const;
-		Type *BuiltinShortType() const;
-		Type *BuiltinIntType() const;
-		Type *BuiltinLongType() const;
-		Type *BuiltinFloatType() const;
-		Type *BuiltinDoubleType() const;
-		Type *BuiltinCharType() const;
+        virtual void Check(Function* node) = 0;
+        virtual void Check(Statement* node) = 0;
+        virtual void Check(VariableDeclarator* node) = 0;
+        virtual void Check(VariableDeclaration* node) = 0;
+        virtual void Check(Expression* node) = 0;
+        virtual void Check(Identifier* node) = 0;
+        virtual void Check(IntegerLiteral* node) = 0;
+        virtual void Check(StringLiteral* node) = 0;
+        virtual void Check(Operator* node) = 0;
+        virtual void Check(CallExpression* node) = 0;
+        virtual void Check(MemoryOperation* node) = 0;
+        virtual void Check(ReturnStatement* node) = 0;
+        virtual void Check(IfStatement* node) = 0;
+        virtual void Check(ExpressionStatement* node) = 0;
+        virtual void Check(WhileStatement* node) = 0;
+        virtual void Check(ForStatement* node) = 0;
+        virtual void Check(InitializerList* node) = 0;
 
 		void StartChecker(SlabVector<AST::Statement*>& AST_tree);
 
@@ -40,17 +47,22 @@ namespace checker {
 
 		SemanticAnalyzer* GetAnalyzer() const
 		{
-			return analyzer_.get();
+			return state_->analyzer_.get();
+		}
+
+		SymbolTable* SymbolTable()
+		{
+			return state_->symbol_table.get();
 		}
 
 		void check_module(SlabVector<AST::Statement*> ASTTree);
 	private:
 		void CheckNode(AST::ASTNode* node);
 
-		std::unique_ptr<SemanticAnalyzer> analyzer_;
 		DiagnosticEngine &diags_;
 		MemoryAllocator* allocator_;
-		std::unique_ptr<SlabVector<AST::Statement*>> AST_tree;
+
+		CheckerState* state_;
 	};
 }
 

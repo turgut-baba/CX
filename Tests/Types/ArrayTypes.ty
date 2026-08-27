@@ -1,10 +1,9 @@
 int main() {
 	int a[2] = {23, 24};
 
-	//int za = a[1];
-  int j = 54;
-  j = 4;
-  a[1] = j;
+	int i = 0;
+	i = 12;
+	a[1] = i;
 
-	return j;
+	return a[1];
 }

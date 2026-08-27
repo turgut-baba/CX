@@ -1,0 +1,33 @@
+int compute_benchmark_raw(int* arrX, int* arrY, int* arrOut, int size) {
+    for (int i = 0; i < size; i = i + 1) {
+        //int x = arrX[i];
+        //int y = arrY[i];
+        
+        int val = 1;
+        
+        // Compute-heavy loop relying solely on primitive math operations.
+        // This creates a dense dependency chain per element that forces 
+        // heavy ALU utilization without needing transcendental functions.
+
+		
+        for (int j = 0; j < 40; j = j + 1) {
+            int old_x = x;
+
+            x = (x * x) - (y * y) + val;
+            y = (2 * old_x * y) + val;
+            
+            // Artificial arithmetic density
+            val = x * 15 + y * 25;
+        }
+        
+        //arrOut[i] = x + y;
+    }
+
+    return 0;
+}
+
+
+int main()
+{
+    return 0;
+}

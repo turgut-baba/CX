@@ -10,7 +10,7 @@
 #include <stdexcept>
 #include <cstring>
 #include "Log/Diagnostics.h"
-#include "Checker.h"
+//#include "Checker.h"
 #include "Comments.h"
 
 
@@ -76,8 +76,8 @@ int main(int argc, char** argv)
         auto ast = parse.AST();
 
         
-        checker::Checker checker = checker::Checker(diags, &allocator);
-        checker.StartChecker(ast);
+        //checker::Checker checker = checker::Checker(diags, &allocator);
+        //checker.StartChecker(ast);
         
         MLIR::Builder mlir = MLIR::Builder();
         mlir.BuildModule(ast);

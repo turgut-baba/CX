@@ -398,16 +398,7 @@ namespace MLIR {
 		{
 			mlir::Type varType = variable.getType();
 
-			// Check if the symbol is a memory allocation (MemRef or Typher Pointer)
-			if (mlir::isa<mlir::MemRefType>(varType) || mlir::isa<mlir::typher::PointerType>(varType)) 
-			{
-				retValue = LvalueToRvalue(variable, location);
-			}
-			else 
-			{
-				// It's already an Rvalue (e.g., direct SSA value or function parameter)
-				retValue = variable; 
-			}
+			retValue = variable; 
 			return;
 		}
 

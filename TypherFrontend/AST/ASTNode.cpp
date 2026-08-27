@@ -9,4 +9,14 @@ namespace AST {
 			if (child != nullptr) child->ChangeChildrenNodesRecursively(func);
 		}
 	}
+
+	void ASTNode::IterateTree(SlabVector<AST::Statement*>& AST_tree, std::function<void(AST::Statement*)> callback)
+	{
+		for (auto& node : AST_tree)
+		{
+			if (node != nullptr) {
+				callback(node);
+			}
+		}
+	}
 }

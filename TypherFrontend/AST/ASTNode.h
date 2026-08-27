@@ -26,9 +26,11 @@ enum class AstBuiltinTypes { // TODO: move this to a seperate file
 	VOID,
 	BOOL,
 	CHAR,
-	INT,
-	FLOAT,
-	DOUBLE
+    SHORT,
+    INT,
+    LONG,
+    FLOAT,
+    DOUBLE,
 };
 
 namespace AST {
@@ -75,6 +77,7 @@ namespace AST {
 
 		ASTNode* HasChild(const ConditionalNodeFunction& cb) const;
 		virtual void Accept(NodeVisitor* visitor) = 0;
+		//virtual void Check(Checker* checker) = 0;
 
 		bool IsNodeType(AstNodeType type)
 		{
@@ -102,7 +105,9 @@ namespace AST {
 		Location loc_; // debug
 		//Flags flags_{};
 		// Scope* current_scope
+		void IterateTree(SlabVector<AST::Statement*>& AST_tree, std::function<void(AST::Statement*)> callback);
 	};
+
 }
 
 #endif
